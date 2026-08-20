@@ -3,7 +3,7 @@
 # afterwards this file is the source of truth and syncs on push.
 services:
   - type: web
-    name: open-ff
+    name: open-leagues
     runtime: docker
     plan: starter
     region: virginia
