@@ -23,7 +23,7 @@ services:
       # what keeps this service inside the 512Mi starter instance.
       - key: DATABASE_URL
         fromDatabase:
-          name: open-leagues-db
+          name: open-leagues-pg
           property: connectionString
       - key: PGLITE_DATA_DIR
         value: /data/pglite
@@ -47,6 +47,8 @@ services:
         sync: false
 
 databases:
-  - name: open-leagues-db
+  - name: open-leagues-pg
     plan: basic-256mb
-    diskSizeGB: 1
+    region: virginia   # MUST match the web service — internal DB hostnames
+    diskSizeGB: 1      # are region-scoped (oregon DB from the first sync is
+                       # orphaned; delete it in the dashboard).
