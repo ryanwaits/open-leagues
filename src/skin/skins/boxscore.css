@@ -29,6 +29,7 @@
   --font-stack-display: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-stack-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-stack-mono: "Courier New", Courier, monospace;
+  --ghost: #eceae2;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -52,6 +53,7 @@
     --lift: 0 0 0 0 rgb(0 0 0 / 0);
     --lift-hover: 0 0 0 0 rgb(0 0 0 / 0);
     --press-cast: rgb(0 0 0 / 0.5);
+    --ghost: #1d1e23;
   }
 }
 
@@ -75,4 +77,5 @@
   --lift: 0 0 0 0 rgb(0 0 0 / 0);
   --lift-hover: 0 0 0 0 rgb(0 0 0 / 0);
   --press-cast: rgb(0 0 0 / 0.5);
+  --ghost: #1d1e23;
 }

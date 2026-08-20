@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { Stamp } from "@/components/ghost-num";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLeagueBundle } from "@/lib/data/fns";
 import type { DispatchArticle } from "@/lib/league/dispatch";
@@ -70,6 +71,7 @@ function DeskPage() {
                 onClick={() => navigate({ search: { week, story: lead.slug } })}
                 className="w-full text-left"
               >
+                <Stamp>Official record · wk {week}</Stamp>
                 <p className="microlabel">{lead.kicker}</p>
                 <h3 className="mt-2 font-display text-4xl font-extrabold leading-[1.15] tracking-[-0.03em]">
                   <span className="hl">{lead.headline}</span>

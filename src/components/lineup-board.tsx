@@ -203,7 +203,7 @@ export function LineupBoard({
                 takes && "bg-[color-mix(in_oklab,var(--brand)_7%,transparent)]",
               )}
             >
-              <span className="w-9 shrink-0 microlabel-data">{label}</span>
+              <span className="w-9 shrink-0 microlabel-data slot-rail">{label}</span>
               {editable ? (
                 <MoveButton
                   state={isSrc ? "source" : src ? (takes ? "target" : "off") : "idle"}

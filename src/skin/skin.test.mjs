@@ -120,3 +120,34 @@ test("card ring and micro-label recipes are named in representative components",
   const account = readFileSync(join(root, "src/routes/account.tsx"), "utf8");
   assert.match(account, /microlabel/);
 });
+
+test("styles.css defines the flourish classes", () => {
+  const styles = readFileSync(join(root, "src/styles.css"), "utf8");
+  assert.match(styles, /\.ghost-num\b/);
+  assert.match(styles, /\.slot-rail\b/);
+  assert.match(styles, /\.stamp\b/);
+  assert.match(styles, /\.ghost-host\b/);
+});
+
+test("boxscore skin defines the --ghost token in all three blocks", () => {
+  const boxscore = readFileSync(join(root, "src/skin/skins/boxscore.css"), "utf8");
+  const matches = boxscore.match(/--ghost:/g) ?? [];
+  assert.ok(matches.length >= 3, "expected --ghost: to appear at least 3 times in boxscore.css");
+});
+
+test("ghost-num.tsx exists and exports GhostNum and Stamp", () => {
+  const ghostNum = readFileSync(join(root, "src/components/ghost-num.tsx"), "utf8");
+  assert.match(ghostNum, /export function GhostNum/);
+  assert.match(ghostNum, /export function Stamp/);
+});
+
+test("flourishes are mounted in representative components", () => {
+  const playerProfile = readFileSync(join(root, "src/components/player-profile.tsx"), "utf8");
+  assert.match(playerProfile, /GhostNum/);
+
+  const recap = readFileSync(join(root, "src/routes/league/$leagueId/recap.tsx"), "utf8");
+  assert.match(recap, /Stamp/);
+
+  const lineupBoard = readFileSync(join(root, "src/components/lineup-board.tsx"), "utf8");
+  assert.match(lineupBoard, /slot-rail/);
+});

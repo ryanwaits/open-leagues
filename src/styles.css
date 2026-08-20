@@ -367,4 +367,23 @@
     transform: none;
     box-shadow: none;
   }
+
+  /* Flourishes: invisible outside boxscore. */
+  .ghost-host { position: relative; }
+  .ghost-num, .stamp { display: none; }
+  [data-skin="boxscore"] .ghost-host { overflow: hidden; }
+  [data-skin="boxscore"] .ghost-num { display: block; position: absolute;
+    right: -0.04em; top: -0.28em; z-index: 0; pointer-events: none;
+    user-select: none; font-family: var(--font-stack-sans);
+    font-weight: 700; font-size: clamp(88px, 16vw, 150px);
+    letter-spacing: -0.05em; line-height: 1; color: var(--ghost); }
+  [data-skin="boxscore"] .ghost-num ~ * { position: relative; }
+  [data-skin="boxscore"] .slot-rail { display: flex; align-items: center;
+    justify-content: center; align-self: stretch; background: var(--band);
+    color: var(--ink); font-weight: 700; }
+  [data-skin="boxscore"] .stamp { display: inline-block;
+    transform: rotate(-7deg); border: 2px solid var(--alarm);
+    color: var(--alarm); font-family: var(--font-stack-sans);
+    font-size: 9px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; padding: 4px 8px; opacity: 0.85; }
 }

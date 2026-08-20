@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { GhostNum } from "@/components/ghost-num";
 import { ScoreStrip } from "@/components/scoreboard";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
@@ -87,7 +88,8 @@ function ScoresPage() {
   return (
     <Shell>
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+        <div className="ghost-host">
+          <GhostNum n={resolvedWeek} />
           <p className="microlabel">ESPN public scoreboard</p>
           <h1 className="mt-1 font-display text-4xl tracking-tight">NFL scores</h1>
           <p className="mt-1 text-sm text-muted">Tap a game for the live box and every play.</p>

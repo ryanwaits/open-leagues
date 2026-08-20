@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Avatar } from "@/components/avatar";
+import { GhostNum } from "@/components/ghost-num";
 import { InjuryMark, injuryMark } from "@/components/player-cell";
 import { displayName, headshotFor, type Profile } from "@/lib/data/player-view";
 import { isDefense } from "@/lib/data/teams";
@@ -31,7 +32,8 @@ export function ProfileIdentity({
     player.depth_chart_order ? `depth #${player.depth_chart_order}` : null,
   ].filter(Boolean);
   return (
-    <div className="flex items-start gap-3">
+    <div className="ghost-host flex items-start gap-3">
+      <GhostNum n={player.number} />
       <Avatar
         src={headshotFor(player)}
         name={displayName(player)}
