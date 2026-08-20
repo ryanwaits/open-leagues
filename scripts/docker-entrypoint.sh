@@ -26,6 +26,9 @@ if [ -z "${CRON_SECRET:-}" ]; then
   echo "WARN: CRON_SECRET unset — /api/league/tick is public (in-process tick still runs)"
 fi
 
+# Apply SQL migrations when a hosted Postgres is configured (no-op on PGLite).
+bun scripts/migrate.mjs
+
 if [ "${OPENFF_DEV:-0}" = "1" ]; then
   exec bun run dev
 fi
