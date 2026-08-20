@@ -55,10 +55,8 @@ function GamePage() {
 
       {g.scoring.length ? (
         <section className="mt-6">
-          <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-            Scoring
-          </h2>
-          <ol className="mt-2 divide-y divide-line rounded-xl bg-surface shadow-[var(--shadow-border)]">
+          <h2 className="microlabel">Scoring</h2>
+          <ol className="mt-2 divide-y divide-line rounded-xl bg-surface ring-card">
             {g.scoring.map((s) => (
               <li key={s.id} className="flex items-start gap-3 px-3 py-2.5 sm:px-4">
                 {s.logo ? (
@@ -124,10 +122,14 @@ function ScoreHead({ g, live }: { g: GameSummary; live: boolean }) {
   const awayDim = g.state === "post" && g.away.winner === false;
   const homeDim = g.state === "post" && g.home.winner === false;
   return (
-    <section className="mt-4 rounded-xl bg-surface px-4 py-5 shadow-[var(--shadow-border)] sm:px-6">
+    <section className="mt-4 rounded-xl bg-surface px-4 py-5 ring-card sm:px-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-          {g.seasonType === "pre" ? "Preseason" : g.seasonType === "post" ? "Postseason" : "Regular"}{" "}
+        <p className="microlabel">
+          {g.seasonType === "pre"
+            ? "Preseason"
+            : g.seasonType === "post"
+              ? "Postseason"
+              : "Regular"}{" "}
           · Week {g.week} · {g.season}
         </p>
         <Badge tone={live ? "live" : g.state === "post" ? "win" : "default"}>
@@ -142,26 +144,16 @@ function ScoreHead({ g, live }: { g: GameSummary; live: boolean }) {
       ) : null}
       {g.lastPlay ? (
         <p className="mt-2 text-sm text-muted">
-          <span className="font-mono text-[11px] uppercase tracking-wide text-faint">Last play </span>
+          <span className="microlabel">Last play </span>
           {g.lastPlay}
         </p>
       ) : null}
-      {live ? (
-        <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-          Public ESPN box · ticks every 8s
-        </p>
-      ) : null}
+      {live ? <p className="mt-3 microlabel">Public ESPN box · ticks every 8s</p> : null}
     </section>
   );
 }
 
-function TeamScore({
-  team,
-  dim,
-}: {
-  team: GameSummary["home"];
-  dim: boolean;
-}) {
+function TeamScore({ team, dim }: { team: GameSummary["home"]; dim: boolean }) {
   return (
     <div className={cn("flex items-center gap-3", dim && "opacity-45")}>
       {team.logo ? (
@@ -171,9 +163,7 @@ function TeamScore({
       )}
       <div className="min-w-0 flex-1">
         <p className="truncate text-lg">{team.name}</p>
-        {team.record ? (
-          <p className="font-mono text-[11px] text-faint">{team.record}</p>
-        ) : null}
+        {team.record ? <p className="font-mono text-[11px] text-faint">{team.record}</p> : null}
       </div>
       <p className="font-display text-4xl tabular-nums tracking-tight">{team.score || "—"}</p>
     </div>
@@ -184,7 +174,9 @@ function PlayFeed({ g }: { g: GameSummary }) {
   if (!g.drives.length) {
     return (
       <p className="mt-4 text-sm text-muted">
-        {g.state === "pre" ? "No plays yet — waiting on kickoff." : "No play-by-play posted for this game."}
+        {g.state === "pre"
+          ? "No plays yet — waiting on kickoff."
+          : "No play-by-play posted for this game."}
       </p>
     );
   }
@@ -192,12 +184,10 @@ function PlayFeed({ g }: { g: GameSummary }) {
   return (
     <div className="mt-4 space-y-3">
       {drives.map((d) => (
-        <article key={d.id} className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+        <article key={d.id} className="rounded-xl bg-surface ring-card">
           <header className="flex items-center gap-2 border-b border-line px-3 py-2 sm:px-4">
-            {d.logo ? (
-              <img src={d.logo} alt="" className="size-4 object-contain" />
-            ) : null}
-            <p className="min-w-0 flex-1 truncate font-mono text-[11px] uppercase tracking-wide text-faint">
+            {d.logo ? <img src={d.logo} alt="" className="size-4 object-contain" /> : null}
+            <p className="min-w-0 flex-1 truncate microlabel">
               {d.team || "Drive"}
               {d.result ? ` · ${d.result}` : ""}
               {d.description ? ` · ${d.description}` : ""}
@@ -207,10 +197,7 @@ function PlayFeed({ g }: { g: GameSummary }) {
             {d.plays.map((p) => (
               <li
                 key={p.id}
-                className={cn(
-                  "flex items-start gap-3 px-3 py-2 sm:px-4",
-                  p.scoring && "bg-win/10",
-                )}
+                className={cn("flex items-start gap-3 px-3 py-2 sm:px-4", p.scoring && "bg-win/10")}
               >
                 <span className="w-14 shrink-0 font-mono text-[11px] tabular-nums text-faint">
                   {p.period ? `Q${p.period}` : ""}
@@ -256,10 +243,10 @@ function TeamBoxBlock({ team }: { team: TeamBox }) {
         <h2 className="font-display text-2xl tracking-tight">{team.name}</h2>
       </div>
       {team.teamStats.length ? (
-        <dl className="mb-4 grid grid-cols-2 gap-x-4 gap-y-1.5 rounded-xl bg-surface px-4 py-3 shadow-[var(--shadow-border)] sm:grid-cols-5">
+        <dl className="mb-4 grid grid-cols-2 gap-x-4 gap-y-1.5 rounded-xl bg-surface px-4 py-3 ring-card sm:grid-cols-5">
           {team.teamStats.map((s) => (
             <div key={s.label}>
-              <dt className="font-mono text-[10px] uppercase tracking-wide text-faint">{s.label}</dt>
+              <dt className="microlabel-data">{s.label}</dt>
               <dd className="font-mono text-sm tabular-nums">{s.value}</dd>
             </div>
           ))}
@@ -267,18 +254,13 @@ function TeamBoxBlock({ team }: { team: TeamBox }) {
       ) : null}
       <div className="space-y-4">
         {team.groups.map((group) => (
-          <div key={group.name} className="overflow-x-auto rounded-xl bg-surface shadow-[var(--shadow-border)]">
+          <div key={group.name} className="overflow-x-auto rounded-xl bg-surface ring-card">
             <table className="w-full min-w-[480px] text-sm">
               <thead>
                 <tr className="border-b border-line">
-                  <th className="px-3 py-2 text-left font-mono text-[11px] uppercase tracking-wide text-faint">
-                    {group.label}
-                  </th>
+                  <th className="px-3 py-2 text-left microlabel">{group.label}</th>
                   {group.headers.map((h) => (
-                    <th
-                      key={h}
-                      className="px-2 py-2 text-right font-mono text-[11px] uppercase tracking-wide text-faint"
-                    >
+                    <th key={h} className="px-2 py-2 text-right microlabel">
                       {h}
                     </th>
                   ))}
@@ -301,14 +283,19 @@ function TeamBoxBlock({ team }: { team: TeamBox }) {
                         ) : null}
                         <span className="truncate">
                           {row.jersey ? (
-                            <span className="mr-1.5 font-mono text-[11px] text-faint">{row.jersey}</span>
+                            <span className="mr-1.5 font-mono text-[11px] text-faint">
+                              {row.jersey}
+                            </span>
                           ) : null}
                           {row.name}
                         </span>
                       </span>
                     </td>
                     {row.stats.map((v, i) => (
-                      <td key={`${row.id}-${i}`} className="px-2 py-1.5 text-right font-mono tabular-nums">
+                      <td
+                        key={`${row.id}-${i}`}
+                        className="px-2 py-1.5 text-right font-mono tabular-nums"
+                      >
                         {v}
                       </td>
                     ))}

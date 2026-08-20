@@ -41,7 +41,7 @@ export function GameCard({ game }: { game: ScoreGame }) {
     <Link
       to="/scores/$gameId"
       params={{ gameId: game.id }}
-      className="flex flex-col gap-2.5 rounded-lg bg-surface p-3.5 shadow-[var(--shadow-border)] transition-[box-shadow] duration-150 hover:shadow-[var(--shadow-border-hover)]"
+      className="flex flex-col gap-2.5 rounded-lg bg-surface p-3.5 ring-card transition-[box-shadow] duration-150 ring-card-h"
     >
       <div className="flex items-center justify-between gap-2">
         <Badge tone={tone}>{game.state === "in" ? "Live" : game.detail}</Badge>

@@ -104,9 +104,7 @@ function Login() {
 
         {authEnabled ? (
           <form className="mt-8 space-y-3" onSubmit={(e) => void onEmail(e)}>
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-              {mode === "up" ? "Create an account" : "Email"}
-            </p>
+            <p className="microlabel">{mode === "up" ? "Create an account" : "Email"}</p>
             {mode === "up" ? (
               <Input
                 value={name}

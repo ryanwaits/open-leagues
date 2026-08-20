@@ -36,13 +36,7 @@ export function injuryMark(status?: string | null): {
   return { letter: raw.slice(0, 3).toUpperCase(), label: cut, tone: "loss", title: raw };
 }
 
-export function InjuryMark({
-  status,
-  className,
-}: {
-  status?: string | null;
-  className?: string;
-}) {
+export function InjuryMark({ status, className }: { status?: string | null; className?: string }) {
   const mark = injuryMark(status);
   if (!mark) return null;
   return (
@@ -108,7 +102,7 @@ export function PlayerCell({
           <span className="truncate text-sm font-medium text-fg">{name}</span>
           {isDef ? null : <InjuryMark status={player.injury_status} />}
         </span>
-        <span className="block truncate font-mono text-[11px] uppercase tracking-wide text-faint">
+        <span className="block truncate microlabel">
           {meta}
           {gameLabel(game, player.team)}
         </span>

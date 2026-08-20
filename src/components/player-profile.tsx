@@ -48,18 +48,10 @@ export function ProfileIdentity({
           {displayName(player)}
         </h1>
         <div className="mt-1 flex flex-wrap items-center gap-2">
-          {role ? (
-            <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-              {role}
-            </span>
-          ) : null}
+          {role ? <span className="microlabel-data">{role}</span> : null}
           {isDefense(player.position) ? null : <InjuryMark status={player.injury_status} />}
         </div>
-        {book.length ? (
-          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-            {book.join(" · ")}
-          </p>
-        ) : null}
+        {book.length ? <p className="mt-1 microlabel-data">{book.join(" · ")}</p> : null}
         {context?.label ? <p className="mt-1 text-[13px] text-muted">{context.label}</p> : null}
       </div>
       {children}
@@ -106,9 +98,7 @@ function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="border-r border-b border-line px-5 py-3 last:border-r-0 sm:border-b-0">
       <span className="block font-mono text-xl font-semibold tabular-nums">{value}</span>
-      <span className="mt-0.5 block font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-        {label}
-      </span>
+      <span className="mt-0.5 block microlabel-data">{label}</span>
     </div>
   );
 }
@@ -128,11 +118,7 @@ export function Section({
     <section className={cn(!bare && "border-b border-line last:border-0")}>
       <header className="flex items-baseline justify-between gap-3 px-5 pt-4 pb-1.5">
         <h2 className="font-display text-base font-bold tracking-[-0.03em]">{title}</h2>
-        {meta ? (
-          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-            {meta}
-          </span>
-        ) : null}
+        {meta ? <span className="microlabel-data">{meta}</span> : null}
       </header>
       <div className="pb-3">{children}</div>
     </section>
@@ -179,9 +165,7 @@ export function ProfileNews({ notes }: { notes: PlayerNote[] }) {
   return (
     <Section title="News" meta={lead.source}>
       <div className="px-5 pb-1">
-        <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-          {noteWhen(lead.date)}
-        </p>
+        <p className="microlabel-data">{noteWhen(lead.date)}</p>
         <p className="mt-1 text-sm font-semibold leading-snug">{lead.headline}</p>
         {body ? (
           <p className={cn("mt-1 text-[13px] leading-relaxed text-muted", !open && "line-clamp-3")}>
@@ -191,9 +175,7 @@ export function ProfileNews({ notes }: { notes: PlayerNote[] }) {
         {open
           ? rest.map((n) => (
               <div key={n.id} className="mt-3 border-t border-line pt-3">
-                <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                  {noteWhen(n.date)}
-                </p>
+                <p className="microlabel-data">{noteWhen(n.date)}</p>
                 <p className="mt-1 text-sm font-semibold leading-snug">{n.headline}</p>
                 {n.text && n.text !== n.headline ? (
                   <p className="mt-1 text-[13px] leading-relaxed text-muted">{n.text}</p>
@@ -205,7 +187,7 @@ export function ProfileNews({ notes }: { notes: PlayerNote[] }) {
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-accent-strong"
+            className="mt-2 microlabel-data text-accent-strong"
           >
             {open ? "Show less" : "Show more"}
           </button>
@@ -246,9 +228,7 @@ export function ProfileSchedule({
                 now && "bg-[color-mix(in_oklab,var(--brand)_10%,transparent)]",
               )}
             >
-              <span className="w-10 shrink-0 font-mono text-[10px] uppercase tracking-wide text-faint">
-                W{g.week}
-              </span>
+              <span className="w-10 shrink-0 microlabel-data">W{g.week}</span>
               <span className={cn("min-w-0 flex-1 truncate text-sm", g.bye && "text-muted")}>
                 {g.opp}
               </span>
@@ -263,7 +243,7 @@ export function ProfileSchedule({
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="px-5 pt-1 pb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-accent-strong"
+          className="px-5 pt-1 pb-2 microlabel-data text-accent-strong"
         >
           {open ? "Show less" : "Show more"}
         </button>

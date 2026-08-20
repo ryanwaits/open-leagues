@@ -304,3 +304,59 @@
     transform: none;
   }
 }
+
+@layer components {
+  /* The label voice. Skins own it; components only name the role. */
+  .microlabel {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-3);
+  }
+  .microlabel-data {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+  }
+  /* The card edge. Ledger: lifted ring. */
+  .ring-card {
+    box-shadow: var(--shadow-border);
+  }
+  .ring-card-h:hover {
+    box-shadow: var(--shadow-border-hover);
+  }
+
+  [data-skin="boxscore"] .microlabel {
+    font-family: var(--font-stack-sans);
+    font-style: italic;
+    font-size: 12px;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--ink);
+  }
+  [data-skin="boxscore"] .microlabel-data {
+    font-family: var(--font-stack-sans);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--ink-2);
+  }
+  [data-skin="boxscore"] .ring-card {
+    box-shadow: none;
+    border-top: 1.5px solid var(--hairline-strong);
+    border-bottom: 1px solid var(--hairline-strong);
+  }
+  [data-skin="boxscore"] .ring-card-h:hover {
+    box-shadow: none;
+  }
+  [data-skin="boxscore"] .push,
+  [data-skin="boxscore"] .push:hover:not(:disabled),
+  [data-skin="boxscore"] .push:active:not(:disabled),
+  [data-skin="boxscore"] .push:disabled {
+    transform: none;
+    box-shadow: none;
+  }
+}

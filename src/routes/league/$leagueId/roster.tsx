@@ -239,7 +239,7 @@ function MyTeamPage() {
   if (!league.data) return null;
   if (rosterId == null) {
     return (
-      <div className="rounded-xl bg-surface px-5 py-6 shadow-[var(--shadow-border)]">
+      <div className="rounded-xl bg-surface px-5 py-6 ring-card">
         <p className="font-display text-xl font-bold tracking-[-0.03em]">
           You don&rsquo;t have a seat here
         </p>
@@ -289,7 +289,7 @@ function MyTeamPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+      <section className="rounded-xl bg-surface ring-card">
         <div className="flex flex-wrap items-center gap-4 p-5">
           <Avatar
             src={t.avatar}
@@ -302,7 +302,7 @@ function MyTeamPage() {
             <h1 className="font-display text-3xl font-extrabold tracking-[-0.035em]">
               {t.teamName}
             </h1>
-            <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+            <p className="mt-1 microlabel-data">
               {t.manager} · seat {rosterId} · {seed}
               {seed === 1 ? "st" : seed === 2 ? "nd" : seed === 3 ? "rd" : "th"} of{" "}
               {league.data.standings.length}
@@ -358,7 +358,7 @@ function MyTeamPage() {
           />
 
           {ir.length || taxi.length ? (
-            <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+            <section className="rounded-xl bg-surface ring-card">
               <header className="px-5 pt-5 pb-2">
                 <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Shelves</h2>
               </header>
@@ -368,9 +368,7 @@ function MyTeamPage() {
                     key={p.player_id}
                     className="flex items-center gap-3 border-b border-line px-5 py-2.5 last:border-0"
                   >
-                    <span className="w-10 shrink-0 font-mono text-[10px] uppercase text-faint">
-                      {p.slot}
-                    </span>
+                    <span className="w-10 shrink-0 microlabel-data">{p.slot}</span>
                     <button
                       type="button"
                       className="min-w-0 flex-1 truncate rounded-md text-left text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
@@ -381,7 +379,7 @@ function MyTeamPage() {
                     >
                       {p.full_name}
                     </button>
-                    <span className="font-mono text-[10px] uppercase text-faint">
+                    <span className="microlabel-data">
                       {[p.position, p.team].filter(Boolean).join(" · ")}
                     </span>
                   </li>
@@ -393,13 +391,13 @@ function MyTeamPage() {
 
         <div className="flex min-w-0 flex-col gap-5">
           {league.data.hosted ? (
-            <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+            <section className="rounded-xl bg-surface ring-card">
               <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
                 <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Waivers</h2>
                 <Link
                   to="/league/$leagueId/wire"
                   params={{ leagueId }}
-                  className="font-mono text-[10px] uppercase tracking-wide text-accent-strong"
+                  className="microlabel-data text-accent-strong"
                 >
                   Add a claim
                 </Link>
@@ -431,13 +429,13 @@ function MyTeamPage() {
           ) : null}
 
           {league.data.hosted ? (
-            <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+            <section className="rounded-xl bg-surface ring-card">
               <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
                 <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Trades</h2>
                 <Link
                   to="/league/$leagueId/trades"
                   params={{ leagueId }}
-                  className="font-mono text-[10px] uppercase tracking-wide text-accent-strong"
+                  className="microlabel-data text-accent-strong"
                 >
                   Trade desk
                 </Link>
@@ -485,14 +483,14 @@ function MyTeamPage() {
             </section>
           ) : null}
 
-          <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+          <section className="rounded-xl bg-surface ring-card">
             <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
               <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Your moves</h2>
               <Link
                 to="/league/$leagueId/activity"
                 params={{ leagueId }}
                 search={{ week: undefined }}
-                className="font-mono text-[10px] uppercase tracking-wide text-accent-strong"
+                className="microlabel-data text-accent-strong"
               >
                 All moves
               </Link>
@@ -511,21 +509,17 @@ function MyTeamPage() {
                     this count is "more than you can see here", not "all year". */}
                 {myMoves.length > MOVES_SHOWN ? (
                   <div className="border-t border-line px-5 py-3">
-                    <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-faint">
-                      +{myMoves.length - MOVES_SHOWN} more
-                    </span>
+                    <span className="microlabel-data">+{myMoves.length - MOVES_SHOWN} more</span>
                   </div>
                 ) : null}
               </>
             )}
           </section>
 
-          <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+          <section className="rounded-xl bg-surface ring-card">
             <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
               <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Bye trouble</h2>
-              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                Derived
-              </span>
+              <span className="microlabel-data">Derived</span>
             </header>
             {byeStack.length === 0 ? (
               <p className="px-5 pb-5 text-sm text-muted">
@@ -540,7 +534,7 @@ function MyTeamPage() {
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-semibold">Week {w}</span>
-                      <span className="block truncate font-mono text-[10px] uppercase tracking-wide text-faint">
+                      <span className="block truncate microlabel-data">
                         {list.map((p) => p.full_name.split(" ").slice(-1)[0]).join(" · ")}
                       </span>
                     </span>
@@ -562,9 +556,7 @@ function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className={cn("border-r border-b border-line px-5 py-3 last:border-r-0 sm:border-b-0")}>
       <span className="block font-mono text-xl font-semibold tabular-nums">{value}</span>
-      <span className="mt-0.5 block font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-        {label}
-      </span>
+      <span className="mt-0.5 block microlabel-data">{label}</span>
     </div>
   );
 }

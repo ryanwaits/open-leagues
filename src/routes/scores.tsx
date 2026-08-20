@@ -15,10 +15,7 @@ export const Route = createFileRoute("/scores")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     week: typeof s.week === "number" ? s.week : s.week ? Number(s.week) : undefined,
     season: typeof s.season === "number" ? s.season : s.season ? Number(s.season) : undefined,
-    kind:
-      s.kind === "pre" || s.kind === "regular" || s.kind === "post"
-        ? s.kind
-        : undefined,
+    kind: s.kind === "pre" || s.kind === "regular" || s.kind === "post" ? s.kind : undefined,
   }),
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) => {
@@ -91,9 +88,7 @@ function ScoresPage() {
     <Shell>
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-faint">
-            ESPN public scoreboard
-          </p>
+          <p className="microlabel">ESPN public scoreboard</p>
           <h1 className="mt-1 font-display text-4xl tracking-tight">NFL scores</h1>
           <p className="mt-1 text-sm text-muted">Tap a game for the live box and every play.</p>
         </div>
@@ -112,10 +107,8 @@ function ScoresPage() {
         </div>
       </header>
 
-      <section className="mt-6 rounded-xl bg-surface p-4 shadow-[var(--shadow-border)] sm:p-5">
-        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-          Scoring pipe
-        </p>
+      <section className="mt-6 rounded-xl bg-surface p-4 ring-card sm:p-5">
+        <p className="microlabel">Scoring pipe</p>
         <p className="mt-2 text-sm text-muted">
           {liveGames > 0
             ? `${liveGames} game${liveGames === 1 ? "" : "s"} live · unofficial fantasy lines poll every 12s.`
@@ -132,21 +125,22 @@ function ScoresPage() {
       </section>
 
       <div className="mt-6 flex gap-1 overflow-x-auto pb-2">
-        {Array.from({ length: kind === "regular" ? 18 : kind === "pre" ? 4 : 5 }, (_, i) => i + 1).map(
-          (w) => (
-            <button
-              key={w}
-              type="button"
-              onClick={() => navigate({ search: { ...search, week: w, season } })}
-              className={cn(
-                "flex size-10 shrink-0 items-center justify-center rounded-sm font-mono text-sm",
-                w === resolvedWeek ? "bg-accent text-accent-fg" : "bg-raised text-muted",
-              )}
-            >
-              {w}
-            </button>
-          ),
-        )}
+        {Array.from(
+          { length: kind === "regular" ? 18 : kind === "pre" ? 4 : 5 },
+          (_, i) => i + 1,
+        ).map((w) => (
+          <button
+            key={w}
+            type="button"
+            onClick={() => navigate({ search: { ...search, week: w, season } })}
+            className={cn(
+              "flex size-10 shrink-0 items-center justify-center rounded-sm font-mono text-sm",
+              w === resolvedWeek ? "bg-accent text-accent-fg" : "bg-raised text-muted",
+            )}
+          >
+            {w}
+          </button>
+        ))}
       </div>
 
       <div className="mt-6">
@@ -181,15 +175,16 @@ function ScoresPage() {
         <section className="mt-10">
           <h2 className="font-display text-2xl">Unofficial PPR this week</h2>
           <p className="mt-1 text-sm text-muted">
-            Same Sleeper stat line we score leagues from. Empty means they have not posted this week yet.
+            Same Sleeper stat line we score leagues from. Empty means they have not posted this week
+            yet.
           </p>
-          <ol className="mt-4 divide-y divide-line rounded-xl bg-surface shadow-[var(--shadow-border)]">
+          <ol className="mt-4 divide-y divide-line rounded-xl bg-surface ring-card">
             {wire.data.leaders.map((row, i) => (
               <li key={row.id} className="flex items-center gap-3 px-4 py-2.5">
                 <span className="w-6 font-mono text-xs text-faint">{i + 1}</span>
                 <span className="min-w-0 flex-1 truncate text-sm">
                   {row.name}
-                  <span className="ml-2 font-mono text-[11px] uppercase text-faint">
+                  <span className="ml-2 microlabel">
                     {[row.pos, row.team].filter(Boolean).join(" · ")}
                   </span>
                 </span>

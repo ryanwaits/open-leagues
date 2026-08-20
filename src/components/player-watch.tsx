@@ -82,7 +82,7 @@ export function PlayerWatch({
         role="dialog"
         aria-modal="true"
         aria-label={target.player.full_name}
-        className="relative z-10 flex h-[min(88vh,42rem)] w-full flex-col rounded-t-xl bg-surface shadow-[var(--shadow-border)] sm:h-full sm:w-[34rem] sm:rounded-none sm:border-l sm:border-line"
+        className="relative z-10 flex h-[min(88vh,42rem)] w-full flex-col rounded-t-xl bg-surface ring-card sm:h-full sm:w-[34rem] sm:rounded-none sm:border-l sm:border-line"
       >
         <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-line sm:hidden" />
         {/* Keyed on the player so switching subjects resets the drawer's tab
@@ -147,7 +147,7 @@ function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => vo
           <Avatar src={src} name={name} className="size-11" textClassName="text-xs"></Avatar>
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-base">{name}</h2>
-            <p className="font-mono text-[11px] uppercase tracking-wide text-faint">
+            <p className="microlabel">
               {baseSlotLabel(target.slot)}
               {target.player.team ? ` · ${target.player.team}` : ""}
               {` · ${target.club}`}
@@ -160,7 +160,7 @@ function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => vo
             <p className="font-display text-3xl tabular-nums tracking-tight">
               {formatPts(shownPts, 1)}
             </p>
-            <p className="font-mono text-[10px] uppercase tracking-wide text-faint">pts</p>
+            <p className="microlabel-data">pts</p>
           </div>
           <button
             type="button"
@@ -175,7 +175,7 @@ function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => vo
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         {!liveHasPlays && !(target.gameId && q.isLoading) ? (
-          <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
+          <p className="mb-3 microlabel">
             {phase != null ? `Sim · ${REPLAY_PHASES[phase]?.label ?? ""}` : "No kickoff yet"}
           </p>
         ) : null}
@@ -244,7 +244,7 @@ function GameStrip({
   return (
     <section className={cn("rounded-lg px-3 py-3", red ? "bg-live/15" : "bg-raised")}>
       <div className="flex items-center justify-between gap-2">
-        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
+        <p className="microlabel">
           {g.away.abbr} @ {g.home.abbr}
         </p>
         <Badge tone={live ? "live" : g.state === "post" ? "win" : "default"}>
@@ -314,7 +314,7 @@ function DriveList({ g, player }: { g: GameSummary; player: SlimPlayer }) {
     <div className="mt-4 space-y-3">
       {drives.map((d) => (
         <article key={d.id} className="rounded-lg bg-raised">
-          <header className="border-b border-line px-3 py-2 font-mono text-[11px] uppercase tracking-wide text-faint">
+          <header className="border-b border-line px-3 py-2 microlabel">
             {d.team || "Drive"}
             {d.result ? ` · ${d.result}` : ""}
           </header>

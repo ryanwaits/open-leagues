@@ -100,16 +100,14 @@ export function TeamTotal({
           <span className="block font-display text-2xl tabular-nums tracking-tight text-faint">
             {formatPts(projected, 1)}
           </span>
-          <span className="block font-mono text-[9px] uppercase tracking-wide text-faint">
-            proj
-          </span>
+          <span className="block microlabel-data">proj</span>
         </span>
       ) : reserve ? (
         // Same two lines, no numbers — the height comes out right without having
         // to name it, and there is no stale figure sitting behind the curtain.
         <span className="invisible min-w-0" aria-hidden="true">
           <span className="block font-display text-2xl tracking-tight">&nbsp;</span>
-          <span className="block font-mono text-[9px] uppercase tracking-wide">proj</span>
+          <span className="block microlabel-data">proj</span>
         </span>
       ) : null}
     </span>

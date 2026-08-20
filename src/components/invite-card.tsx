@@ -43,8 +43,8 @@ export function InviteCard({ code, origin }: { code: string; origin: string }) {
   }
 
   return (
-    <div className="mt-4 max-w-md rounded-xl bg-surface px-4 py-4 shadow-[var(--shadow-border)]">
-      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Invite</p>
+    <div className="mt-4 max-w-md rounded-xl bg-surface px-4 py-4 ring-card">
+      <p className="microlabel">Invite</p>
       <p className="mt-1 font-mono text-lg tracking-[0.18em]">{code}</p>
       <a href={url} className="mt-1 block break-all font-mono text-[11px] text-muted hover:text-fg">
         {url}

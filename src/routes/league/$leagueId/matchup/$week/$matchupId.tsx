@@ -285,7 +285,7 @@ function MatchupPage() {
       </div>
 
       {pairingIsLive(pair) ? (
-        <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.16em] text-live">
+        <p className="mb-4 microlabel text-live">
           Live unofficial · same pipe as Sunday · ticks every {LIVE_POLL_MS / 1000}s
         </p>
       ) : null}
@@ -307,9 +307,9 @@ function MatchupPage() {
         mine={league.data?.myRosterId ?? null}
       />
 
-      <section className="mt-6 rounded-xl bg-surface shadow-[var(--shadow-border)]">
+      <section className="mt-6 rounded-xl bg-surface ring-card">
         <header className="flex items-center justify-between border-b border-line px-3 py-2.5 sm:px-4">
-          <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Starters</h2>
+          <h2 className="microlabel">Starters</h2>
           <p className="font-mono text-[11px] tabular-nums text-faint">
             Tap a name · {formatPts(starterTotal(pair.home), 1)}
             <span className="mx-1.5 text-line">·</span>
@@ -335,9 +335,9 @@ function MatchupPage() {
       </section>
 
       {pair.away ? (
-        <section className="mt-6 rounded-xl bg-surface shadow-[var(--shadow-border)]">
+        <section className="mt-6 rounded-xl bg-surface ring-card">
           <header className="border-b border-line px-3 py-2.5 sm:px-4">
-            <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Bench</h2>
+            <h2 className="microlabel">Bench</h2>
           </header>
           {!homeTeam.data && !awayTeam.data ? (
             <div className="space-y-2 p-3">
@@ -357,9 +357,9 @@ function MatchupPage() {
           )}
         </section>
       ) : (
-        <section className="mt-6 rounded-xl bg-surface shadow-[var(--shadow-border)]">
+        <section className="mt-6 rounded-xl bg-surface ring-card">
           <header className="border-b border-line px-3 py-2.5 sm:px-4">
-            <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Bench</h2>
+            <h2 className="microlabel">Bench</h2>
           </header>
           {!homeTeam.data ? (
             <div className="space-y-2 p-3">
@@ -412,9 +412,7 @@ function MatchupPage() {
 
       {matchups.data && matchups.data.length > 1 ? (
         <section className="mt-8">
-          <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-            Rest of week {week}
-          </h2>
+          <h2 className="microlabel">Rest of week {week}</h2>
           <ul className="mt-3 space-y-1.5">
             {matchups.data
               .filter((p) => p.matchupId !== pair.matchupId)
@@ -427,7 +425,7 @@ function MatchupPage() {
                       week: String(week),
                       matchupId: String(p.matchupId),
                     }}
-                    className="flex items-center gap-3 rounded-lg bg-surface px-3 py-2.5 text-sm shadow-[var(--shadow-border)] transition-[box-shadow] duration-150 hover:shadow-[var(--shadow-border-hover)]"
+                    className="flex items-center gap-3 rounded-lg bg-surface px-3 py-2.5 text-sm ring-card transition-[box-shadow] duration-150 ring-card-h"
                   >
                     <span className="min-w-0 flex-1 truncate">{p.home.teamName}</span>
                     <span className="shrink-0 font-mono tabular-nums text-muted">
@@ -517,9 +515,9 @@ function Scoreboard({
   const tied = Boolean(away && pair.home.points === away.points && decided);
 
   return (
-    <section className="rounded-xl bg-surface px-4 py-5 shadow-[var(--shadow-border)] sm:px-6 sm:py-6">
+    <section className="rounded-xl bg-surface px-4 py-5 ring-card sm:px-6 sm:py-6">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
+        <p className="microlabel">
           Week {week}
           {pair.label ? ` · ${pair.label}` : pair.kind === "playoff" ? " · Playoff" : ""}
         </p>
@@ -551,16 +549,12 @@ function Scoreboard({
               {formatPts(pair.home.points, 1)}
               <span className="mx-1.5 text-base">–</span>
               {formatPts(away?.points ?? 0, 1)}
-              <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.14em]">proj</span>
+              <span className="ml-2 microlabel-data">proj</span>
             </p>
           ) : null}
-          {tied ? (
-            <p className="mt-1 font-mono text-[11px] uppercase tracking-wide text-faint">Tie</p>
-          ) : null}
+          {tied ? <p className="mt-1 microlabel">Tie</p> : null}
           {live ? (
-            <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.16em] text-live">
-              Unofficial · {LIVE_POLL_MS / 1000}s
-            </p>
+            <p className="mt-1 microlabel text-live">Unofficial · {LIVE_POLL_MS / 1000}s</p>
           ) : null}
         </div>
         {away ? (
@@ -579,7 +573,7 @@ function Scoreboard({
         )}
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-3 border-t border-line pt-4 font-mono text-[11px] uppercase tracking-wide text-faint">
+      <div className="mt-5 grid grid-cols-2 gap-3 border-t border-line pt-4 microlabel">
         <p>{yetLabel(pair.home)}</p>
         <p className="text-right">{away ? yetLabel(away) : "Bye"}</p>
       </div>
@@ -670,9 +664,7 @@ function StarterRow({
         club={homeClub}
         onWatch={onWatch}
       />
-      <span className="w-8 text-center font-mono text-[10px] uppercase tracking-wide text-faint sm:w-10">
-        {baseSlotLabel(home.slot)}
-      </span>
+      <span className="w-8 text-center microlabel-data sm:w-10">{baseSlotLabel(home.slot)}</span>
       {bye ? (
         <span className="text-right text-sm text-faint">Bye</span>
       ) : (

@@ -47,9 +47,7 @@ function Home() {
 function GuestHome() {
   return (
     <section className="w-full max-w-md text-center">
-      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-        Hosted here · no other app
-      </p>
+      <p className="microlabel">Hosted here · no other app</p>
       <h1 className="mt-3 font-display text-5xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
         Your league, <span className="hl">your desk</span>.
       </h1>
@@ -71,7 +69,7 @@ function GuestHome() {
 function FirstHome() {
   return (
     <section className="w-full max-w-md text-center">
-      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">No leagues yet</p>
+      <p className="microlabel">No leagues yet</p>
       <h1 className="mt-3 font-display text-4xl font-extrabold tracking-[-0.03em] text-balance">
         How are you getting in?
       </h1>
@@ -105,7 +103,7 @@ function DeskHome({
 }) {
   return (
     <section className="w-full max-w-lg text-center">
-      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Your leagues</p>
+      <p className="microlabel">Your leagues</p>
       <h1 className="mt-2 font-display text-4xl font-extrabold tracking-[-0.03em]">The desk</h1>
       <ul className="mt-6 space-y-2 text-left">
         {seats.map((l) => (
@@ -115,7 +113,7 @@ function DeskHome({
               params={{ leagueId: l.leagueId }}
               preload="intent"
               onClick={() => onOpen(l)}
-              className="group flex w-full items-center justify-between gap-3 rounded-xl bg-surface px-4 py-4 text-left shadow-[var(--shadow-border)] transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[var(--shadow-border-hover)]"
+              className="group flex w-full items-center justify-between gap-3 rounded-xl bg-surface px-4 py-4 text-left ring-card transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 ring-card-h"
             >
               <span>
                 <span className="block text-sm font-semibold">{l.name}</span>
@@ -146,7 +144,7 @@ function PathCard({ to, title, hint }: { to: "/join" | "/new"; title: string; hi
   return (
     <Link
       to={to}
-      className="group flex w-full items-center justify-between gap-3 rounded-xl bg-surface px-4 py-4 text-left shadow-[var(--shadow-border)] transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[var(--shadow-border-hover)]"
+      className="group flex w-full items-center justify-between gap-3 rounded-xl bg-surface px-4 py-4 text-left ring-card transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 ring-card-h"
     >
       <span>
         <span className="block text-sm font-semibold">{title}</span>

@@ -135,7 +135,7 @@ function PlayerPage() {
         Back
       </button>
 
-      <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+      <section className="rounded-xl bg-surface ring-card">
         <div className="p-5">
           <ProfileIdentity player={player} size="lg" context={context}>
             <div className="shrink-0">
@@ -177,22 +177,22 @@ function PlayerPage() {
       {p ? (
         <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr] lg:items-start">
           <div className="flex min-w-0 flex-col gap-5">
-            <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+            <section className="rounded-xl bg-surface ring-card">
               <ProfileNews notes={p.news} />
             </section>
-            <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+            <section className="rounded-xl bg-surface ring-card">
               <ProfileGameLog weekly={p.weekly} bye={p.byeWeek} perGame={p.perGame} tall />
             </section>
-            <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+            <section className="rounded-xl bg-surface ring-card">
               <ProfileSplits p={p} />
             </section>
           </div>
 
           <div className="flex min-w-0 flex-col gap-5">
-            <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+            <section className="rounded-xl bg-surface ring-card">
               <ProfileThisWeek p={p} player={player} game={mine?.game} />
             </section>
-            <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+            <section className="rounded-xl bg-surface ring-card">
               <ProfileSchedule games={p.schedule} week={p.slateWeek} />
             </section>
           </div>

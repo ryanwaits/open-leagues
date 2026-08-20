@@ -81,7 +81,7 @@ function JoinLeague() {
 
   return (
     <Shell>
-      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-faint">Member</p>
+      <p className="microlabel">Member</p>
       <h1 className="mt-2 font-display text-4xl tracking-tight">Join a league</h1>
       <p className="mt-2 max-w-xl text-sm text-muted">
         Paste the invite code. If seats have names, pick yours.
@@ -94,9 +94,7 @@ function JoinLeague() {
         }}
       >
         <label className="block">
-          <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-            Invite code
-          </span>
+          <span className="microlabel">Invite code</span>
           <Input
             className="mt-1.5 uppercase tracking-[0.2em]"
             value={code}
@@ -116,11 +114,9 @@ function JoinLeague() {
             </p>
             {pack.seats.length ? (
               <label className="mt-3 block">
-                <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-                  Open seats
-                </span>
+                <span className="microlabel">Open seats</span>
                 <select
-                  className="mt-1.5 h-11 w-full rounded-md bg-raised px-3 text-sm text-fg shadow-[var(--shadow-border)]"
+                  className="mt-1.5 h-11 w-full rounded-md bg-raised px-3 text-sm text-fg ring-card"
                   value={rosterId}
                   onChange={(e) => setRosterId(e.target.value ? Number(e.target.value) : "")}
                 >

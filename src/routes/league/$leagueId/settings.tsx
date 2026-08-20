@@ -180,7 +180,7 @@ function SettingsPage() {
       <Link
         to="/league/$leagueId/draft"
         params={{ leagueId }}
-        className="flex items-center justify-between gap-4 rounded-xl bg-surface px-5 py-4 shadow-[var(--shadow-border)] transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[var(--shadow-border-hover)]"
+        className="flex items-center justify-between gap-4 rounded-xl bg-surface px-5 py-4 ring-card transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 ring-card-h"
       >
         <span>
           <span className="block font-display text-lg font-bold tracking-[-0.03em]">
@@ -194,21 +194,19 @@ function SettingsPage() {
                 : "Not started yet."}
           </span>
         </span>
-        <span className="font-mono text-[11px] uppercase tracking-wide text-accent-strong">
-          Open
-        </span>
+        <span className="microlabel text-accent-strong">Open</span>
       </Link>
 
       <PushOptIn leagueId={leagueId} hasSeat={bundle.data?.myRosterId != null} />
 
       <section>
-        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
+        <p className="microlabel">
           {q.data.source === "sleeper" ? "Imported from Sleeper" : "Hosted on Ledger"}
           {q.data.sourceLeagueId ? ` · ${q.data.sourceLeagueId}` : ""}
         </p>
         <h2 className="mt-1 font-display text-2xl">League</h2>
         <label className="mt-4 block max-w-md">
-          <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Name</span>
+          <span className="microlabel">Name</span>
           <Input
             className="mt-1.5"
             value={name}
@@ -218,9 +216,7 @@ function SettingsPage() {
         </label>
         <div className="mt-4 flex flex-wrap gap-6">
           <label className="block">
-            <span className="block font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-              Current week
-            </span>
+            <span className="block microlabel">Current week</span>
             <Input
               className="mt-1.5 w-24"
               type="number"
@@ -262,7 +258,7 @@ function SettingsPage() {
             </button>
           ))}
         </div>
-        <p className="mt-3 rounded-xl bg-surface px-4 py-3 font-mono text-xs text-muted shadow-[var(--shadow-border)]">
+        <p className="mt-3 rounded-xl bg-surface px-4 py-3 font-mono text-xs text-muted ring-card">
           {describeSlots(slotsFromCounts(counts))}
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -271,13 +267,11 @@ function SettingsPage() {
             return (
               <div
                 key={row.key}
-                className="flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2.5 shadow-[var(--shadow-border)]"
+                className="flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2.5 ring-card"
               >
                 <span>
                   <span className="block text-sm">{row.label}</span>
-                  <span className="block font-mono text-[10px] uppercase text-faint">
-                    {row.hint}
-                  </span>
+                  <span className="block microlabel-data">{row.hint}</span>
                 </span>
                 <span className="flex items-center gap-1">
                   <button
@@ -316,7 +310,7 @@ function SettingsPage() {
           leftover.
         </p>
         <div className="mt-4">
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Teams in</p>
+          <p className="microlabel">Teams in</p>
           <div className="mt-2 flex flex-wrap gap-1">
             {[4, 5, 6, 7, 8].map((n) => (
               <button
@@ -338,9 +332,7 @@ function SettingsPage() {
           </div>
         </div>
         <div className="mt-4">
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-            First-round byes
-          </p>
+          <p className="microlabel">First-round byes</p>
           <div className="mt-2 flex flex-wrap gap-1">
             {[0, 1, 2, 3].map((n) => (
               <button
@@ -360,9 +352,7 @@ function SettingsPage() {
         </div>
         <div className="mt-4 flex flex-wrap gap-6">
           <label>
-            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-              Regular weeks
-            </span>
+            <span className="microlabel">Regular weeks</span>
             <Input
               className="mt-1.5 w-24"
               type="number"
@@ -374,9 +364,7 @@ function SettingsPage() {
             />
           </label>
           <label>
-            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-              Playoffs start
-            </span>
+            <span className="microlabel">Playoffs start</span>
             <Input
               className="mt-1.5 w-24"
               type="number"
@@ -388,7 +376,7 @@ function SettingsPage() {
             />
           </label>
         </div>
-        <p className="mt-4 rounded-xl bg-surface px-4 py-3 text-sm text-muted shadow-[var(--shadow-border)]">
+        <p className="mt-4 rounded-xl bg-surface px-4 py-3 text-sm text-muted ring-card">
           {describeBracket(playoff, byes, pStart)}
         </p>
       </section>
@@ -437,9 +425,7 @@ function SettingsPage() {
         </div>
         <div className="mt-4 flex flex-wrap gap-6">
           <label>
-            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-              FAAB $
-            </span>
+            <span className="microlabel">FAAB $</span>
             <Input
               className="mt-1.5 w-24"
               type="number"
@@ -451,9 +437,7 @@ function SettingsPage() {
             />
           </label>
           <label>
-            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-              Trade deadline week
-            </span>
+            <span className="microlabel">Trade deadline week</span>
             <Input
               className="mt-1.5 w-24"
               type="number"
@@ -499,9 +483,7 @@ function SettingsPage() {
         </div>
         <div className="mt-4 flex flex-wrap gap-6">
           <label>
-            <span className="block font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-              Pool seed $
-            </span>
+            <span className="block microlabel">Pool seed $</span>
             <Input
               className="mt-1.5 w-24"
               type="number"
@@ -513,9 +495,7 @@ function SettingsPage() {
             />
           </label>
           <label>
-            <span className="block font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-              Max per wager $
-            </span>
+            <span className="block microlabel">Max per wager $</span>
             <Input
               className="mt-1.5 w-24"
               type="number"
@@ -527,9 +507,7 @@ function SettingsPage() {
             />
           </label>
           <label>
-            <span className="block font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-              Max at risk $
-            </span>
+            <span className="block microlabel">Max at risk $</span>
             <Input
               className="mt-1.5 w-24"
               type="number"
@@ -583,15 +561,10 @@ function SettingsPage() {
 
         {grouped.map((g) => (
           <div key={g.group} className="mt-6">
-            <h3 className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-              {g.group}
-            </h3>
+            <h3 className="microlabel">{g.group}</h3>
             <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {g.fields.map((f) => (
-                <label
-                  key={f.key}
-                  className="rounded-lg bg-surface p-3 shadow-[var(--shadow-border)]"
-                >
+                <label key={f.key} className="rounded-lg bg-surface p-3 ring-card">
                   <span className="block text-xs text-muted">{f.label}</span>
                   <Input
                     className="mt-1.5 h-9"
@@ -612,7 +585,7 @@ function SettingsPage() {
 
       <section>
         <h2 className="font-display text-2xl">Seats</h2>
-        <ul className="mt-3 divide-y divide-line rounded-xl bg-surface shadow-[var(--shadow-border)]">
+        <ul className="mt-3 divide-y divide-line rounded-xl bg-surface ring-card">
           {q.data.teams.map((t) => (
             <li key={t.rosterId} className="flex items-center justify-between gap-3 px-4 py-3">
               <span>
@@ -633,7 +606,7 @@ function SettingsPage() {
                   Claim
                 </Button>
               ) : (
-                <span className="font-mono text-[11px] uppercase text-faint">Taken</span>
+                <span className="microlabel">Taken</span>
               )}
             </li>
           ))}
@@ -842,7 +815,7 @@ function PushOptIn({ leagueId, hasSeat }: { leagueId: string; hasSeat: boolean }
   const on = Boolean(status.data.subscribed);
   return (
     <section>
-      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">On this phone</p>
+      <p className="microlabel">On this phone</p>
       <h2 className="mt-1 font-display text-2xl">Notify me when I'm away</h2>
       <p className="mt-1 text-sm text-muted">
         You're on the clock, a trade is waiting, or a waiver claim processed. Off unless you turn it
@@ -902,7 +875,7 @@ function AllowlistPanel({ leagueId, locked }: { leagueId: string; locked: boolea
   const emails = q.data ?? [];
   return (
     <div className="mt-6">
-      <h3 className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Invite list</h3>
+      <h3 className="microlabel">Invite list</h3>
       <p className="mt-1 text-sm text-muted">
         {emails.length === 0
           ? "Anyone with the code can join. Add emails to lock it."
@@ -934,7 +907,7 @@ function AllowlistPanel({ leagueId, locked }: { leagueId: string; locked: boolea
         </Button>
       </form>
       {emails.length > 0 ? (
-        <ul className="mt-3 divide-y divide-line rounded-xl bg-surface shadow-[var(--shadow-border)]">
+        <ul className="mt-3 divide-y divide-line rounded-xl bg-surface ring-card">
           {emails.map((addr) => (
             <li key={addr} className="flex items-center justify-between gap-3 px-4 py-2.5">
               <span className="font-mono text-sm">{addr}</span>

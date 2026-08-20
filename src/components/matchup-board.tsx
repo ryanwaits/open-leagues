@@ -99,11 +99,7 @@ export function MatchupBoard({
           </h2>
           {action}
         </div>
-        {label ? (
-          <p className="px-5 pb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-live">
-            {label}
-          </p>
-        ) : null}
+        {label ? <p className="px-5 pb-3 microlabel text-live">{label}</p> : null}
         <div className={cn(SPINE, "items-end")}>
           <BandSide side={home} prev={prevHome} live={liveHome} leagueId={leagueId} />
           <span className="flex items-end justify-center self-stretch pb-4">

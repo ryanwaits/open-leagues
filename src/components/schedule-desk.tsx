@@ -7,13 +7,7 @@ import { cn } from "@/lib/utils";
 
 type Pair = { home: number; away: number | null };
 
-export function ScheduleDesk({
-  leagueId,
-  canEdit,
-}: {
-  leagueId: string;
-  canEdit: boolean;
-}) {
+export function ScheduleDesk({ leagueId, canEdit }: { leagueId: string; canEdit: boolean }) {
   const qc = useQueryClient();
   const q = useQuery({
     queryKey: ["schedule", leagueId],
@@ -108,7 +102,7 @@ export function ScheduleDesk({
         {week === q.data.currentWeek ? " · current" : ""}
         {missing > 0 ? ` · ${missing} team${missing === 1 ? "" : "s"} unassigned` : ""}
       </p>
-      <ul className="mt-3 divide-y divide-line rounded-xl bg-surface shadow-[var(--shadow-border)]">
+      <ul className="mt-3 divide-y divide-line rounded-xl bg-surface ring-card">
         {pairs.map((p, i) => (
           <li key={i} className="grid items-center gap-2 px-3 py-2.5 sm:grid-cols-[1fr_auto_1fr]">
             <TeamPick
@@ -120,7 +114,7 @@ export function ScheduleDesk({
                 if (id != null) setHome(i, id);
               }}
             />
-            <span className="text-center font-mono text-[11px] uppercase text-faint">vs</span>
+            <span className="text-center microlabel">vs</span>
             <TeamPick
               value={p.away}
               names={names}
@@ -174,7 +168,7 @@ function TeamPick({
 }) {
   return (
     <select
-      className="h-11 w-full rounded-md bg-raised px-3 text-sm text-fg shadow-[var(--shadow-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60"
+      className="h-11 w-full rounded-md bg-raised px-3 text-sm text-fg ring-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60"
       value={value ?? ""}
       disabled={disabled}
       onChange={(e) => {

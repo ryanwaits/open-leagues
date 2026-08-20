@@ -334,7 +334,7 @@ function TradesPage() {
 
       {mineId && !league.data.locked ? (
         <section className="space-y-3">
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Propose</p>
+          <p className="microlabel">Propose</p>
           {search.want && !counterTrade ? (
             <p className="text-xs text-muted">
               Player is on their roster. Partner is set — add what you want to send.
@@ -404,7 +404,7 @@ function TradesPage() {
           {!thirdId ? (
             <button
               type="button"
-              className="font-mono text-[11px] uppercase text-muted hover:text-fg"
+              className="microlabel text-muted hover:text-fg"
               onClick={() =>
                 setThirdId(partners.find((p) => p.rosterId !== them)?.rosterId ?? null)
               }
@@ -418,7 +418,7 @@ function TradesPage() {
       )}
 
       <section>
-        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Book</p>
+        <p className="microlabel">Book</p>
         {trades.data == null && trades.isPending ? (
           <p className="mt-3 text-sm text-muted">Loading…</p>
         ) : !book.length ? (

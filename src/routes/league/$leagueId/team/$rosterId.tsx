@@ -17,9 +17,7 @@ export const Route = createFileRoute("/league/$leagueId/team/$rosterId")({
   component: TeamPage,
 });
 
-type Pending =
-  | { kind: "start"; player: RosterPlayer }
-  | { kind: "sit"; player: RosterPlayer };
+type Pending = { kind: "start"; player: RosterPlayer } | { kind: "sit"; player: RosterPlayer };
 
 function TeamPage() {
   const { leagueId, rosterId } = Route.useParams();
@@ -147,7 +145,12 @@ function TeamPage() {
           </p>
           <div className="flex gap-1">
             {pending.kind === "sit" ? (
-              <Button size="sm" variant="outline" disabled={busy} onClick={() => sit.mutate(pending.player.player_id)}>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                onClick={() => sit.mutate(pending.player.player_id)}
+              >
                 Sit only
               </Button>
             ) : null}
@@ -159,10 +162,8 @@ function TeamPage() {
       ) : null}
 
       <section className="mt-8">
-        <h3 className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-          Week {week} starters
-        </h3>
-        <ul className="mt-2 divide-y divide-line rounded-xl bg-surface shadow-[var(--shadow-border)]">
+        <h3 className="microlabel">Week {week} starters</h3>
+        <ul className="mt-2 divide-y divide-line rounded-xl bg-surface ring-card">
           {slots.map(({ label }) => {
             const p = bySlot.get(label);
             const hit = eligibleStart(label, p);
@@ -176,7 +177,7 @@ function TeamPage() {
                   selected && "bg-raised",
                 )}
               >
-                <span className="w-8 font-mono text-[10px] uppercase tracking-wide text-faint">{label}</span>
+                <span className="w-8 microlabel-data">{label}</span>
                 <div className="min-w-0 flex-1">
                   {p ? (
                     <PlayerCell player={p} compact game={p.game} />
@@ -204,7 +205,12 @@ function TeamPage() {
                   </Button>
                 ) : null}
                 {mine && !pending && p ? (
-                  <Button size="sm" variant="ghost" disabled={busy} onClick={() => setPending({ kind: "sit", player: p })}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => setPending({ kind: "sit", player: p })}
+                  >
                     Sit
                   </Button>
                 ) : null}
@@ -226,8 +232,22 @@ function TeamPage() {
           start.mutate({ playerId: p.player_id, replaceId: pending!.player.player_id })
         }
       />
-      <PlayerGroup label="IR" rows={ir} mine={false} pending={null} busy={false} eligible={() => false} />
-      <PlayerGroup label="Taxi" rows={taxi} mine={false} pending={null} busy={false} eligible={() => false} />
+      <PlayerGroup
+        label="IR"
+        rows={ir}
+        mine={false}
+        pending={null}
+        busy={false}
+        eligible={() => false}
+      />
+      <PlayerGroup
+        label="Taxi"
+        rows={taxi}
+        mine={false}
+        pending={null}
+        busy={false}
+        eligible={() => false}
+      />
     </div>
   );
 }
@@ -254,22 +274,28 @@ function PlayerGroup({
   if (!rows.length) return null;
   return (
     <section className="mt-8">
-      <h3 className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">{label}</h3>
-      <ul className="mt-2 divide-y divide-line rounded-xl bg-surface shadow-[var(--shadow-border)]">
+      <h3 className="microlabel">{label}</h3>
+      <ul className="mt-2 divide-y divide-line rounded-xl bg-surface ring-card">
         {rows.map((p) => {
           const hit = eligible(p);
           const selected = pending?.kind === "start" && pending.player.player_id === p.player_id;
           return (
             <li
               key={p.player_id}
-              className={cn("flex items-center gap-3 px-3 py-2.5", hit && "bg-accent/10", selected && "bg-raised")}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5",
+                hit && "bg-accent/10",
+                selected && "bg-raised",
+              )}
             >
               <span className="w-8" />
               <div className="min-w-0 flex-1">
                 <PlayerCell player={p} compact game={p.game} />
               </div>
 
-              <span className="w-12 text-right font-mono text-sm tabular-nums">{formatPts(p.weekPts, 1)}</span>
+              <span className="w-12 text-right font-mono text-sm tabular-nums">
+                {formatPts(p.weekPts, 1)}
+              </span>
               {mine && hit && onSwap ? (
                 <Button size="sm" disabled={busy} onClick={() => onSwap(p)}>
                   Here

@@ -88,7 +88,7 @@ export function MoveRow({ move }: { move: ActivityItem }) {
           ) : null}
           <span
             className={cn(
-              "inline-flex h-4 shrink-0 items-center rounded-xs px-1.5 font-mono text-[9px] uppercase tracking-[0.1em]",
+              "inline-flex h-4 shrink-0 items-center rounded-xs px-1.5 microlabel-data",
               CHIP[kind],
             )}
           >

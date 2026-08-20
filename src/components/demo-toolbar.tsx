@@ -71,7 +71,7 @@ export function DemoToolbar({ state }: { state: PrototypeState | undefined }) {
               <Play className="size-3" strokeWidth={2.4} />
             )}
           </button>
-          <span className="px-1.5 font-mono text-[10px] uppercase tracking-[0.12em] tabular-nums">
+          <span className="px-1.5 microlabel-data tabular-nums">
             {label} · {phase + 1}/{REPLAY_PHASES.length}
           </span>
           <button
@@ -88,7 +88,7 @@ export function DemoToolbar({ state }: { state: PrototypeState | undefined }) {
       <DropdownMenu.Root>
         <DropdownMenu.Trigger
           className={cn(
-            "pointer-events-auto inline-flex h-8 items-center gap-1.5 rounded-pill border px-3 font-mono text-[10px] uppercase tracking-[0.12em] shadow-[var(--shadow-lift)] transition-colors duration-150",
+            "pointer-events-auto inline-flex h-8 items-center gap-1.5 rounded-pill border px-3 microlabel-data shadow-[var(--shadow-lift)] transition-colors duration-150",
             state
               ? "border-accent-strong bg-accent text-accent-fg"
               : "border-line bg-surface text-faint hover:text-muted",
@@ -106,9 +106,7 @@ export function DemoToolbar({ state }: { state: PrototypeState | undefined }) {
             collisionPadding={12}
             className="z-50 w-60 rounded-lg border border-line bg-surface p-1 shadow-[var(--shadow-lift)] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0"
           >
-            <p className="px-3 pt-2 pb-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-              Week phase · demo mode
-            </p>
+            <p className="px-3 pt-2 pb-1.5 microlabel-data">Week phase · demo mode</p>
             <Row on={!state} label="Off" hint="real data" onSelect={() => setState(undefined)} />
             {PROTOTYPE_STATES.map((s) => (
               <Row
@@ -142,7 +140,7 @@ function Chip({
       type="button"
       onClick={onClick}
       title={title}
-      className="pointer-events-auto inline-flex h-8 items-center gap-1.5 rounded-pill border border-line bg-surface px-3 font-mono text-[10px] uppercase tracking-[0.12em] text-faint shadow-[var(--shadow-lift)] transition-colors duration-150 hover:text-muted"
+      className="pointer-events-auto inline-flex h-8 items-center gap-1.5 rounded-pill border border-line bg-surface px-3 microlabel-data shadow-[var(--shadow-lift)] transition-colors duration-150 hover:text-muted"
     >
       {children}
       {label}

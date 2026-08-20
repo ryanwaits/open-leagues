@@ -49,10 +49,10 @@ export function PlayerFeed({
   const visible = open || !cut ? rows : rows.slice(0, SHOWN);
 
   return (
-    <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+    <section className="rounded-xl bg-surface ring-card">
       <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
         <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Your players</h2>
-        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+        <span className="microlabel-data">
           {phase === "live" || phase === "settled" ? "This week" : "Status"}
         </span>
       </header>
@@ -109,15 +109,13 @@ export function PlayerFeed({
       {!loading && cut ? (
         <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-3">
           {/* Say what was cut. A silent slice reads as "that is all of them". */}
-          <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-faint">
-            {open ? `All ${rows.length}` : `+${cut} more`}
-          </span>
+          <span className="microlabel-data">{open ? `All ${rows.length}` : `+${cut} more`}</span>
           <button
             type="button"
             aria-expanded={open}
             aria-controls={listId}
             onClick={() => setOpen((v) => !v)}
-            className="-my-3 inline-flex h-11 items-center font-mono text-[10px] uppercase tracking-[0.12em] text-accent-strong"
+            className="-my-3 inline-flex h-11 items-center microlabel-data text-accent-strong"
           >
             {open ? "Show less" : "Show all"}
           </button>

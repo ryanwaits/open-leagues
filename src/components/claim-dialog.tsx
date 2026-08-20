@@ -170,7 +170,7 @@ export function ClaimDialog({
                   </span>
                 </Dialog.Title>
                 <Dialog.Description asChild>
-                  <span className="block truncate font-mono text-[10px] uppercase tracking-[0.1em] text-faint">
+                  <span className="block truncate microlabel-data">
                     {[target.player.position, target.player.team].filter(Boolean).join(" · ")}
                   </span>
                 </Dialog.Description>
@@ -193,9 +193,7 @@ export function ClaimDialog({
           <div className="min-h-0 flex-1 overflow-y-auto">
             {dropping ? (
               <section className="border-b border-line px-5 py-4">
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                  Drop
-                </span>
+                <span className="microlabel-data">Drop</span>
                 <p className="mt-1.5 text-sm text-muted">
                   {waiverType === "none"
                     ? "He becomes a free agent. Anyone can add him."
@@ -204,9 +202,7 @@ export function ClaimDialog({
               </section>
             ) : money ? (
               <section className="border-b border-line px-5 py-4">
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                  Your bid
-                </span>
+                <span className="microlabel-data">Your bid</span>
                 <div className="mt-2.5 flex items-center gap-3">
                   <StepButton
                     label="Lower bid"
@@ -217,7 +213,7 @@ export function ClaimDialog({
                   </StepButton>
                   <div
                     className={cn(
-                      "flex items-baseline rounded-md bg-raised px-3.5 py-1.5 shadow-[var(--shadow-border)] focus-within:shadow-[0_0_0_1px_var(--color-accent-deep)]",
+                      "flex items-baseline rounded-md bg-raised px-3.5 py-1.5 ring-card focus-within:shadow-[0_0_0_1px_var(--color-accent-deep)]",
                       overBudget && "shadow-[0_0_0_1px_var(--color-loss)]",
                     )}
                   >
@@ -251,9 +247,7 @@ export function ClaimDialog({
               </section>
             ) : mode === "claim" ? (
               <section className="border-b border-line px-5 py-4">
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                  Waiver priority
-                </span>
+                <span className="microlabel-data">Waiver priority</span>
                 <p className="mt-1.5 font-mono text-2xl font-bold tracking-[-0.03em]">
                   {waiverPos ? `#${waiverPos}` : "—"}
                 </p>
@@ -265,7 +259,7 @@ export function ClaimDialog({
 
             {!dropping && droppable.length > 0 ? (
               <section className="border-b border-line px-5 py-4">
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+                <span className="microlabel-data">
                   {mustDrop ? "Drop someone" : "Drop someone (optional)"}
                 </span>
                 {rosterCap ? (
@@ -333,7 +327,7 @@ export function ClaimDialog({
                         <span className="min-w-0 flex-1 truncate text-sm font-medium">
                           {p.full_name}
                         </span>
-                        <span className="shrink-0 font-mono text-[10px] uppercase text-faint">
+                        <span className="shrink-0 microlabel-data">
                           {[p.position, p.team].filter(Boolean).join(" · ")}
                         </span>
                       </label>
@@ -396,7 +390,7 @@ function StepButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="grid size-10 shrink-0 place-items-center rounded-pill text-lg font-bold shadow-[var(--shadow-border)] transition-colors duration-150 hover:bg-raised disabled:opacity-35 disabled:hover:bg-transparent"
+      className="grid size-10 shrink-0 place-items-center rounded-pill text-lg font-bold ring-card transition-colors duration-150 hover:bg-raised disabled:opacity-35 disabled:hover:bg-transparent"
     >
       {children}
     </button>

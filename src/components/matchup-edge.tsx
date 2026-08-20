@@ -72,12 +72,10 @@ export function MatchupEdge({
   const pct = Math.round(wp.probability * 100);
 
   return (
-    <section className="mt-6 rounded-xl bg-surface shadow-[var(--shadow-border)]">
+    <section className="mt-6 rounded-xl bg-surface ring-card">
       <header className="flex flex-wrap items-baseline justify-between gap-3 px-5 pt-5 pb-3">
         <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Where the game is</h2>
-        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-          Margin by slot
-        </span>
+        <span className="microlabel-data">Margin by slot</span>
       </header>
 
       {wp.live ? (
@@ -86,7 +84,7 @@ export function MatchupEdge({
             <span className="bg-accent-deep" style={{ width: `${pct}%` }} />
             <span className="bg-faint" style={{ width: `${100 - pct}%` }} />
           </div>
-          <div className="mt-1.5 flex justify-between font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+          <div className="mt-1.5 flex justify-between microlabel-data">
             <span>
               {a.teamName} {pct}%
             </span>
@@ -108,9 +106,7 @@ export function MatchupEdge({
               key={r.slot}
               className="grid grid-cols-[34px_1fr_62px] items-center gap-3 px-5 py-1.5"
             >
-              <span className="font-mono text-[10px] uppercase text-faint">
-                {baseSlotLabel(r.slot)}
-              </span>
+              <span className="microlabel-data">{baseSlotLabel(r.slot)}</span>
               <span className="relative h-4">
                 <span className="absolute inset-y-0 left-1/2 w-px bg-line-strong" />
                 <span

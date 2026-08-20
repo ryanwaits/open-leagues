@@ -170,10 +170,10 @@ export function LineupBoard({
   };
 
   return (
-    <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+    <section className="rounded-xl bg-surface ring-card">
       <header className="flex flex-wrap items-baseline justify-between gap-3 px-5 pt-5 pb-3">
         <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Starting lineup</h2>
-        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+        <span className="microlabel-data">
           {editable ? `Week ${team.week} · tap ⇅ to move` : `Week ${team.week}`}
         </span>
       </header>
@@ -203,9 +203,7 @@ export function LineupBoard({
                 takes && "bg-[color-mix(in_oklab,var(--brand)_7%,transparent)]",
               )}
             >
-              <span className="w-9 shrink-0 font-mono text-[10px] uppercase tracking-wide text-faint">
-                {label}
-              </span>
+              <span className="w-9 shrink-0 microlabel-data">{label}</span>
               {editable ? (
                 <MoveButton
                   state={isSrc ? "source" : src ? (takes ? "target" : "off") : "idle"}
@@ -259,7 +257,7 @@ export function LineupBoard({
       </ul>
 
       <header className="border-t border-line px-5 pt-4 pb-2">
-        <h3 className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Bench</h3>
+        <h3 className="microlabel">Bench</h3>
       </header>
       <ul className="pb-2">
         {bench.length === 0 ? (
@@ -279,9 +277,7 @@ export function LineupBoard({
                 takes && "bg-[color-mix(in_oklab,var(--brand)_7%,transparent)]",
               )}
             >
-              <span className="w-9 shrink-0 font-mono text-[10px] uppercase tracking-wide text-faint">
-                {p.position ?? ""}
-              </span>
+              <span className="w-9 shrink-0 microlabel-data">{p.position ?? ""}</span>
               {editable ? (
                 canStart || takes ? (
                   <MoveButton
@@ -331,9 +327,7 @@ export function LineupBoard({
                   ? src.player.full_name
                   : (src.player?.full_name ?? `${src.label} slot`)}
               </span>
-              <span className="block font-mono text-[10px] uppercase tracking-wide text-faint">
-                Tap a lit row
-              </span>
+              <span className="block microlabel-data">Tap a lit row</span>
             </span>
             {src.kind === "slot" && src.player ? (
               <button
@@ -343,7 +337,7 @@ export function LineupBoard({
                   if (src.player) onSit(src.player.player_id, src.player.full_name);
                   cancel();
                 }}
-                className="shrink-0 rounded-pill px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-accent-strong shadow-[0_0_0_1px_var(--color-accent-deep)] hover:bg-raised"
+                className="shrink-0 rounded-pill px-3 py-2 microlabel-data text-accent-strong shadow-[0_0_0_1px_var(--color-accent-deep)] hover:bg-raised"
               >
                 To bench
               </button>
@@ -351,7 +345,7 @@ export function LineupBoard({
             <button
               type="button"
               onClick={cancel}
-              className="shrink-0 rounded-pill px-2 py-1 font-mono text-[10px] uppercase tracking-wide text-muted hover:text-fg"
+              className="shrink-0 rounded-pill px-2 py-1 microlabel-data text-muted hover:text-fg"
             >
               Cancel
             </button>
@@ -431,7 +425,7 @@ function Points({
       <span className="block font-mono text-sm tabular-nums text-muted">
         {formatPts(projection.points, 1)}
       </span>
-      <span className="block font-mono text-[9px] uppercase tracking-[0.1em] text-faint">
+      <span className="block microlabel-data">
         {projection.reason === "bye" ? "bye" : projection.reason === "out" ? "out" : "proj"}
       </span>
     </span>

@@ -69,7 +69,7 @@ export function PlayerSheet({
         role="dialog"
         aria-modal="true"
         aria-label={target.player.full_name}
-        className="relative z-10 flex h-[min(88vh,44rem)] w-full flex-col rounded-t-xl bg-surface shadow-[var(--shadow-border)] sm:h-full sm:w-[34rem] sm:rounded-none sm:border-l sm:border-line"
+        className="relative z-10 flex h-[min(88vh,44rem)] w-full flex-col rounded-t-xl bg-surface ring-card sm:h-full sm:w-[34rem] sm:rounded-none sm:border-l sm:border-line"
       >
         <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-pill bg-line sm:hidden" />
         <Body target={target} leagueId={leagueId} onClose={onClose} />
@@ -92,9 +92,7 @@ function Body({
   const q = usePlayerProfile(leagueId, player.player_id);
   const p = q.data;
   const cached = findCachedWirePlayer(qc, leagueId, player.player_id);
-  const hint = isWirePlayer(cached)
-    ? { points: cached.pts, posRank: cached.rank }
-    : undefined;
+  const hint = isWirePlayer(cached) ? { points: cached.pts, posRank: cached.rank } : undefined;
 
   return (
     <>

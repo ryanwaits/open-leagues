@@ -89,18 +89,14 @@ function LeaguePage() {
   return (
     <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr] lg:items-start">
       <div className="flex min-w-0 flex-col gap-5">
-        <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+        <section className="rounded-xl bg-surface ring-card">
           <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
             <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Standings</h2>
-            {playoff > 0 ? (
-              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                Top {playoff} make it
-              </span>
-            ) : null}
+            {playoff > 0 ? <span className="microlabel-data">Top {playoff} make it</span> : null}
           </header>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[460px] text-sm">
-              <thead className="font-mono text-[10px] uppercase tracking-wide text-faint">
+              <thead className="microlabel-data">
                 <tr className="border-b border-line">
                   <th className="px-4 py-3 text-left font-medium" />
                   <th className="px-2 py-3 text-left font-medium">Team</th>
@@ -165,14 +161,14 @@ function LeaguePage() {
           </div>
         </section>
 
-        <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+        <section className="rounded-xl bg-surface ring-card">
           <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
             <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Week {week} slate</h2>
             <Link
               to="/league/$leagueId/matchups"
               params={{ leagueId }}
               search={{ week }}
-              className="font-mono text-[10px] uppercase tracking-wide text-accent-strong"
+              className="microlabel-data text-accent-strong"
             >
               Open matchup
             </Link>
@@ -226,14 +222,14 @@ function LeaguePage() {
           )}
         </section>
 
-        <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+        <section className="rounded-xl bg-surface ring-card">
           <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
             <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Moves</h2>
             <Link
               to="/league/$leagueId/activity"
               params={{ leagueId }}
               search={{ week: undefined }}
-              className="font-mono text-[10px] uppercase tracking-wide text-accent-strong"
+              className="microlabel-data text-accent-strong"
             >
               All weeks
             </Link>
@@ -277,11 +273,9 @@ function LeaguePage() {
             to="/league/$leagueId/recap"
             params={{ leagueId }}
             search={{ week, story: undefined }}
-            className="block rounded-xl bg-surface px-5 py-5 shadow-[var(--shadow-border)] transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[var(--shadow-border-hover)]"
+            className="block rounded-xl bg-surface px-5 py-5 ring-card transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 ring-card-h"
           >
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-              {recap.data.kicker}
-            </p>
+            <p className="microlabel">{recap.data.kicker}</p>
             <p className="mt-1.5 font-display text-xl font-bold leading-snug tracking-[-0.03em]">
               <span className="hl">{recap.data.headline}</span>
             </p>
@@ -290,13 +284,13 @@ function LeaguePage() {
         ) : null}
 
         {league.data.hosted ? (
-          <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+          <section className="rounded-xl bg-surface ring-card">
             <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
               <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Open trades</h2>
               <Link
                 to="/league/$leagueId/trades"
                 params={{ leagueId }}
-                className="font-mono text-[10px] uppercase tracking-wide text-accent-strong"
+                className="microlabel-data text-accent-strong"
               >
                 Trade desk
               </Link>
@@ -317,7 +311,7 @@ function LeaguePage() {
                         <span className="block truncate text-sm font-medium">
                           {t.sides.map((s) => s.teamName).join(" ↔ ")}
                         </span>
-                        <span className="block font-mono text-[10px] uppercase tracking-wide text-faint">
+                        <span className="block microlabel-data">
                           {waitingOnMe ? "waiting on you" : "awaiting them"}
                         </span>
                       </span>
@@ -331,10 +325,10 @@ function LeaguePage() {
         ) : null}
 
         {book.data?.enabled ? (
-          <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+          <section className="rounded-xl bg-surface ring-card">
             <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
               <h2 className="font-display text-lg font-bold tracking-[-0.03em]">The book</h2>
-              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+              <span className="microlabel-data">
                 {book.data.locked ? "closed" : `week ${book.data.week}`}
               </span>
             </header>
@@ -415,12 +409,10 @@ function LeaguePage() {
           </section>
         ) : null}
 
-        <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+        <section className="rounded-xl bg-surface ring-card">
           <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
             <h2 className="font-display text-lg font-bold tracking-[-0.03em]">House rules</h2>
-            <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-              Read only
-            </span>
+            <span className="microlabel-data">Read only</span>
           </header>
           <dl>
             <Rule k="Scoring" v={league.data.scoringLabel} />
@@ -441,7 +433,7 @@ function LeaguePage() {
             <Link
               to="/league/$leagueId/settings"
               params={{ leagueId }}
-              className="font-mono text-[10px] uppercase tracking-wide text-accent-strong"
+              className="microlabel-data text-accent-strong"
             >
               Open league setup
             </Link>
@@ -487,9 +479,7 @@ function LineupRule({ lineup }: { lineup: NonNullable<LeagueBundle["lineup"]> })
 
   return (
     <div className="border-t border-line px-5 py-3.5">
-      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-        Starting lineup
-      </span>
+      <span className="microlabel-data">Starting lineup</span>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         {shown.map((s) => (
           <span

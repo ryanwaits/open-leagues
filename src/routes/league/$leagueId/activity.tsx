@@ -39,10 +39,7 @@ function ActivityPage() {
       ) : (
         <ul className="space-y-2">
           {activity.data?.map((tx) => (
-            <li
-              key={tx.id}
-              className="rounded-xl bg-surface px-4 py-3 shadow-[var(--shadow-border)]"
-            >
+            <li key={tx.id} className="rounded-xl bg-surface px-4 py-3 ring-card">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge>{tx.type.replace("_", " ")}</Badge>
                 <Badge tone={tx.status === "complete" ? "win" : "muted"}>{tx.status}</Badge>

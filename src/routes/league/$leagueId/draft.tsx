@@ -176,7 +176,7 @@ function DraftPage() {
       )}
       <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
         <section>
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
+          <p className="microlabel">
             {d
               ? `${d.status} · pick ${Math.min(d.pickNo, d.total || 1)} / ${d.total || "—"}`
               : "Draft"}
@@ -271,14 +271,12 @@ function DraftPage() {
 
           {myRosterId != null && d != null && d.status !== "complete" ? (
             <div className="mt-8">
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-                Your queue
-              </p>
+              <p className="microlabel">Your queue</p>
               <ul className="mt-2 space-y-1">
                 {(d.queue ?? []).map((q, i) => (
                   <li
                     key={q.playerId}
-                    className="flex items-center gap-2 rounded-lg bg-surface px-3 py-2 shadow-[var(--shadow-border)]"
+                    className="flex items-center gap-2 rounded-lg bg-surface px-3 py-2 ring-card"
                   >
                     <span className="w-5 font-mono text-[11px] text-faint">{i + 1}</span>
                     <div className="min-w-0 flex-1">
@@ -320,7 +318,9 @@ function DraftPage() {
                 ))}
               </ul>
               {(d.queue ?? []).length === 0 ? (
-                <p className="mt-2 text-sm text-muted">Empty — autodraft will take best available.</p>
+                <p className="mt-2 text-sm text-muted">
+                  Empty — autodraft will take best available.
+                </p>
               ) : null}
               <p className="mt-2 text-xs text-muted">
                 Autodraft takes the top of this queue first.
@@ -334,7 +334,7 @@ function DraftPage() {
               : d.recent.map((p) => (
                   <li
                     key={p.pick}
-                    className="flex items-center gap-3 rounded-lg bg-surface px-3 py-2 shadow-[var(--shadow-border)]"
+                    className="flex items-center gap-3 rounded-lg bg-surface px-3 py-2 ring-card"
                   >
                     <span className="w-10 font-mono text-[11px] text-faint">
                       {p.round}.{p.pick}
@@ -361,9 +361,7 @@ function DraftPage() {
 
           {d && d.stock.some((p) => !p.used) ? (
             <div className="mt-8">
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-                Pick stock
-              </p>
+              <p className="microlabel">Pick stock</p>
               <ul className="mt-2 max-h-72 space-y-1 overflow-y-auto">
                 {d.stock
                   .filter((p) => !p.used)
@@ -412,7 +410,7 @@ function DraftPage() {
               ))}
             </div>
           </div>
-          <ul className="mt-4 divide-y divide-line rounded-xl bg-surface shadow-[var(--shadow-border)]">
+          <ul className="mt-4 divide-y divide-line rounded-xl bg-surface ring-card">
             {d == null
               ? Array.from({ length: 8 }).map((_, i) => (
                   <li key={i} className="p-3">

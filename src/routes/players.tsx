@@ -39,13 +39,11 @@ function PlayersPage() {
   return (
     <Shell>
       <header>
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-faint">
-          Season PPR · Sleeper unofficial stats
-        </p>
+        <p className="microlabel">Season PPR · Sleeper unofficial stats</p>
         <h1 className="mt-1 font-display text-4xl tracking-tight">Players</h1>
         <p className="mt-2 max-w-xl text-sm text-muted">
-          Live season scoring from Sleeper, with a 2025 seed if the feed is
-          quiet. Search the active pool anytime.
+          Live season scoring from Sleeper, with a 2025 seed if the feed is quiet. Search the active
+          pool anytime.
         </p>
       </header>
 
@@ -73,9 +71,9 @@ function PlayersPage() {
         </div>
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-xl bg-surface shadow-[var(--shadow-border)]">
+      <div className="mt-6 overflow-x-auto rounded-xl bg-surface ring-card">
         <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="font-mono text-[11px] uppercase tracking-wide text-faint">
+          <thead className="microlabel">
             <tr className="border-b border-line">
               <th className="px-4 py-3 font-medium">#</th>
               <th className="px-2 py-3 font-medium">Player</th>
@@ -96,7 +94,8 @@ function PlayersPage() {
                   </tr>
                 ))
               : rows.map((p, i) => {
-                  const leader = "pts_ppr" in p && typeof p.pts_ppr === "number" ? (p as LeaderRow) : null;
+                  const leader =
+                    "pts_ppr" in p && typeof p.pts_ppr === "number" ? (p as LeaderRow) : null;
                   return (
                     <tr key={p.player_id} className="border-b border-line last:border-0">
                       <td className="px-4 py-2.5 font-mono text-xs text-faint">{i + 1}</td>
@@ -107,15 +106,17 @@ function PlayersPage() {
                         {leader ? formatPts(leader.pts_ppr, 1) : "—"}
                       </td>
                       <td className="px-3 py-2.5 text-right font-mono text-xs tabular-nums text-muted">
-                        {leader ? `${formatInt(leader.pass_yd)} / ${formatInt(leader.pass_td)}` : "—"}
-                      </td>
-                      <td className="px-3 py-2.5 text-right font-mono text-xs tabular-nums text-muted">
-                        {leader ? `${formatInt(leader.rush_yd)} / ${formatInt(leader.rush_td)}` : "—"}
+                        {leader
+                          ? `${formatInt(leader.pass_yd)} / ${formatInt(leader.pass_td)}`
+                          : "—"}
                       </td>
                       <td className="px-3 py-2.5 text-right font-mono text-xs tabular-nums text-muted">
                         {leader
-                          ? `${formatInt(leader.rec)} / ${formatInt(leader.rec_yd)}`
+                          ? `${formatInt(leader.rush_yd)} / ${formatInt(leader.rush_td)}`
                           : "—"}
+                      </td>
+                      <td className="px-3 py-2.5 text-right font-mono text-xs tabular-nums text-muted">
+                        {leader ? `${formatInt(leader.rec)} / ${formatInt(leader.rec_yd)}` : "—"}
                       </td>
                       <td className="px-4 py-2.5 text-right font-mono text-xs tabular-nums text-muted">
                         {leader ? formatInt(leader.gp) : "—"}

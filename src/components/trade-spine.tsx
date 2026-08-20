@@ -78,7 +78,7 @@ export function TradeSpineRow({
                 yourMove ? "bg-accent-deep" : "bg-line-strong",
               )}
             />
-            <span className="truncate font-mono text-[10.5px] uppercase tracking-[0.1em] text-faint">
+            <span className="truncate microlabel-data">
               {withWhom} &middot; {yourMove ? "your move" : "their move"}
             </span>
           </span>

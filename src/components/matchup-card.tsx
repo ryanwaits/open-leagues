@@ -75,15 +75,10 @@ export function MatchupCard({
   const theirBest = bestStarter(theirs, lineValue);
 
   return (
-    <section className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+    <section className="rounded-xl bg-surface ring-card">
       <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
         <h2 className="font-display text-lg font-bold tracking-[-0.03em]">The matchup</h2>
-        <span
-          className={cn(
-            "font-mono text-[10px] uppercase tracking-[0.12em]",
-            live ? "text-live" : "text-faint",
-          )}
-        >
+        <span className={cn("microlabel-data", live ? "text-live" : "text-faint")}>
           Week {week} · {live ? "Live" : settled ? "Final" : "Preview"}
         </span>
       </header>
@@ -99,7 +94,7 @@ export function MatchupCard({
               style={{ width: `${share}%` }}
             />
           </div>
-          <div className="flex items-baseline justify-between font-mono text-[9.5px] uppercase tracking-[0.1em] text-faint">
+          <div className="flex items-baseline justify-between microlabel-data">
             <span>{label}</span>
             {delta ? <span className="tabular-nums">{delta}</span> : null}
           </div>
@@ -124,7 +119,7 @@ export function MatchupCard({
         <Link
           to="/league/$leagueId/matchup/$week/$matchupId"
           params={{ leagueId, week: String(week), matchupId: String(pair.matchupId) }}
-          className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent-strong"
+          className="microlabel-data text-accent-strong"
         >
           {scoring ? "Full box score →" : "Full preview →"}
         </Link>
@@ -193,9 +188,7 @@ function WatchRow({
   if (!p) return null;
   return (
     <div className="flex min-w-0 items-baseline gap-2">
-      <span className="w-[74px] shrink-0 font-mono text-[8.5px] uppercase tracking-[0.12em] text-faint">
-        {label}
-      </span>
+      <span className="w-[74px] shrink-0 microlabel-data">{label}</span>
       <span className="truncate text-[13px] font-semibold tracking-[-0.01em]">{p.full_name}</span>
       {p.position ? (
         <span className="inline-flex h-4 shrink-0 items-center rounded-xs bg-raised px-1.5 font-mono text-[9px] text-muted">

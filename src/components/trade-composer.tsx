@@ -927,7 +927,7 @@ export function TradeComposer({
   }
 
   const dealCard = (
-    <div className="rounded-xl bg-surface px-4 py-3 shadow-[var(--shadow-border)]">
+    <div className="rounded-xl bg-surface px-4 py-3 ring-card">
       <div className="grid gap-4 sm:grid-cols-2">
         <ComposeColumn
           title="You get"
@@ -981,9 +981,7 @@ export function TradeComposer({
 
       {hasAlso ? (
         <div className="mt-4">
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-            Also moving
-          </p>
+          <p className="microlabel">Also moving</p>
           <ul className="mt-1.5 space-y-1">
             {alsoPlayers.map((p) => (
               <li key={p.player_id}>
@@ -1293,7 +1291,7 @@ export function TradeComposer({
           {onThirdChange ? (
             <button
               type="button"
-              className="ml-1 font-mono text-[11px] uppercase text-muted hover:text-fg"
+              className="ml-1 microlabel text-muted hover:text-fg"
               onClick={() => onThirdChange(null)}
             >
               Remove
@@ -1366,7 +1364,7 @@ function RosterPanel({
       <div className="flex items-baseline justify-between gap-2 border-b border-line pb-1.5">
         <p className="text-sm font-medium">{title}</p>
         {count > 0 ? (
-          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
+          <p className="microlabel-data">
             {count} {count === 1 ? "asset" : "assets"}
           </p>
         ) : null}
@@ -1467,7 +1465,7 @@ function ComposeColumn({
   const has = players.length > 0 || picks.length > 0 || (faab != null && faab.amount > 0);
   return (
     <div className="min-w-0">
-      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">{title}</p>
+      <p className="microlabel">{title}</p>
       <ul className="mt-1.5 space-y-1">
         {!has ? (
           <li className="px-2 py-1.5 text-xs text-faint">{empty}</li>
@@ -1607,7 +1605,7 @@ function FaabPicker({
     return (
       <button
         type="button"
-        className="mt-2 font-mono text-[11px] uppercase text-muted hover:text-fg"
+        className="mt-2 microlabel text-muted hover:text-fg"
         onClick={() => onFaab("0")}
       >
         + FAAB
@@ -1620,7 +1618,7 @@ function FaabPicker({
         <span className="font-mono text-[11px] text-faint">FAAB</span>
         <div
           className={cn(
-            "flex items-baseline rounded-md bg-surface px-2.5 py-1 shadow-[var(--shadow-border)] focus-within:shadow-[0_0_0_1px_var(--color-accent-deep)]",
+            "flex items-baseline rounded-md bg-surface px-2.5 py-1 ring-card focus-within:shadow-[0_0_0_1px_var(--color-accent-deep)]",
             faabErr && "shadow-[0_0_0_1px_var(--color-loss)]",
           )}
         >

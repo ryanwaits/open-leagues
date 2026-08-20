@@ -1,9 +1,22 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 
 const root = join(import.meta.dirname, "../..");
+
+function findTsxFiles(dir) {
+  const files = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...findTsxFiles(full));
+    } else if (entry.isFile() && entry.name.endsWith(".tsx")) {
+      files.push(full);
+    }
+  }
+  return files;
+}
 
 test("styles.css references shape/type tokens by var, not literal", () => {
   const styles = readFileSync(join(root, "src/styles.css"), "utf8");
@@ -62,4 +75,48 @@ test("theme.ts stores the skin under ledger-skin and stamps data-skin pre-paint"
   assert.match(theme, /SKIN_KEY\s*=\s*"ledger-skin"/);
   assert.match(theme, /data-skin/);
   assert.match(theme, /NO_FLASH_SCRIPT/);
+});
+
+test("styles.css defines the microlabel/ring-card voice classes and the boxscore .push override", () => {
+  const styles = readFileSync(join(root, "src/styles.css"), "utf8");
+  assert.match(styles, /\.microlabel\s*\{/);
+  assert.match(styles, /\.microlabel-data\s*\{/);
+  assert.match(styles, /\.ring-card\s*\{/);
+  assert.match(styles, /\[data-skin="boxscore"\]\s+\.push/);
+});
+
+test("no src/**/*.tsx file has residual shadow-border or bare micro-label recipes", () => {
+  const tsxFiles = findTsxFiles(join(root, "src"));
+  assert.ok(tsxFiles.length > 0, "expected to find .tsx files under src");
+
+  const shadowBorderLeaks = [];
+  const microlabelLeaks = [];
+  for (const file of tsxFiles) {
+    const content = readFileSync(file, "utf8");
+    if (/shadow-\[var\(--shadow-border/.test(content)) {
+      shadowBorderLeaks.push(file);
+    }
+    if (/font-mono text-\[[0-9.]+px\] uppercase/.test(content)) {
+      microlabelLeaks.push(file);
+    }
+  }
+
+  assert.deepEqual(
+    shadowBorderLeaks,
+    [],
+    "no .tsx file should reference shadow-[var(--shadow-border...) directly",
+  );
+  assert.deepEqual(
+    microlabelLeaks,
+    [],
+    "no .tsx file should reference the raw font-mono uppercase micro-label recipe",
+  );
+});
+
+test("card ring and micro-label recipes are named in representative components", () => {
+  const teamMasthead = readFileSync(join(root, "src/components/team-masthead.tsx"), "utf8");
+  assert.match(teamMasthead, /ring-card/);
+
+  const account = readFileSync(join(root, "src/routes/account.tsx"), "utf8");
+  assert.match(account, /microlabel/);
 });

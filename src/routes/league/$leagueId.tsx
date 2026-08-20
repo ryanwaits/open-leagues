@@ -272,7 +272,7 @@ function ClaimBanner({ leagueId, inviteCode }: { leagueId: string; inviteCode: s
   if (!seats.length) return null;
 
   return (
-    <div className="mb-6 flex flex-wrap items-end gap-3 rounded-xl bg-surface px-4 py-4 shadow-[var(--shadow-border)]">
+    <div className="mb-6 flex flex-wrap items-end gap-3 rounded-xl bg-surface px-4 py-4 ring-card">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">This league has open seats. Claim one.</p>
         <select

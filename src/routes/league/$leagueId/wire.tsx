@@ -165,7 +165,7 @@ function WirePage() {
           {pendingClaims.map((c) => (
             <li
               key={c.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface px-3 py-2 text-sm shadow-[var(--shadow-border)]"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface px-3 py-2 text-sm ring-card"
             >
               <span>
                 {c.mine ? "Your" : "A"} claim · +{c.add.name}
@@ -216,9 +216,9 @@ function WirePage() {
         </div>
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-xl bg-surface shadow-[var(--shadow-border)]">
+      <div className="mt-6 overflow-x-auto rounded-xl bg-surface ring-card">
         <table className="w-full text-left text-sm">
-          <thead className="font-mono text-[11px] uppercase tracking-wide text-faint">
+          <thead className="microlabel">
             <tr className="border-b border-line">
               <th className="px-4 py-3 font-medium">Player</th>
               <th className="hidden px-3 py-3 font-medium sm:table-cell">Status</th>

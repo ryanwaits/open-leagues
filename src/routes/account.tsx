@@ -21,7 +21,7 @@ function AccountPage() {
 
   return (
     <Shell>
-      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">You</p>
+      <p className="microlabel">You</p>
       <h1 className="mt-2 font-display text-4xl tracking-tight">Account</h1>
       <p className="mt-2 max-w-md text-sm text-muted">
         {user?.displayName ?? "Signed in"}
@@ -55,7 +55,7 @@ function AppearancePanel() {
 
   return (
     <div className="mt-8 max-w-lg">
-      <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Appearance</h2>
+      <h2 className="microlabel">Appearance</h2>
       <p className="mt-1 text-sm text-muted">Pick the skin this desk renders with.</p>
 
       <div
@@ -120,7 +120,7 @@ function AgentTokensPanel() {
 
   return (
     <div className="mt-8 max-w-lg">
-      <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Agent tokens</h2>
+      <h2 className="microlabel">Agent tokens</h2>
       <p className="mt-1 text-sm text-muted">
         For Codex / Claude / Grok talking to this desk. Shown once; hashed at rest.
       </p>
@@ -146,9 +146,7 @@ function AgentTokensPanel() {
 
       {once ? (
         <div className="mt-3 rounded-xl bg-raised px-3 py-3">
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-            Copy now — not shown again
-          </p>
+          <p className="microlabel">Copy now — not shown again</p>
           <code className="mt-1 block break-all font-mono text-xs text-fg">{once}</code>
           <Button
             type="button"
@@ -169,7 +167,7 @@ function AgentTokensPanel() {
         {(tokens.data ?? []).map((t) => (
           <li
             key={t.id}
-            className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 shadow-[var(--shadow-border)]"
+            className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-card"
           >
             <span>
               <span className="block font-mono text-xs">{t.prefix}…</span>

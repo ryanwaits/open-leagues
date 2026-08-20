@@ -300,7 +300,7 @@ function MyTeamPage() {
   // rather than render an empty shell.
   if (rosterId == null) {
     return (
-      <div className="rounded-xl bg-surface px-5 py-6 shadow-[var(--shadow-border)]">
+      <div className="rounded-xl bg-surface px-5 py-6 ring-card">
         <p className="font-display text-xl font-bold tracking-[-0.03em]">
           You don&rsquo;t have a seat here
         </p>
@@ -437,9 +437,9 @@ function DeskCard({
       to="/league/$leagueId/recap"
       params={{ leagueId }}
       search={{ week, story: undefined }}
-      className="block rounded-xl bg-surface px-5 py-5 shadow-[var(--shadow-border)] transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[var(--shadow-border-hover)]"
+      className="block rounded-xl bg-surface px-5 py-5 ring-card transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 ring-card-h"
     >
-      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">{recap.kicker}</p>
+      <p className="microlabel">{recap.kicker}</p>
       <p className="mt-1.5 font-display text-xl font-bold leading-snug tracking-[-0.03em]">
         <span className="hl">{recap.headline}</span>
       </p>

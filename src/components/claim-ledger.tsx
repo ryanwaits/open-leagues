@@ -120,12 +120,12 @@ export function ClaimLedgerFoot({
           aria-hidden
           className={cn("size-1.5 rounded-pill", open ? "bg-accent-deep" : "bg-line-strong")}
         />
-        <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-faint">
+        <span className="microlabel-data">
           {open ? "Open" : "Closed"} &middot; week {week}
         </span>
       </span>
       {showMoney ? (
-        <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-faint">
+        <span className="microlabel-data">
           ${staked} in claims &middot; ${spendable} left
         </span>
       ) : null}

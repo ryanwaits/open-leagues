@@ -59,11 +59,7 @@ export function WeekPicker({
                 className="flex min-h-10 cursor-pointer items-center gap-2.5 rounded-md px-3 py-1.5 text-sm outline-none data-[highlighted]:bg-raised"
               >
                 <span className="flex-1 font-medium">{label(w, playoffStart)}</span>
-                {w === currentWeek ? (
-                  <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-faint">
-                    now
-                  </span>
-                ) : null}
+                {w === currentWeek ? <span className="microlabel-data">now</span> : null}
                 {on ? (
                   <Check className="size-3.5 shrink-0 text-accent-strong" strokeWidth={3} />
                 ) : null}

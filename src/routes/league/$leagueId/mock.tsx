@@ -206,7 +206,7 @@ function MockDraftPage() {
     return (
       <div className="space-y-6">
         <Banner />
-        <div className="rounded-xl bg-surface p-6 shadow-[var(--shadow-border)]">
+        <div className="rounded-xl bg-surface p-6 ring-card">
           <h2 className="font-display text-2xl tracking-tight">Mock draft</h2>
           <p className="mt-2 max-w-prose text-sm text-muted">
             Same board and book as the real room. Nothing here is saved — refresh and it is gone.
@@ -270,7 +270,7 @@ function MockDraftPage() {
 
       <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
         <section>
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
+          <p className="microlabel">
             Mock · pick {Math.min(state.onClock, state.picks.length)} / {state.picks.length}
             {pool.length ? ` · ${pool.length}-player pool` : ""}
           </p>
@@ -311,7 +311,7 @@ function MockDraftPage() {
           </div>
 
           {seatPicker ? (
-            <ul className="mt-4 space-y-1 rounded-xl bg-surface p-3 shadow-[var(--shadow-border)]">
+            <ul className="mt-4 space-y-1 rounded-xl bg-surface p-3 ring-card">
               {state.seats.map((s, i) => (
                 <li key={s.rosterId}>
                   <button
@@ -335,14 +335,12 @@ function MockDraftPage() {
           ) : null}
 
           <div className="mt-8">
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-              Your queue
-            </p>
+            <p className="microlabel">Your queue</p>
             <ul className="mt-2 space-y-1">
               {queue.map((entry, i) => (
                 <li
                   key={entry.playerId}
-                  className="flex items-center gap-2 rounded-lg bg-surface px-3 py-2 shadow-[var(--shadow-border)]"
+                  className="flex items-center gap-2 rounded-lg bg-surface px-3 py-2 ring-card"
                 >
                   <span className="w-5 font-mono text-[11px] text-faint">{i + 1}</span>
                   <div className="min-w-0 flex-1">
@@ -392,14 +390,12 @@ function MockDraftPage() {
 
           {historyRef.current.length > 0 ? (
             <div className="mt-8">
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-                How the board fell
-              </p>
+              <p className="microlabel">How the board fell</p>
               <ul className="mt-2 space-y-3">
                 {historyRef.current.map((h) => (
                   <li
                     key={h.finishedAt}
-                    className="rounded-lg bg-surface px-3 py-2 text-sm shadow-[var(--shadow-border)]"
+                    className="rounded-lg bg-surface px-3 py-2 text-sm ring-card"
                   >
                     <p className="font-mono text-[11px] text-faint">
                       Seat {h.mySeat + 1} · {h.myPicks.length} picks
@@ -447,7 +443,7 @@ function MockDraftPage() {
               ))}
             </div>
           </div>
-          <ul className="mt-4 divide-y divide-line rounded-xl bg-surface shadow-[var(--shadow-border)]">
+          <ul className="mt-4 divide-y divide-line rounded-xl bg-surface ring-card">
             {poolQ.isLoading
               ? Array.from({ length: 8 }).map((_, i) => (
                   <li key={i} className="p-3">

@@ -196,9 +196,7 @@ export function DraftTradeDrawer({
 
           <div className="min-h-0 flex-1 overflow-y-auto">
             <section className="border-b border-line px-5 py-4">
-              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                With
-              </span>
+              <span className="microlabel-data">With</span>
               <div className="mt-2 flex flex-col gap-0.5">
                 {counterparties.map((s) => {
                   const on = them === s.rosterId;
@@ -253,9 +251,7 @@ export function DraftTradeDrawer({
 
             {pickingRoster != null && addKind === "pick" ? (
               <section className="border-b border-line px-5 py-4">
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                  Add a pick
-                </span>
+                <span className="microlabel-data">Add a pick</span>
                 <ul className="mt-2 max-h-48 space-y-0.5 overflow-y-auto">
                   {unusedPicks(pickingRoster).map((p) => {
                     const side = addingFor === "send" ? send : get;
@@ -303,9 +299,7 @@ export function DraftTradeDrawer({
 
             {pickingRoster != null && addKind === "player" ? (
               <section className="border-b border-line px-5 py-4">
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                  Add a player
-                </span>
+                <span className="microlabel-data">Add a player</span>
                 <ul className="mt-2 max-h-48 space-y-0.5 overflow-y-auto">
                   {draftedPlayers(pickingRoster).map((p) => {
                     const side = addingFor === "send" ? send : get;
@@ -327,9 +321,7 @@ export function DraftTradeDrawer({
                           className="flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-sm hover:bg-raised disabled:opacity-40"
                         >
                           <span className="min-w-0 truncate font-medium">{p.name}</span>
-                          <span className="shrink-0 font-mono text-[10px] uppercase text-faint">
-                            {p.position ?? ""}
-                          </span>
+                          <span className="shrink-0 microlabel-data">{p.position ?? ""}</span>
                         </button>
                       </li>
                     );
@@ -356,9 +348,7 @@ export function DraftTradeDrawer({
 
             {pickingRoster != null && addKind === "faab" ? (
               <section className="border-b border-line px-5 py-4">
-                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                  FAAB amount
-                </span>
+                <span className="microlabel-data">FAAB amount</span>
                 <div className="mt-2.5 flex items-center gap-3">
                   <StepButton
                     label="Lower amount"
@@ -367,7 +357,7 @@ export function DraftTradeDrawer({
                   >
                     −
                   </StepButton>
-                  <div className="flex items-baseline rounded-md bg-raised px-3.5 py-1.5 shadow-[var(--shadow-border)] focus-within:shadow-[0_0_0_1px_var(--color-accent-deep)]">
+                  <div className="flex items-baseline rounded-md bg-raised px-3.5 py-1.5 ring-card focus-within:shadow-[0_0_0_1px_var(--color-accent-deep)]">
                     <span className="font-mono text-xl font-bold text-faint">$</span>
                     <input
                       type="text"
@@ -459,9 +449,7 @@ function AssetColumn({
   return (
     <section className="border-b border-line px-5 py-4">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-          {title}
-        </span>
+        <span className="microlabel-data">{title}</span>
         <span className="truncate text-xs text-muted">{subtitle}</span>
       </div>
       <ul className="mt-2 space-y-1">
@@ -477,9 +465,7 @@ function AssetColumn({
                   ? a.playerName
                   : `$${a.amount} FAAB`}
               {a.kind === "player" && a.playerPos ? (
-                <span className="ml-1.5 font-mono text-[10px] uppercase text-faint">
-                  {a.playerPos}
-                </span>
+                <span className="ml-1.5 microlabel-data">{a.playerPos}</span>
               ) : null}
             </span>
             <button
@@ -528,7 +514,7 @@ function StepButton({
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="grid size-10 shrink-0 place-items-center rounded-pill text-lg font-bold shadow-[var(--shadow-border)] transition-colors duration-150 hover:bg-raised disabled:opacity-35 disabled:hover:bg-transparent"
+      className="grid size-10 shrink-0 place-items-center rounded-pill text-lg font-bold ring-card transition-colors duration-150 hover:bg-raised disabled:opacity-35 disabled:hover:bg-transparent"
     >
       {children}
     </button>

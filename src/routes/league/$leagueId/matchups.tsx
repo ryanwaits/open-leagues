@@ -238,7 +238,7 @@ function MatchupsPage() {
   return (
     <div>
       {league.data?.scoringLive && phase == null ? (
-        <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-live">
+        <p className="mb-3 microlabel text-live">
           Live unofficial · ticks every {LIVE_POLL_MS / 1000}s
         </p>
       ) : null}
@@ -313,15 +313,13 @@ function MatchupsPage() {
                       )}
                     >
                       <span className="flex items-center justify-between gap-2">
-                        <span className="truncate font-mono text-[9px] uppercase tracking-[0.12em] text-faint">
+                        <span className="truncate microlabel-data">
                           {yours ? "Your game" : `Game ${i + 1}`}
                         </span>
                         {pairingIsLive(p) ? (
                           <span className="size-1.5 shrink-0 rounded-pill bg-live" />
                         ) : preview ? (
-                          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-faint">
-                            Proj
-                          </span>
+                          <span className="microlabel-data">Proj</span>
                         ) : null}
                       </span>
                       <span className="mt-1.5 flex items-baseline justify-between gap-2">
@@ -369,16 +367,14 @@ function MatchupsPage() {
                     : `${pair.home.teamName} vs ${pair.away?.teamName ?? "Bye"}`;
                 return (
                   <>
-                    <article className="overflow-hidden rounded-xl bg-surface shadow-[var(--shadow-border)]">
+                    <article className="overflow-hidden rounded-xl bg-surface ring-card">
                       {/* Two columns is right the moment there is room for two columns.
                     Under `sm` there is not, and stacking the rosters buries the
                     comparison — so the phone gets the same data paired by slot,
                     and its own header, since the band would not fit. */}
                       <div className="p-4 sm:hidden">
                         {pair.label ? (
-                          <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-live">
-                            {pair.label}
-                          </p>
+                          <p className="mb-3 microlabel text-live">{pair.label}</p>
                         ) : null}
                         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                           <h2 className="font-display text-lg font-bold tracking-[-0.03em]">
@@ -391,7 +387,7 @@ function MatchupsPage() {
                               week: String(week),
                               matchupId: String(pair.matchupId),
                             }}
-                            className="font-mono text-[11px] uppercase tracking-wide text-accent-strong"
+                            className="microlabel text-accent-strong"
                           >
                             Full box score
                           </Link>
@@ -437,7 +433,7 @@ function MatchupsPage() {
                               week: String(week),
                               matchupId: String(pair.matchupId),
                             }}
-                            className="font-mono text-[11px] uppercase tracking-wide text-accent-strong"
+                            className="microlabel text-accent-strong"
                           >
                             Full box score
                           </Link>

@@ -26,13 +26,11 @@ export function LinePanel({
     return (
       <section
         data-testid="wager-no-price"
-        className={cn("rounded-xl bg-surface shadow-[var(--shadow-border)]", className)}
+        className={cn("rounded-xl bg-surface ring-card", className)}
       >
         <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
           <h2 className="font-display text-lg font-bold tracking-[-0.03em]">The line</h2>
-          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-            no price
-          </span>
+          <span className="microlabel-data">no price</span>
         </header>
         <p className="px-5 pb-5 text-sm text-muted">
           Nothing to price yet. A line needs projections for both rosters, which arrive once the
@@ -56,12 +54,10 @@ export function LinePanel({
   const allowed = (roster: number) => line.restrictedTo == null || line.restrictedTo === roster;
 
   return (
-    <section className={cn("rounded-xl bg-surface shadow-[var(--shadow-border)]", className)}>
+    <section className={cn("rounded-xl bg-surface ring-card", className)}>
       <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
         <h2 className="font-display text-lg font-bold tracking-[-0.03em]">The line</h2>
-        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-          {line.locked ? "closed" : "suggested"}
-        </span>
+        <span className="microlabel-data">{line.locked ? "closed" : "suggested"}</span>
       </header>
 
       <Row
@@ -201,12 +197,12 @@ function Price({
       disabled={!on}
       onClick={onClick}
       className={cn(
-        "min-w-[4.5rem] rounded-md px-3 py-1.5 text-center shadow-[var(--shadow-border)] transition-colors duration-150",
+        "min-w-[4.5rem] rounded-md px-3 py-1.5 text-center ring-card transition-colors duration-150",
         on ? "hover:bg-raised" : "opacity-40",
       )}
     >
       <span className="block font-mono text-sm font-bold tabular-nums">{price}</span>
-      <span className="block font-mono text-[9px] uppercase tracking-wide text-faint">{note}</span>
+      <span className="block microlabel-data">{note}</span>
     </button>
   );
 }
@@ -235,9 +231,7 @@ function Fig({ n, label }: { n: string; label: string }) {
   return (
     <span className="flex-1 text-center">
       <span className="block font-mono text-base font-bold tabular-nums">{n}</span>
-      <span className="block font-mono text-[9px] uppercase tracking-[0.12em] text-faint">
-        {label}
-      </span>
+      <span className="block microlabel-data">{label}</span>
     </span>
   );
 }

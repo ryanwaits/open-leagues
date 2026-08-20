@@ -33,7 +33,7 @@ export function TeamMasthead({
   const ptsLabel = phase === "live" ? "Live" : phase === "settled" ? "Final" : "Projected";
 
   return (
-    <section className="grid grid-cols-4 rounded-xl bg-surface shadow-[var(--shadow-border)]">
+    <section className="grid grid-cols-4 rounded-xl bg-surface ring-card">
       <Cell label="Record" value={fmtRecord(mine.wins, mine.losses, mine.ties)} />
       {/* Rank is the one cell that goes somewhere: the full table with the
           playoff line lives on standings, one tap away. */}
@@ -46,9 +46,7 @@ export function TeamMasthead({
           {ordinal(idx + 1)}
           <small className="ml-1 text-[11px] font-medium text-faint">of {standings.length}</small>
         </span>
-        <span className="block font-mono text-[9px] uppercase tracking-[0.12em] text-faint">
-          Rank
-        </span>
+        <span className="block microlabel-data">Rank</span>
       </Link>
       <Cell label={ptsLabel} value={weekPts != null ? formatPts(weekPts, 1) : "—"} />
       {faab != null ? (
@@ -66,9 +64,7 @@ function Cell({ label, value }: { label: string; value: string }) {
       <span className="block truncate font-mono text-base font-semibold tabular-nums sm:text-lg">
         {value}
       </span>
-      <span className="block font-mono text-[9px] uppercase tracking-[0.12em] text-faint">
-        {label}
-      </span>
+      <span className="block microlabel-data">{label}</span>
     </div>
   );
 }

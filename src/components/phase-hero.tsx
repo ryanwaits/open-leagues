@@ -102,7 +102,7 @@ export function PhaseHero(props: {
     return (
       <Shell tone="good">
         <div className="flex w-full flex-col gap-3">
-          <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
+          <span className="flex items-center gap-2 microlabel-data text-muted">
             <span className="size-1.5 animate-pulse rounded-pill bg-live" />
             Live · week {week} · {health.yetToPlay} yet to play
           </span>
@@ -111,9 +111,7 @@ export function PhaseHero(props: {
               <Avatar src={me.avatar} name={me.teamName} className="size-9" tint />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-bold">{me.teamName}</span>
-                <span className="block font-mono text-[10px] uppercase tracking-wide text-faint">
-                  you
-                </span>
+                <span className="block microlabel-data">you</span>
               </span>
             </span>
             <span className="font-mono text-3xl font-semibold tabular-nums">
@@ -127,9 +125,7 @@ export function PhaseHero(props: {
               <span className="ml-auto flex min-w-0 items-center gap-2.5">
                 <span className="min-w-0 text-right">
                   <span className="block truncate text-sm font-bold">{them.teamName}</span>
-                  <span className="block font-mono text-[10px] uppercase tracking-wide text-faint">
-                    {winning ? "trailing" : "ahead"}
-                  </span>
+                  <span className="block microlabel-data">{winning ? "trailing" : "ahead"}</span>
                 </span>
                 <Avatar src={them.avatar} name={them.teamName} className="size-9" tint />
               </span>
@@ -196,7 +192,7 @@ function Shell({ tone, children }: { tone: "calm" | "alarm" | "good"; children: 
     <section
       className={cn(
         "flex flex-wrap items-center gap-4 rounded-xl px-5 py-5",
-        tone === "calm" && "bg-surface shadow-[var(--shadow-border)]",
+        tone === "calm" && "bg-surface ring-card",
         tone === "alarm" &&
           "bg-[color-mix(in_oklab,var(--alarm)_12%,var(--paper-raised))] shadow-[0_0_0_1px_color-mix(in_oklab,var(--alarm)_40%,transparent),var(--lift)]",
         tone === "good" &&
@@ -221,12 +217,7 @@ function Body({
 }) {
   return (
     <div className="min-w-0 flex-1 basis-64">
-      <p
-        className={cn(
-          "font-mono text-[10px] uppercase tracking-[0.14em]",
-          tone === "alarm" ? "text-loss" : "text-faint",
-        )}
-      >
+      <p className={cn("microlabel-data", tone === "alarm" ? "text-loss" : "text-faint")}>
         {kicker}
       </p>
       <h2 className="mt-1.5 font-display text-xl font-extrabold tracking-[-0.03em]">{title}</h2>

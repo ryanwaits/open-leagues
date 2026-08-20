@@ -135,7 +135,7 @@ export function TradeOfferCard({
   const change = delta?.change ?? null;
 
   return (
-    <li className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+    <li className="rounded-xl bg-surface ring-card">
       <button
         type="button"
         aria-expanded={open}
@@ -303,7 +303,7 @@ function AssetColumn({
 }) {
   return (
     <div className="min-w-0">
-      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">{title}</p>
+      <p className="microlabel">{title}</p>
       <ul className="mt-1.5 space-y-1">
         {assets.length === 0 ? (
           <li className="px-2 py-1.5 text-xs text-faint">{empty}</li>
@@ -381,9 +381,7 @@ export function TradeRosterAfter({
     <div className="mt-4 space-y-2 border-t border-line pt-3">
       {before && after && moved.length > 0 ? (
         <>
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-            Your roster after
-          </p>
+          <p className="microlabel">Your roster after</p>
           <PositionBars before={before} after={after} positions={moved} />
         </>
       ) : null}

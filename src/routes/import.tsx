@@ -91,13 +91,18 @@ function toPayload(t: DraftTeam) {
   };
 }
 
-async function readDroppedFile(file: File): Promise<{ paste?: string; known?: string; label: string }> {
+async function readDroppedFile(
+  file: File,
+): Promise<{ paste?: string; known?: string; label: string }> {
   const name = file.name;
   const isPdf = file.type === "application/pdf" || name.toLowerCase().endsWith(".pdf");
   if (isPdf) {
     const buf = await file.arrayBuffer();
     const latin1 = new TextDecoder("latin1").decode(buf);
-    if (latin1.includes("907798861") || (/\bWIFFL\b/.test(latin1) && /draft\s+recap/i.test(latin1))) {
+    if (
+      latin1.includes("907798861") ||
+      (/\bWIFFL\b/.test(latin1) && /draft\s+recap/i.test(latin1))
+    ) {
       return { known: "wiffl-2026", label: name };
     }
     const strings: string[] = [];
@@ -137,14 +142,8 @@ function ImportPage() {
   const [openTeam, setOpenTeam] = useState<number | null>(1);
   const [dragging, setDragging] = useState(false);
 
-  const missed = useMemo(
-    () => draft.reduce((n, t) => n + t.unmatched.length, 0),
-    [draft],
-  );
-  const matched = useMemo(
-    () => draft.reduce((n, t) => n + t.players, 0),
-    [draft],
-  );
+  const missed = useMemo(() => draft.reduce((n, t) => n + t.unmatched.length, 0), [draft]);
+  const matched = useMemo(() => draft.reduce((n, t) => n + t.players, 0), [draft]);
 
   function applyPreview(res: Preview) {
     const teams = res.teams.map((t, i) => ({
@@ -172,7 +171,11 @@ function ImportPage() {
   }
 
   const preview = useMutation({
-    mutationFn: async (opts?: { known?: string; paste?: string; teams?: ReturnType<typeof toPayload>[] }) => {
+    mutationFn: async (opts?: {
+      known?: string;
+      paste?: string;
+      teams?: ReturnType<typeof toPayload>[];
+    }) => {
       if (source === "rebuild") {
         return previewRebuild({
           data: {
@@ -289,9 +292,7 @@ function ImportPage() {
 
   return (
     <Shell>
-      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-faint">
-        Bring a league over
-      </p>
+      <p className="microlabel">Bring a league over</p>
       <h1 className="mt-2 font-display text-4xl tracking-tight">
         {step === "review" ? "Verify the board" : "Import a league"}
       </h1>
@@ -334,22 +335,20 @@ function ImportPage() {
         <section className="mt-8 max-w-3xl">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
+              <p className="microlabel">
                 {previewData.season} · {previewData.teamCount} teams · {previewData.scoringLabel}
                 {previewData.pickCount ? ` · ${previewData.pickCount} picks` : ""}
               </p>
               <h2 className="mt-1 font-display text-3xl">{name || previewData.name}</h2>
               <p className="mt-2 text-sm text-muted">
                 Top {previewData.playoffTeams ?? 4} make the dance
-                {(previewData.playoffByes ?? 0) > 0
-                  ? ` · #1–${previewData.playoffByes} bye`
-                  : ""}
-                . Friends claim the open seats.
+                {(previewData.playoffByes ?? 0) > 0 ? ` · #1–${previewData.playoffByes} bye` : ""}.
+                Friends claim the open seats.
               </p>
             </div>
             <button
               type="button"
-              className="font-mono text-[11px] uppercase text-muted hover:text-fg"
+              className="microlabel text-muted hover:text-fg"
               onClick={() => setStep("source")}
             >
               Back to source
@@ -358,13 +357,11 @@ function ImportPage() {
 
           <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
             <label className="block">
-              <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-                League name
-              </span>
+              <span className="microlabel">League name</span>
               <Input className="mt-1.5" value={name} onChange={(e) => setName(e.target.value)} />
             </label>
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Season</p>
+              <p className="microlabel">Season</p>
               <div className="mt-1.5 flex gap-1">
                 {seasonYears.map((y) => (
                   <button
@@ -382,7 +379,7 @@ function ImportPage() {
               </div>
             </div>
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Scoring</p>
+              <p className="microlabel">Scoring</p>
               <div className="mt-1.5 flex gap-1">
                 {(
                   [
@@ -414,10 +411,19 @@ function ImportPage() {
             </p>
           ) : null}
 
-          <div className="mt-4 flex flex-wrap items-center gap-3 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
+          <div className="mt-4 flex flex-wrap items-center gap-3 microlabel">
             <span className="text-win">{matched} matched</span>
-            {missed ? <span className="text-loss">{missed} unmatched</span> : <span>All names found</span>}
-            <button type="button" className="text-muted hover:text-fg" onClick={recheck} disabled={preview.isPending}>
+            {missed ? (
+              <span className="text-loss">{missed} unmatched</span>
+            ) : (
+              <span>All names found</span>
+            )}
+            <button
+              type="button"
+              className="text-muted hover:text-fg"
+              onClick={recheck}
+              disabled={preview.isPending}
+            >
               {preview.isPending ? "Checking…" : "Re-check names"}
             </button>
           </div>
@@ -427,7 +433,7 @@ function ImportPage() {
               const open = openTeam === t.rosterId;
               const yours = claim === t.rosterId;
               return (
-                <li key={t.rosterId} className="rounded-xl bg-surface shadow-[var(--shadow-border)]">
+                <li key={t.rosterId} className="rounded-xl bg-surface ring-card">
                   <div className="flex items-stretch">
                     <button
                       type="button"
@@ -444,7 +450,10 @@ function ImportPage() {
                         </span>
                       </span>
                       <ChevronDown
-                        className={cn("size-4 shrink-0 text-faint transition-transform", open && "rotate-180")}
+                        className={cn(
+                          "size-4 shrink-0 text-faint transition-transform",
+                          open && "rotate-180",
+                        )}
                       />
                     </button>
                     <div className="flex shrink-0 items-center pr-3">
@@ -464,9 +473,7 @@ function ImportPage() {
                   {open ? (
                     <div className="space-y-3 border-t border-line px-4 py-3">
                       <label className="block">
-                        <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-                          Team
-                        </span>
+                        <span className="microlabel">Team</span>
                         <Input
                           className="mt-1.5"
                           value={t.teamName}
@@ -474,9 +481,7 @@ function ImportPage() {
                         />
                       </label>
                       <label className="block">
-                        <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-                          Roster · one name per line
-                        </span>
+                        <span className="microlabel">Roster · one name per line</span>
                         <textarea
                           className="mt-1.5 min-h-40 w-full rounded-md border-0 bg-raised px-3 py-2 font-mono text-xs leading-relaxed text-fg outline-none ring-0 placeholder:text-faint"
                           value={t.names.join("\n")}
@@ -488,9 +493,7 @@ function ImportPage() {
                         />
                       </label>
                       {t.unmatched.length ? (
-                        <p className="text-[12px] text-loss">
-                          Unmatched: {t.unmatched.join(", ")}
-                        </p>
+                        <p className="text-[12px] text-loss">Unmatched: {t.unmatched.join(", ")}</p>
                       ) : (
                         <p className="flex items-center gap-1.5 text-[12px] text-win">
                           <Check className="size-3.5" /> Every name matched
@@ -498,8 +501,10 @@ function ImportPage() {
                       )}
                       <button
                         type="button"
-                        className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase text-muted hover:text-loss"
-                        onClick={() => setDraft((rows) => rows.filter((r) => r.rosterId !== t.rosterId))}
+                        className="inline-flex items-center gap-1.5 microlabel text-muted hover:text-loss"
+                        onClick={() =>
+                          setDraft((rows) => rows.filter((r) => r.rosterId !== t.rosterId))
+                        }
                       >
                         <Trash2 className="size-3.5" /> Remove team
                       </button>
@@ -511,7 +516,7 @@ function ImportPage() {
           </ul>
           <button
             type="button"
-            className="mt-3 inline-flex h-10 items-center gap-1.5 font-mono text-[11px] uppercase text-muted hover:text-fg"
+            className="mt-3 inline-flex h-10 items-center gap-1.5 microlabel text-muted hover:text-fg"
             onClick={() =>
               setDraft((rows) => [...rows, emptyTeam((rows[rows.length - 1]?.rosterId ?? 0) + 1)])
             }
@@ -519,7 +524,7 @@ function ImportPage() {
             <Plus className="size-3.5" /> Add a team
           </button>
 
-          <div className="sticky bottom-3 mt-6 flex flex-wrap items-center gap-3 rounded-xl bg-bg/90 p-3 shadow-[var(--shadow-border)] backdrop-blur-md">
+          <div className="sticky bottom-3 mt-6 flex flex-wrap items-center gap-3 rounded-xl bg-bg/90 p-3 ring-card backdrop-blur-md">
             <Button
               type="button"
               onClick={() => {
@@ -555,9 +560,7 @@ function ImportPage() {
             <>
               <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
                 <label className="block">
-                  <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-                    League name
-                  </span>
+                  <span className="microlabel">League name</span>
                   <Input
                     className="mt-1.5"
                     value={name}
@@ -566,7 +569,7 @@ function ImportPage() {
                   />
                 </label>
                 <div>
-                  <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Season</p>
+                  <p className="microlabel">Season</p>
                   <div className="mt-1.5 flex gap-1">
                     {seasonYears.map((y) => (
                       <button
@@ -585,7 +588,7 @@ function ImportPage() {
                 </div>
               </div>
               <div>
-                <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Scoring</p>
+                <p className="microlabel">Scoring</p>
                 <div className="mt-1.5 flex flex-wrap gap-1">
                   {(
                     [
@@ -617,21 +620,26 @@ function ImportPage() {
                 onDragLeave={() => setDragging(false)}
                 onDrop={onDrop}
                 className={cn(
-                  "rounded-xl bg-surface px-4 py-6 text-center shadow-[var(--shadow-border)] transition-[box-shadow]",
-                  dragging && "shadow-[var(--shadow-border-hover)]",
+                  "rounded-xl bg-surface px-4 py-6 text-center ring-card transition-[box-shadow]",
+                  dragging && "ring-card-h",
                 )}
               >
                 <FileUp className="mx-auto size-5 text-faint" />
                 <p className="mt-2 text-sm text-fg">Drop a recap PDF or txt</p>
                 <p className="mt-1 text-xs text-muted">
-                  ESPN draft recap, team blocks, or a CSV. Print-to-PDF is often an image —
-                  we’ll still catch WIFFL.
+                  ESPN draft recap, team blocks, or a CSV. Print-to-PDF is often an image — we’ll
+                  still catch WIFFL.
                 </p>
                 {fileLabel ? (
                   <p className="mt-2 font-mono text-[11px] text-faint">{fileLabel}</p>
                 ) : null}
                 <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileRef.current?.click()}
+                  >
                     Choose file
                   </Button>
                   <Button
@@ -662,12 +670,10 @@ function ImportPage() {
 
               <label className="block">
                 <span className="flex items-center justify-between gap-3">
-                  <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-                    Or paste the recap
-                  </span>
+                  <span className="microlabel">Or paste the recap</span>
                   <button
                     type="button"
-                    className="font-mono text-[11px] uppercase text-muted hover:text-fg"
+                    className="microlabel text-muted hover:text-fg"
                     onClick={() => {
                       setPaste(SAMPLE_REBUILD);
                       setKnown(null);
@@ -687,17 +693,15 @@ function ImportPage() {
                 />
               </label>
               <p className="text-xs leading-relaxed text-muted">
-                ESPN recap lines, or <span className="font-mono text-fg">Team | Manager | W-L</span> with
-                players underneath. You’ll edit before anything is created.
+                ESPN recap lines, or <span className="font-mono text-fg">Team | Manager | W-L</span>{" "}
+                with players underneath. You’ll edit before anything is created.
               </p>
             </>
           ) : null}
 
           {source === "sleeper" ? (
             <label className="block max-w-lg">
-              <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-                Sleeper league ID
-              </span>
+              <span className="microlabel">Sleeper league ID</span>
               <Input
                 className="mt-1.5"
                 value={leagueId}
@@ -711,9 +715,7 @@ function ImportPage() {
           {source === "espn" ? (
             <div className="max-w-lg space-y-4">
               <label className="block">
-                <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-                  ESPN league ID or URL
-                </span>
+                <span className="microlabel">ESPN league ID or URL</span>
                 <Input
                   className="mt-1.5"
                   value={leagueId}
@@ -723,7 +725,7 @@ function ImportPage() {
                 />
               </label>
               <div>
-                <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Season</p>
+                <p className="microlabel">Season</p>
                 <div className="mt-1.5 flex gap-1">
                   {seasonYears.map((y) => (
                     <button
@@ -741,16 +743,26 @@ function ImportPage() {
                 </div>
               </div>
               <p className="text-xs text-muted">
-                Private leagues need SWID + espn_s2, or flip the league public for
-                one minute. A recap paste is simpler if you just want the names.
+                Private leagues need SWID + espn_s2, or flip the league public for one minute. A
+                recap paste is simpler if you just want the names.
               </p>
               <label className="block">
-                <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">SWID</span>
-                <Input className="mt-1.5" value={swid} onChange={(e) => setSwid(e.target.value)} autoComplete="off" />
+                <span className="microlabel">SWID</span>
+                <Input
+                  className="mt-1.5"
+                  value={swid}
+                  onChange={(e) => setSwid(e.target.value)}
+                  autoComplete="off"
+                />
               </label>
               <label className="block">
-                <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">espn_s2</span>
-                <Input className="mt-1.5" value={espnS2} onChange={(e) => setEspnS2(e.target.value)} autoComplete="off" />
+                <span className="microlabel">espn_s2</span>
+                <Input
+                  className="mt-1.5"
+                  value={espnS2}
+                  onChange={(e) => setEspnS2(e.target.value)}
+                  autoComplete="off"
+                />
               </label>
             </div>
           ) : null}
@@ -763,12 +775,12 @@ function ImportPage() {
 
       {source !== "rebuild" && previewData ? (
         <section className="mt-10 max-w-2xl">
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
+          <p className="microlabel">
             {previewData.season} · {previewData.teamCount} teams · {previewData.scoringLabel}
           </p>
           <h2 className="mt-1 font-display text-3xl">{previewData.name}</h2>
           <p className="mt-3 text-sm text-muted">Claim your seat. Everyone else stays open.</p>
-          <ul className="mt-4 divide-y divide-line rounded-xl bg-surface shadow-[var(--shadow-border)]">
+          <ul className="mt-4 divide-y divide-line rounded-xl bg-surface ring-card">
             {previewData.teams.map((t) => (
               <li key={t.rosterId}>
                 <button
@@ -792,9 +804,7 @@ function ImportPage() {
                       </span>
                     ) : null}
                   </span>
-                  <span className="font-mono text-[11px] uppercase text-faint">
-                    {claim === t.rosterId ? "Yours" : "Open"}
-                  </span>
+                  <span className="microlabel">{claim === t.rosterId ? "Yours" : "Open"}</span>
                 </button>
               </li>
             ))}

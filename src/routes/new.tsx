@@ -46,7 +46,7 @@ function NewLeague() {
 
   return (
     <Shell>
-      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-faint">Commissioner</p>
+      <p className="microlabel">Commissioner</p>
       <h1 className="mt-2 font-display text-4xl tracking-tight">Start a league</h1>
       <p className="mt-2 max-w-xl text-sm text-muted">
         Import the draft you already ran, or open an empty desk. Friends join here with your invite
@@ -55,7 +55,7 @@ function NewLeague() {
 
       <Link
         to="/import"
-        className="mt-6 flex max-w-lg items-center justify-between gap-3 rounded-xl bg-surface px-4 py-4 text-left shadow-[var(--shadow-border)] transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[var(--shadow-border-hover)]"
+        className="mt-6 flex max-w-lg items-center justify-between gap-3 rounded-xl bg-surface px-4 py-4 text-left ring-card transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 ring-card-h"
       >
         <span>
           <span className="block text-sm font-semibold">Import WIFFL or a recap</span>
@@ -63,11 +63,11 @@ function NewLeague() {
             Known draft, ESPN PDF, or Sleeper id. You pick your seat before it becomes a league.
           </span>
         </span>
-        <span className="shrink-0 font-mono text-[11px] uppercase text-faint">Import</span>
+        <span className="shrink-0 microlabel">Import</span>
       </Link>
 
       <details className="mt-8 max-w-lg">
-        <summary className="cursor-pointer font-mono text-[11px] uppercase tracking-[0.16em] text-faint hover:text-muted">
+        <summary className="cursor-pointer microlabel hover:text-muted">
           Start empty instead
         </summary>
         <form
@@ -78,9 +78,7 @@ function NewLeague() {
           }}
         >
           <label className="block">
-            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-              League name
-            </span>
+            <span className="microlabel">League name</span>
             <Input
               className="mt-1.5"
               value={name}
@@ -90,9 +88,7 @@ function NewLeague() {
             />
           </label>
           <label className="block">
-            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">
-              Your team
-            </span>
+            <span className="microlabel">Your team</span>
             <Input
               className="mt-1.5"
               value={teamName}
@@ -102,7 +98,7 @@ function NewLeague() {
             />
           </label>
           <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Teams</p>
+            <p className="microlabel">Teams</p>
             <div className="mt-2 flex gap-1">
               {[8, 10, 12, 14].map((n) => (
                 <button
@@ -120,7 +116,7 @@ function NewLeague() {
             </div>
           </div>
           <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-faint">Scoring</p>
+            <p className="microlabel">Scoring</p>
             <div className="mt-2 flex flex-wrap gap-1">
               {(
                 [
@@ -143,7 +139,7 @@ function NewLeague() {
               ))}
             </div>
           </div>
-          <label className="flex items-start gap-3 rounded-xl bg-surface p-4 shadow-[var(--shadow-border)]">
+          <label className="flex items-start gap-3 rounded-xl bg-surface p-4 ring-card">
             <input
               type="checkbox"
               checked={fillHouse}

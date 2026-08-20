@@ -89,7 +89,7 @@ export function PlayerStatRow({
         <PlayerCell player={data.player} compact={dense} />
         {data.byeWeek != null ? (
           <div className={cn("mt-0.5", dense ? "pl-10" : "pl-[2.875rem]")}>
-            <span className="rounded-pill bg-raised px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-faint">
+            <span className="rounded-pill bg-raised px-1.5 py-0.5 microlabel-data">
               BYE {data.byeWeek}
             </span>
           </div>
@@ -107,18 +107,14 @@ export function PlayerStatRow({
         >
           {formatPts(data.projection, 1)}
         </span>
-        <span className="block font-mono text-[9px] uppercase tracking-wide text-faint">
-          {data.projectionIsAverage ? "AVG" : "PROJ"}
-        </span>
+        <span className="block microlabel-data">{data.projectionIsAverage ? "AVG" : "PROJ"}</span>
       </div>
 
       {data.posRank ? (
         <span
           className={cn(
             "shrink-0 rounded-pill px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide",
-            isEliteRank(data.posRank)
-              ? "bg-highlight text-accent-fg"
-              : "bg-raised text-muted",
+            isEliteRank(data.posRank) ? "bg-highlight text-accent-fg" : "bg-raised text-muted",
           )}
         >
           {data.posRank}
@@ -139,10 +135,7 @@ function Sparkline({ weekly }: { weekly: (number | null)[] }) {
   }
   const max = Math.max(1, ...window.map((v) => v ?? 0));
   return (
-    <span
-      className="inline-flex h-[18px] w-11 shrink-0 items-end gap-px"
-      aria-hidden
-    >
+    <span className="inline-flex h-[18px] w-11 shrink-0 items-end gap-px" aria-hidden>
       {window.map((v, i) => (
         <span
           key={i}

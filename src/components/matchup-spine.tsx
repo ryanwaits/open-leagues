@@ -214,12 +214,7 @@ function Half({
         >
           {formatPts(line?.points, 1)}
         </span>
-        <span
-          className={cn(
-            "truncate font-mono text-[8.5px] uppercase tracking-wide",
-            live ? "text-live" : "text-faint",
-          )}
-        >
+        <span className={cn("truncate microlabel-data", live ? "text-live" : "text-faint")}>
           {status}
         </span>
       </span>

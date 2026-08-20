@@ -77,7 +77,7 @@ function InstallSheet({
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-40 bg-black/40" />
-        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[90vh] flex-col rounded-t-2xl bg-surface px-5 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-3 shadow-[var(--shadow-border)] outline-none">
+        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[90vh] flex-col rounded-t-2xl bg-surface px-5 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-3 ring-card outline-none">
           <Drawer.Handle className="mx-auto h-1.5 w-10 shrink-0 rounded-full bg-line" />
           <Drawer.Title className="sr-only">Add {brand.name} to your home screen</Drawer.Title>
           <Drawer.Description className="sr-only">
@@ -85,11 +85,7 @@ function InstallSheet({
           </Drawer.Description>
 
           <div className="mt-4 flex flex-col items-center text-center">
-            <img
-              src="/favicon.svg"
-              alt=""
-              className="size-14 rounded-xl shadow-[var(--shadow-border)]"
-            />
+            <img src="/favicon.svg" alt="" className="size-14 rounded-xl ring-card" />
             <h2 className="mt-4 font-display text-xl tracking-tight text-fg">
               Put the desk on your phone
             </h2>
@@ -139,9 +135,7 @@ function InstallSheet({
           </div>
 
           {ios ? (
-            <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
-              Safari only — Chrome on iOS cannot pin it.
-            </p>
+            <p className="mt-4 microlabel">Safari only — Chrome on iOS cannot pin it.</p>
           ) : null}
 
           <button
@@ -270,12 +264,10 @@ export function InstallDrawerButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full max-w-lg items-center justify-between rounded-xl bg-surface px-4 py-3 text-left text-sm font-semibold text-fg shadow-[var(--shadow-border)] hover:bg-raised"
+        className="flex w-full max-w-lg items-center justify-between rounded-xl bg-surface px-4 py-3 text-left text-sm font-semibold text-fg ring-card hover:bg-raised"
       >
         Add to phone
-        <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
-          Home screen
-        </span>
+        <span className="microlabel">Home screen</span>
       </button>
       <InstallSheet
         open={open}
