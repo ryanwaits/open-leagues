@@ -11,9 +11,14 @@ import { brand } from "@/skin/brand";
 import appCss from "../styles.css?url";
 
 const APP_NAME = brand.name;
-const host = import.meta.env.VITE_PUBLIC_HOSTNAME;
-// Absolute URL when the public host is known at build time; scrapers want it.
-const ogImage = host ? `https://${host}/og.jpg` : undefined;
+// Resolved at RUNTIME, not build time: SSR reads the env (set on the host —
+// scrapers only ever see the SSR HTML), the client reads its own location so
+// hydration agrees. Docker builds never need the value inlined.
+const host =
+  typeof window === "undefined"
+    ? (process.env.VITE_PUBLIC_HOSTNAME ?? import.meta.env.VITE_PUBLIC_HOSTNAME)
+    : window.location.hostname;
+const ogImage = host && host !== "localhost" ? `https://${host}/og.jpg` : undefined;
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   head: () => ({
