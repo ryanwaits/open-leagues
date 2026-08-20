@@ -55,7 +55,11 @@ const cache = new Map<string, { at: number; data: unknown }>();
 async function eget<T>(url: string, ttl: number): Promise<T> {
   const hit = cache.get(url);
   if (hit && Date.now() - hit.at < ttl) return hit.data as T;
-  const res = await fetch(url, { headers: { accept: "application/json" } });
+  // ESPN 403s datacenter requests without a browser-ish UA (same precedent
+  // as espn-ff.server.ts).
+  const res = await fetch(url, {
+    headers: { accept: "application/json", "user-agent": "Mozilla/5.0" },
+  });
   if (!res.ok) throw new Error(`ESPN failed (${res.status})`);
   const data = (await res.json()) as T;
   cache.set(url, { at: Date.now(), data });

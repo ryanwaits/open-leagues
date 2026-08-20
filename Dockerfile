@@ -19,6 +19,13 @@ ENV VITE_PUBLIC_HOSTNAME=${VITE_PUBLIC_HOSTNAME}
 # Standalone server output (Vercel preset stays the default outside Docker).
 RUN NITRO_PRESET=node-server bunx vite build
 
+# Nitro bundles PGLite's JS into _libs but not its wasm payloads; the loader
+# resolves them relative to itself. Without these, the first DB touch 500s.
+RUN cp node_modules/@electric-sql/pglite/dist/pglite.data \
+       node_modules/@electric-sql/pglite/dist/pglite.wasm \
+       node_modules/@electric-sql/pglite/dist/initdb.wasm \
+       .output/server/_libs/
+
 ENV NODE_ENV=production
 
 ENV PGLITE_DATA_DIR=/data/pglite \
