@@ -11,6 +11,11 @@ COPY . .
 # data/*.json (players-slim, stats, weekly-ppr) come with COPY .;
 # data/pglite is excluded via .dockerignore — volume mounts /data.
 
+# Render passes service env vars to Docker builds as build args; declare the
+# one Vite must inline (og:image absolute URL) so the build can see it.
+ARG VITE_PUBLIC_HOSTNAME
+ENV VITE_PUBLIC_HOSTNAME=${VITE_PUBLIC_HOSTNAME}
+
 # Standalone server output (Vercel preset stays the default outside Docker).
 RUN NITRO_PRESET=node-server bunx vite build
 
