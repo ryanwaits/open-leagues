@@ -328,6 +328,9 @@
   .ring-card-h:hover {
     box-shadow: var(--shadow-border-hover);
   }
+  .ring-card-lit {
+    box-shadow: var(--shadow-border-hover);
+  }
 
   [data-skin="boxscore"] .microlabel {
     font-family: var(--font-stack-sans);
@@ -351,6 +354,11 @@
   }
   [data-skin="boxscore"] .ring-card-h:hover {
     box-shadow: none;
+  }
+  [data-skin="boxscore"] .ring-card-lit {
+    box-shadow: none;
+    border-top: 1.5px solid var(--hairline-strong);
+    border-bottom: 1px solid var(--hairline-strong);
   }
   [data-skin="boxscore"] .push,
   [data-skin="boxscore"] .push:hover:not(:disabled),

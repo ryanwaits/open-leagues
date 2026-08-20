@@ -621,7 +621,7 @@ function ImportPage() {
                 onDrop={onDrop}
                 className={cn(
                   "rounded-xl bg-surface px-4 py-6 text-center ring-card transition-[box-shadow]",
-                  dragging && "ring-card-h",
+                  dragging && "ring-card-lit",
                 )}
               >
                 <FileUp className="mx-auto size-5 text-faint" />
