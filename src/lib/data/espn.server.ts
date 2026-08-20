@@ -58,7 +58,14 @@ async function eget<T>(url: string, ttl: number): Promise<T> {
   // ESPN 403s datacenter requests without a browser-ish UA (same precedent
   // as espn-ff.server.ts).
   const res = await fetch(url, {
-    headers: { accept: "application/json", "user-agent": "Mozilla/5.0" },
+    headers: {
+      accept: "application/json",
+      "accept-language": "en-US,en;q=0.9",
+      // Bare "Mozilla/5.0" reads as a bot to ESPN's edge from datacenter IPs;
+      // a full browser UA passes.
+      "user-agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+    },
   });
   if (!res.ok) throw new Error(`ESPN failed (${res.status})`);
   const data = (await res.json()) as T;
