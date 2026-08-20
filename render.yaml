@@ -1,0 +1,36 @@
+# Render Blueprint — one web service, PGLite on a persistent disk.
+# Launch once from the Render dashboard (New → Blueprint → this repo);
+# afterwards this file is the source of truth and syncs on push.
+services:
+  - type: web
+    name: open-ff
+    runtime: docker
+    plan: starter
+    region: virginia
+    healthCheckPath: /
+    autoDeploy: true
+    # One instance only — the disk is the database. Deploys pause briefly.
+    numInstances: 1
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
+    domains:
+      - leagues.waits.dev
+    envVars:
+      - key: PGLITE_DATA_DIR
+        value: /data/pglite
+      - key: OPENFF_SELF_TICK
+        value: "1"
+      # Secrets — set values in the dashboard at blueprint launch; never here.
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        sync: false
+      # Optional Google sign-in; leave blank to run email-only.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
