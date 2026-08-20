@@ -13,7 +13,9 @@ import type {
   TeamBox,
 } from "./types";
 
-const ESPN = "https://site.api.espn.com/apis/site/v2/sports/football/nfl";
+// site.web.api mirrors the apis/site/v2 paths and, unlike site.api, is not
+// IP-blocked from datacenter hosts (Render probed 403 vs 200, 2026-08-20).
+const ESPN = "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl";
 
 type EspnCompetitor = {
   id?: string;
