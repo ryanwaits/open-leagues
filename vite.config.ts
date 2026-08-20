@@ -146,6 +146,21 @@ export default defineConfig(({ command }) => ({
     strictPort: true,
   },
   resolve: { tsconfigPaths: true },
+  build: {
+    rollupOptions: {
+      output: {
+        // CSS keeps a STABLE name. The server and client environments hash
+        // styles.css differently (`?url`), so a hashed name makes SSR link a
+        // file that only exists under the client's hash — the /assets 404
+        // falls back to HTML and the first paint renders unstyled. Un-hashed
+        // CSS cannot diverge; freshness rides the ETag instead.
+        assetFileNames: (info) =>
+          (info.names?.[0] ?? "").endsWith(".css")
+            ? "assets/[name][extname]"
+            : "assets/[name]-[hash][extname]",
+      },
+    },
+  },
   plugins: [
     pgliteBootstrapPlugin(),
     // Before tanstackStart so /auth/popup never falls through to the SPA.
