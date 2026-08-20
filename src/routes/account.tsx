@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { InstallCoach } from "@/components/install-coach";
+import { InstallDrawerButton } from "@/components/install-drawer";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +30,7 @@ function AccountPage() {
       <AppearancePanel />
       <AgentTokensPanel />
       <div className="mt-10 max-w-lg">
-        <InstallCoach />
+        <InstallDrawerButton />
       </div>
       <Link to="/" className="mt-8 inline-block text-sm text-muted hover:text-fg">
         Back to the desk

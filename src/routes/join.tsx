@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { A2HS_JOIN_KEY } from "@/lib/a2hs";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { joinLeague, previewInvite } from "@/lib/league/fns";
 import { useLeagueStore } from "@/lib/store";
@@ -43,6 +44,11 @@ function JoinLeague() {
       }),
     onSuccess: (res) => {
       remember({ leagueId: res.leagueId, name: res.name || "My league", season: res.season });
+      try {
+        localStorage.setItem(A2HS_JOIN_KEY, "1");
+      } catch {
+        /* ignore */
+      }
       void navigate({ to: "/league/$leagueId", params: { leagueId: res.leagueId } });
     },
     onError: (err) => {

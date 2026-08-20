@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import { Radio, Trophy, UserRound } from "lucide-react";
+import { InstallDrawer } from "@/components/install-drawer";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignedIn, SignedOut, UserButton } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -136,6 +137,8 @@ export function Shell({
       >
         {children}
       </main>
+
+      <InstallDrawer />
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/95 backdrop-blur-md md:hidden">
         {tabs?.length ? (

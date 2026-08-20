@@ -32,7 +32,7 @@ test("home onboarding split hides first-run noise", () => {
   const joinSrc = readFileSync(join(root, "src/routes/join.tsx"), "utf8");
   assert.doesNotMatch(joinSrc, /InstallCoach/);
   const account = readFileSync(join(root, "src/routes/account.tsx"), "utf8");
-  assert.match(account, /InstallCoach/);
+  assert.match(account, /InstallDrawerButton/);
   const fresh = readFileSync(join(root, "src/routes/new.tsx"), "utf8");
   assert.match(fresh, /Start empty instead/);
 });
