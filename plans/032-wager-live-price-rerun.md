@@ -4,7 +4,10 @@
 > Do not restyle the ticket. Do not add markets. Follow the steps. If a
 > STOP fires, report — do not invent a fake price.
 >
-> **Drift check (run first)**: `git diff --stat 84d684e..HEAD -- scripts/wager-qa.mjs src/components/wager-ticket.tsx src/components/book-panel.tsx`
+> **Drift check (run first)**: `git diff --stat 8e660ba..HEAD -- scripts/wager-qa.mjs src/components/wager-ticket.tsx src/components/book-panel.tsx`
+> (Reconciled 2026-08-20 at `8e660ba`: 049's classname codemod restyled both
+> components — cosmetic only; `wager-no-price`/`wager-price` testids intact
+> at book-panel.tsx:28/196; wager-qa.mjs unchanged. Finding still live.)
 
 ## Status
 
@@ -13,8 +16,9 @@
 - **Risk**: LOW
 - **Depends on**: plans/029-wager-ticket-qa.md (DONE `dd9bc53`)
 - **Category**: tests
-- **Planned at**: commit `84d684e`, 2026-08-20 (reconciled; execute that day
-  STOPPED — throwaway league still `wager-no-price`. Finding live.)
+- **Planned at**: commit `84d684e`, 2026-08-20 (reconciled `8f04751`;
+  execute that day STOPPED — throwaway league still `wager-no-price`.
+  Finding live; `scripts/wager-qa.mjs` / ticket files unchanged.)
 
 ## Why this matters
 

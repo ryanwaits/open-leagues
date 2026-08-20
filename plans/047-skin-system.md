@@ -1,135 +1,363 @@
-# 047 — Runtime skin system (Ledger + Box Score, N skins later)
+# Plan 047: `data-skin` runtime skins — Ledger default, Box Score behind a per-user picker
 
-> Reconciled 2026-08-20 at `84d684e`. Finding still live (`data-skin` not in
-> app source). `__root.tsx` now mounts `PushRegister` (037) — keep it. Still
-> design-incomplete: `review-plan` before execute.
+> **Executor instructions**: Follow step by step. Run every verification
+> command and confirm the expected result before the next step. On any STOP
+> condition, stop and report — do not improvise. When done, update this
+> plan's row in `plans/README.md`.
+>
+> **Drift check (run first)**:
+> `git diff --stat 8f04751..HEAD -- src/styles.css src/skin src/lib/theme.ts src/routes/__root.tsx src/routes/account.tsx src/components/theme-toggle.tsx`
+> Any changed in-scope file → compare the "Current state" excerpts below
+> against live code; on a mismatch, STOP.
 
-**Goal:** `data-skin` on `<html>` switches the whole look — colors, radii, type,
-label voice, button/card structure — at runtime, like `data-theme` does for
-light/dark. Ledger stays byte-identical as default. Box Score ships as the
-second skin, proving the axis. Skin × theme is a matrix: every skin defines
-light + dark.
+## Status
 
-**Non-goals:** no component forks per skin, no CSS-in-JS, no engine/auth
-changes (skin SKILL.md "do not edit" list holds). `data-accent` ramp survives
-as a Ledger-internal knob.
+- **Priority**: P2
+- **Effort**: M (this slice)
+- **Risk**: MED (touches global CSS contract; mitigated by no-visual-change gates)
+- **Depends on**: none. **Plan 048 must run AFTER this plan** (both edit `src/routes/account.tsx`).
+- **Category**: dx / direction
+- **Planned at**: commit `8f04751`, 2026-08-20
 
-Design source: the "Box Score" canvas (claude.ai artifact `a9ee7f62`),
-Tokens + DarkTokens artboards are the palette of record.
+## Why this matters
 
-## Phase A — make skin a token axis (no visual change)
+The app has one skin ("Ledger": cream, rounded, green) restyled only by
+editing files. A second full design ("Box Score": paper white, ink rules,
+electric blue, square corners — designed on the Box Score canvas, artifact
+`a9ee7f62`) needs to coexist at runtime, per user, without forking components.
+This plan builds the axis: a `data-skin` attribute beside `data-theme`, the
+token contract widened so radii/fonts swap with it, and a token-level Box
+Score skin behind an `/account` picker. Ledger stays byte-identical and
+default.
 
-1. `src/skin/tokens.css`: current `:root` values become the implicit `ledger`
-   skin (unchanged selectors → zero regression). Add raw tokens for what
-   `@theme inline` currently hardcodes: `--r-xs…--r-xl`, `--r-pill`,
-   `--font-stack-display/sans/mono`.
-2. `src/styles.css` `@theme inline`: point `--radius-*`, `--font-*` at those
-   vars instead of literals. `--shadow-border` already composes vars; add
-   `--rule` (row divider color) token, alias `--color-line` to it.
-3. Verify: build + typecheck + screenshot diff — pixel-identical.
+**This plan is slice 1 only.** The label-voice codemod ("Phase C": `.microlabel`,
+`.card`, `.push`/`.hl` per-skin styling, ~155 uppercase-tracking sites, 94
+shadow-border sites) and the Box Score flourishes ("Phase E": ghost numerals,
+slot rails, agate tables) are **deferred to follow-up plans** written after
+this lands (see Maintenance notes). Until then Box Score renders as a
+token-level reskin — correct colors/radii/fonts, Ledger's label voice. That is
+acceptable and expected.
 
-## Phase B — skin plumbing
+## Current state
 
-1. `src/lib/theme.ts`: add `skinPref` (localStorage `skin`, default `ledger`)
-   beside theme pref; stamp `data-skin` in the same pre-paint inline script in
-   `__root.tsx` (no flash). Keep `theme-color` meta in sync per skin+mode.
-2. Settings (league setup → appearance, plus the shell toggle area): skin
-   picker. Per-user pref only in this slice.
+- `src/skin/tokens.css` — raw color/shadow values on `:root`. Light
+  `:root` ends ~line 35; last token is `--press-cast: rgb(63 167 101 / 0.4)`
+  at line 34 — add radius/font tokens **there**, not after the dark
+  `--press-cast` at line 90. Dark via `[data-theme="dark"]` +
+  `prefers-color-scheme`. Accent ramp at `[data-accent="blue"]`
+  (lines 96–122). No radius/font tokens. No `data-skin` anywhere in
+  `src/` (verified: 0 hits).
+- `src/styles.css` — Tailwind v4; maps tokens via `@theme inline`. Radii and
+  fonts are LITERALS today:
 
-## Phase C — semantic voice classes (the codemod)
+  ```css
+  /* src/styles.css:56-66 */
+  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  ...
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+  ```
 
-Mechanical, Ledger-identical output:
+  Imports at top: `@import "tailwindcss";` / `@import "tw-animate-css";` /
+  `@import "./skin/tokens.css";` (line 3).
+- `src/lib/theme.ts` — theme store: `THEME_KEY = "ledger-theme"` (line 6),
+  `NO_FLASH_SCRIPT` (line 13, inline pre-paint stamper), `readPref`,
+  `setThemePref`, `useTheme` via `useSyncExternalStore` + a module-level
+  `listeners` Set. Copy these patterns exactly for skin.
+- `src/routes/__root.tsx` — inlines `NO_FLASH_SCRIPT` in `<head>`; hardcoded
+  `theme-color` metas (lines ~30–31: `#f7f4ea` light / `#14161a` dark);
+  mounts `<PushRegister />` (leave alone); Google Fonts link (leave — Box
+  Score uses system Helvetica, loads nothing).
+- `src/components/theme-toggle.tsx` — segmented `role="radiogroup"` control;
+  the structural exemplar for the skin picker.
+- `src/routes/account.tsx` — "You" header (line 22), user blurb, then
+  `<AgentTokensPanel />` (line 28), then `<InstallCoach />` (line 30).
+  The "Agent tokens" `h2` lives inside the panel (line 72). There is NO
+  appearance section today; insert one **between the user blurb and
+  `<AgentTokensPanel />`**. Section headers use
+  `font-mono text-[11px] uppercase tracking-[0.16em] text-faint` — match.
+- `src/skin/brand.test.mjs` — node:test source-assertion pattern; model new
+  tests on it.
+- Cascade fact: `[data-accent="blue"]` and `[data-skin="boxscore"]` have equal
+  specificity (0,1,0). `boxscore.css` is imported AFTER `tokens.css`, so with
+  both attributes present the skin wins. Intended; do not "fix".
 
-1. `.microlabel` utility = today's `font-mono text-[10px/11px] uppercase
-   tracking-*` recipe, defined once in styles.css under `[data-skin]` scope.
-   Codemod ~190 call sites. Box Score restyles it italic 12px (or agate caps
-   for table heads — second class `.field-label`).
-2. `.push`: keep name; per-skin block. Ledger = 3D press. Box Score = flat
-   blue pill, no transform.
-3. `.hl`: per-skin band color/thickness (Ledger `--highlight`, Box Score
-   `--tint` at baseline).
-4. `.card` utility = `bg-surface rounded-xl shadow-[var(--shadow-border)]`
-   (100+ sites). Ledger keeps lift; Box Score sets `--lift: 0 0 #0000` and
-   ring → hairline rule, radius 0 via Phase A tokens. Zebra: components
-   already use `border-line` + `bg` tokens, so white-row look falls out of
-   token values; `bg-raised` rows (129 sites) read as "earned fill" — audit
-   the handful that are texture-not-signal.
+## Commands you will need
 
-## Phase D — boxscore skin file
+| Purpose | Command | Expected on success |
+|---|---|---|
+| Typecheck | `bun run typecheck` | exit 0 |
+| Lint | `bun run lint` | exit 0 |
+| Tests | `bun test src scripts` | all pass |
+| Build | `bun run build` | exit 0. NOTE: chains `db:migrate`, which writes the local `data/pglite` dir — expected, not an error. |
+| Dev server | `bun run dev` (port 8080) | serves app |
 
-`src/skin/skins/boxscore.css`, imported after tokens.css:
-`[data-skin="boxscore"]` + dark blocks. Values from the canvas:
-paper `#FBFAF6`, panel `#F1F0EA`, panel-2 `#E9E8E1`, hairline `#CFCEC5`,
-ink `#101114/#54565A/#8F9194`, brand `#2118C8`, deep `#150E9E`, link
-`#2B46E0`, tint `#B9C0EE`, wash `#E9EBF8`, alarm `#D2422E` (marks only);
-dark: paper `#141519`, ink `#ECEBE4`, blue `#2A2BDC`, link `#8691F7`,
-hair `#2E2F34`, alarm `#EE6A52`. Radii 0 (pill 999), Helvetica stack,
-lift none.
+Package manager is **bun** (`packageManager: bun@1.3.10`). No installs needed.
 
-## Phase E — flourishes (ships with D)
+## Scope
 
-Ghost numerals (`<GhostNum>` renders per-page number, `display:none` in
-ledger), gray slot rails, agate spec tables, stamp/barcode on recap. Each is
-additive CSS/components gated on `[data-skin="boxscore"]`.
+**In scope** (only files you may modify/create):
+- `src/skin/tokens.css` (add radius/font raw tokens)
+- `src/skin/skins/boxscore.css` (create)
+- `src/styles.css` (var indirection + one import line)
+- `src/lib/theme.ts` (skin store + NO_FLASH extension)
+- `src/routes/__root.tsx` (theme-color sync ONLY)
+- `src/routes/account.tsx` (Appearance section)
+- `src/skin/skin.test.mjs` (create)
+- `src/skin/SKILL.md` (rewrite)
+- `plans/README.md` (status row)
 
-## QA gate
+**Out of scope** (do NOT touch):
+- `src/lib/league/**`, `src/lib/auth/**`, `server/**`, `public/__grok/**`,
+  `public/sw.js`, `src/components/push-register.tsx`, `<PreviewHostBridge />`
+- `src/components/theme-toggle.tsx` (read as exemplar only; theme control
+  stays in the header — do NOT move it to /account)
+- `src/lib/auth/gates.tsx` (no new menu rows in this plan)
+- Every `.tsx` component classname (the codemod is a later plan)
+- `src/components/install-coach.tsx` (plan 048's file)
 
-Per phase: `bun run typecheck && bun run build && bun run lint`. Screenshot
-both skins × both modes on home/standings/matchups/player (agent-browser).
-Ledger default must be pixel-identical through Phase C.
+## Git workflow
 
-## Execution notes (read before starting — file-level map)
+- Work directly on the current branch. Commit per step, conventional style
+  (repo examples: `feat: restyle claims and moves on the roster page`,
+  `fix: keep push sub when leaving one league`). Do not push.
 
-**Slice order:** A → B → minimal D (token-only boxscore so the picker is real)
-→ C (codemod) → full D+E. A picker with one skin is pointless; minimal D ships
-in slice 1.
+## Steps
 
-- `src/lib/theme.ts` — pattern to copy: `THEME_KEY`/`readPref`/
-  `useSyncExternalStore` + `NO_FLASH_SCRIPT` string. Add `SKIN_KEY="ledger-skin"`,
-  `SkinPref = "ledger" | "boxscore"`, `useSkin()`. Convention: ledger = attribute
-  ABSENT (like data-accent); only stamp `data-skin="boxscore"`. Extend
-  `NO_FLASH_SCRIPT` to stamp skin in the same pre-paint pass (it is already
-  inlined in `__root.tsx` head).
-- `src/routes/__root.tsx` — `theme-color` metas are hardcoded to Ledger cream/
-  dark (`#f7f4ea`/`#14161a`) via `prefers-color-scheme` media. Skin switch must
-  update them at runtime (small effect in RootDocument keyed on skin+resolved;
-  boxscore: `#fbfaf6`/`#141519`). Google Fonts link (Jakarta/JetBrains) stays —
-  Box Score uses system Helvetica, loads nothing extra.
-- `src/styles.css` — `@theme inline` radii (`--radius-xs: 8px` … literals) and
-  fonts (`--font-display` literal stacks) become `var(--r-*)` /
-  `var(--font-stack-*)` references. `@theme inline` emits the var reference
-  into utilities, so runtime swap works like the colors already do.
-- `src/skin/tokens.css` — add to `:root` (Ledger values): `--r-xs:8px --r-sm:10px
-  --r-md:14px --r-lg:18px --r-xl:22px --r-pill:999px`, `--font-stack-display/
-  sans/mono` (current Jakarta/JetBrains stacks).
-- `src/skin/skins/boxscore.css` (new, imported after tokens.css):
-  `[data-skin="boxscore"]` light + dark blocks per the palette in Phase D;
-  radii → 0 except `--r-pill:999px`; Helvetica/Courier stacks; `--lift: 0 0 #0000`.
-- Skin picker: settings page appearance area + document in shell; per-user only.
-- Toaster in `__root.tsx` uses `rounded-lg` + literal shadow classNames — swept
-  up by Phase C `.card`/token pass, fine in slice 1 (radius token makes it
-  square already).
-- `src/skin/SKILL.md` rewrite lands in Phase B (decision 6).
+### Step 1: Raw radius + font tokens in tokens.css
 
-**QA slice 1:** typecheck/build/lint green; agent-browser screenshots of home +
-standings in ledger (must be pixel-identical to today) and boxscore light/dark.
+In `src/skin/tokens.css`, inside the existing `:root` block (after
+`--press-cast`), add:
 
-## Decisions (2026-08-19)
+```css
+  /* shape + type — per-skin knobs; Tailwind's @theme reads these names */
+  --r-xs: 8px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 22px;
+  --r-pill: 999px;
+  --font-stack-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-stack-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-stack-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+```
 
-1. Skin scope: **per-user** localStorage pref only. No DB column.
-2. `data-accent="blue"`: **keep** as a Ledger-internal knob (orthogonal:
-   accent = color-within-a-skin, skin = whole look). ~30 lines, harmless.
-   Kill later if two-blues confusion shows up.
-3. Fonts are per-skin tokens: **Ledger keeps Plus Jakarta / JetBrains Mono;
-   Box Score matches the mocks** — Helvetica Neue system stack
-   (`"Helvetica Neue", Helvetica, Arial, sans-serif`), Courier stack for
-   record-ID mono. No webfont license needed.
-4. **Ledger stays default** for now.
-5. Phase E flourishes ship **with the first Box Score release** (ghost
-   numerals, slot rails, agate spec tables, recap stamp).
-6. grok.me is no longer a constraint. Rewrite `src/skin/SKILL.md` to
-   document the runtime skin system (how to author a skin file); prune the
-   grok.me-HOSTING paragraphs (Grok install tutorial, host-slug naming,
-   fork-and-edit contract). **PWA itself is untouched and load-bearing** —
-   manifest, `grok-pwa` middleware, and A2HS install path all stay; the
-   install UX upgrade is plan 048. The "do not edit" engine/auth list holds.
+Do NOT add them to the `[data-theme="dark"]` blocks (shape/type don't vary by
+mode).
+
+**Verify**: `grep -c "\-\-r-xs" src/skin/tokens.css` → `1`
+
+### Step 2: styles.css points at the vars
+
+In `src/styles.css` `@theme inline`, replace the literals from the excerpt
+above with references — value-for-value, nothing else in the block changes:
+
+```css
+  --font-display: var(--font-stack-display);
+  --font-sans: var(--font-stack-sans);
+  --font-mono: var(--font-stack-mono);
+  ...
+  --radius-xs: var(--r-xs);
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+  --radius-pill: var(--r-pill);
+```
+
+**Verify**: `bun run typecheck && bun run lint` → both exit 0.
+`grep -n "radius-xs: 8px" src/styles.css` → no matches.
+Then `bun run dev`, load `http://localhost:8080` — cards still rounded,
+fonts unchanged (Ledger must look identical).
+
+### Step 3: skin store in theme.ts
+
+Append to `src/lib/theme.ts`, copying its own patterns (same `listeners` set,
+same try/catch localStorage guards):
+
+```ts
+export type SkinPref = "ledger" | "boxscore";
+export const SKIN_KEY = "ledger-skin";   // the ONE key; no other spelling
+
+export function readSkin(): SkinPref { /* localStorage[SKIN_KEY]==="boxscore" ? "boxscore" : "ledger" */ }
+export function setSkinPref(s: SkinPref) {
+  // "ledger" → removeItem + removeAttribute("data-skin")  (absent = default,
+  // same convention as data-accent); "boxscore" → setItem + setAttribute.
+  // Then emit().
+}
+export function useSkin() { /* useSyncExternalStore(subscribe, readSkin, () => "ledger") */ }
+```
+
+Extend `NO_FLASH_SCRIPT` (keep it one literal string): inside the existing
+try block, after the theme stamp, add the equivalent of:
+`var s=localStorage.getItem("ledger-skin");if(s==="boxscore")document.documentElement.setAttribute("data-skin",s);`
+
+**Verify**: `bun run typecheck` → exit 0.
+
+### Step 4: boxscore skin file
+
+Create `src/skin/skins/boxscore.css` with EXACTLY this contract (palette of
+record: Box Score canvas Tokens/DarkTokens artboards):
+
+```css
+/* Box Score — ink rules, one electric blue, square corners. Loaded after
+   tokens.css so it outranks the accent ramp at equal specificity. */
+[data-skin="boxscore"] {
+  --paper: #fbfaf6;
+  --paper-raised: #ffffff;
+  --paper-sunken: #f1f0ea;
+  --band: #e9e8e1;
+  --ink: #101114;
+  --ink-2: #54565a;
+  --ink-3: #8f9194;
+  --hairline: #cfcec5;
+  --hairline-strong: #101114;
+  --brand: #2118c8;
+  --brand-deep: #150e9e;
+  --brand-strong: #2b46e0;
+  --brand-ink: #f5f6ff;
+  --highlight: #b9c0ee;
+  --alarm: #d2422e;
+  --caution: #c4921a;
+  --lift: 0 0 0 0 rgb(0 0 0 / 0);
+  --lift-hover: 0 0 0 0 rgb(0 0 0 / 0);
+  --press-cast: rgb(33 24 200 / 0.25);
+  --r-xs: 0px; --r-sm: 0px; --r-md: 0px; --r-lg: 0px; --r-xl: 0px;
+  --r-pill: 999px;
+  --font-stack-display: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-stack-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-stack-mono: "Courier New", Courier, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-skin="boxscore"]:not([data-theme="light"]) { /* dark block below */ }
+}
+[data-skin="boxscore"][data-theme="dark"] { /* same dark block */ }
+```
+
+Dark block values (colors only — shape/type don't redeclare):
+paper `#141519`, paper-raised `#1a1b20`, paper-sunken `#1f2024`, band
+`#26272b`, ink `#ecebe4`, ink-2 `#a4a5aa`, ink-3 `#6f7177`, hairline
+`#2e2f34`, hairline-strong `#ecebe4`, brand `#2a2bdc`, brand-deep `#1b16b8`,
+brand-strong `#8691f7`, brand-ink `#f5f6ff`, highlight `#2c3384`, alarm
+`#ee6a52`, caution `#e3b341`, lift/lift-hover `0 0 0 0 rgb(0 0 0 / 0)`,
+press-cast `rgb(0 0 0 / 0.5)`.
+
+In `src/styles.css` add directly after line 3's tokens import:
+`@import "./skin/skins/boxscore.css";`
+
+**Verify**: `bun run build` → exit 0. In the dev app run
+`document.documentElement.setAttribute("data-skin","boxscore")` in the
+console → page turns paper-white/blue with square cards; removing the
+attribute restores Ledger exactly.
+
+### Step 5: theme-color meta sync
+
+In `RootDocument` (`src/routes/__root.tsx`), add a `useEffect` keyed on
+`useSkin()` + `useTheme().resolved` that rewrites both `meta[name=theme-color]`
+elements' `content`: ledger `#f7f4ea`/`#14161a`, boxscore `#fbfaf6`/`#141519`.
+Leave the SSR'd meta values (Ledger) as-is for first paint.
+
+**Verify**: `bun run typecheck` → exit 0.
+
+### Step 6: /account Appearance section + picker
+
+In `src/routes/account.tsx`, insert a new section between the header and
+"Agent tokens": `h2` labeled `Appearance` (match the mono-caps section-header
+classes quoted in Current state), containing a two-option segmented control
+labeled `Ledger` / `Box Score` bound to `useSkin()` — structure and classes
+modeled on `src/components/theme-toggle.tsx` (`role="radiogroup"`, pill
+buttons, `mounted` guard for SSR agreement).
+
+**Verify**: `bun run typecheck && bun run lint` → exit 0. In dev: `/account`
+shows the control; toggling reskins instantly and survives reload (pre-paint,
+no flash: hard-reload with boxscore selected must not flash cream).
+
+### Step 7: tests
+
+Create `src/skin/skin.test.mjs` modeled on `src/skin/brand.test.mjs`
+(node:test + readFileSync source assertions):
+
+1. `styles.css` contains `var(--r-xs)` and `var(--font-stack-sans)` and does
+   NOT contain `--radius-xs: 8px`.
+2. `tokens.css` defines all of: `--r-xs --r-sm --r-md --r-lg --r-xl --r-pill
+   --font-stack-display --font-stack-sans --font-stack-mono`.
+3. `skins/boxscore.css` defines every name in the full contract list (loop
+   over: paper, paper-raised, paper-sunken, band, ink, ink-2, ink-3,
+   hairline, hairline-strong, brand, brand-deep, brand-strong, brand-ink,
+   highlight, alarm, caution, lift, press-cast, r-pill, font-stack-sans).
+4. `theme.ts` exports `SKIN_KEY` = `"ledger-skin"` and `NO_FLASH_SCRIPT`
+   mentions `data-skin`.
+
+**Verify**: `bun test src/skin` → all pass (existing brand tests included).
+
+### Step 8: rewrite src/skin/SKILL.md
+
+Replace the fork-and-edit + grok.me content: document (a) the three-layer
+token system, (b) how to author a new skin = one CSS file defining the Step 4
+contract under `[data-skin="<name>"]` + registering the pref value, (c) keep
+the existing "Do not edit" engine/auth list verbatim. DELETE: Grok install
+tutorial references, host-slug PWA naming, `git merge -X ours` fork guidance.
+Do NOT delete anything about the manifest or `public/__grok` file mechanics —
+they are load-bearing (PWA install path).
+
+**Verify**: `grep -ci "grok.me" src/skin/SKILL.md` → `0`.
+
+## Test plan
+
+Covered by Step 7 (contract tests) + existing suite. Manual: screenshot pass
+with agent-browser (per your environment rules) of `/` and a league standings
+page in ledger-light, ledger-dark, boxscore-light, boxscore-dark; ledger
+shots must be indistinguishable from pre-change (this is the no-regression
+gate for Steps 1–2; capture "before" shots before Step 1).
+
+## Done criteria
+
+- [ ] `bun run typecheck`, `bun run lint`, `bun test src scripts`, `bun run build` all exit 0
+- [ ] `grep -rn "data-skin" src/lib/theme.ts src/skin | wc -l` ≥ 3
+- [ ] `grep -n "radius-xs: 8px" src/styles.css` → no matches
+- [ ] Ledger before/after screenshots indistinguishable
+- [ ] Boxscore toggles live from `/account`, persists, no first-paint flash
+- [ ] `git status` shows only in-scope files modified
+- [ ] `plans/README.md` row updated
+
+## STOP conditions
+
+- Drift check shows changes to `src/styles.css` or `src/skin/tokens.css`
+  that contradict the Current state excerpts.
+- After Step 2 the dev app's radii or fonts visibly change in Ledger →
+  the `@theme inline` var indirection is not resolving; STOP, report, do not
+  work around with duplicate literals.
+- Plan 048 has already modified `src/routes/account.tsx` (check
+  `git log --oneline -3 -- src/routes/account.tsx`) → STOP and report the
+  ordering conflict.
+- Any step seems to require editing a component `.tsx` classname → that is
+  Phase C (a later plan); STOP.
+
+## Maintenance notes
+
+- **Deferred follow-ups** (write as plans 049/050 after this lands, per the
+  operator's "flourishes ship with first Box Score release" decision — the
+  release is not cut until they land): (1) voice codemod — `.microlabel` /
+  `.field-label` / `.card` utilities replacing ~155 `uppercase tracking-[`
+  sites and ~94 `shadow-[var(--shadow-border)]` sites, plus per-skin `.push`
+  and `.hl`; re-census counts first. (2) Box Score flourishes — `GhostNum`
+  component (new; zero refs today), slot rails, agate spec tables, recap
+  stamp, all gated on `[data-skin="boxscore"]`; spec against the canvas.
+- `data-accent` remains a Ledger-internal knob; skin file order in
+  `styles.css` is what beats it — a reviewer reordering imports breaks that.
+- Reviewer scrutiny: the NO_FLASH_SCRIPT string (it is un-typechecked JS in a
+  string) and the Step 2 diff being value-for-value.
+
+## Decisions log (operator, 2026-08-19/20)
+
+Per-user pref only · accent knob kept · Ledger default · Box Score fonts =
+Helvetica system stack per the mocks · flourishes ship with the first Box
+Score release (via follow-up plans) · SKILL.md rewritten, grok.me pruned,
+PWA untouched.

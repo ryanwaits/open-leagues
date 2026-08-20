@@ -51,28 +51,102 @@ conditions, update your row when done.
 
 ## Last reconcile
 
-2026-08-20 against `84d684e`. No BLOCKED / IN PROGRESS.
+2026-08-20 (third pass) against `8e660ba`. No BLOCKED / IN PROGRESS.
+
+Since second pass: 049 voice codemod (`cfbacc8` + revision `06091c8`) and
+050 flourishes (`8e660ba`) executed + reviewed + APPROVED via the execute
+loop. **Box Score release complete (047+049+050)** — tokens, voice,
+flourishes all landed, Ledger pixel-identical throughout, verified in
+browser both skins × both modes. 50 of 50 authored plans now DONE except
+032 (ops-gated).
+
+**Verified this pass:** full gates green at `8e660ba` (typecheck 0, 184/0
+tests, build 0). 032 drift check re-run: wager files restyled by 049
+(cosmetic; testids intact, wager-qa.mjs unchanged) — pin refreshed to
+`8e660ba`, finding still live.
+
+**Operator queue (nothing executable by an agent):** push/deploy ~30 local
+commits on main · real-device iOS/Android install pass (048) · iOS
+step-copy variant call (048) · run 032 when a week quotes a line.
+
+## Second-pass reconcile (superseded)
+
+2026-08-20 (second pass) against `505ccb2`. No BLOCKED / IN PROGRESS.
+
+Commits since prior reconcile (`8f04751`): plan 047 executed + reviewed
+(`ed6cdd4` + revision `303e7a0`), plan 048 executed + reviewed
+(`505ccb2`) — both APPROVED via the improve execute loop, dispatched
+executor, tech-lead review, one revision round (047) and one sanctioned
+out-of-scope test-assertion fix (048). All local on main, nothing pushed.
+
+**Verified this pass (cheap, on `505ccb2`):**
+- 047/048 done criteria re-run in full during review (typecheck 0, tests
+  175/0 with the known `import.meta.glob` baseline error, build 0, scoped
+  biome no new findings). Live-browser verified: skin toggle + persistence
+  + no-flash reload, drawer auto/manual/dismiss branches.
+- 026: join still carries `?code=` through login redirect (`join.tsx:60,74`)
+  after 048's edit; `src/skin/*` intact (SKILL.md deliberately rewritten by
+  047 — fork-and-edit contract replaced by the runtime-skin doc; grok.me
+  hosting refs pruned by design, PWA mechanics kept).
+- 037: `public/sw.js` present, still no `cache.put`; PushRegister untouched
+  by 047/048 (out-of-scope lists held).
+- Aggregate: `bun test src scripts` green covers the source-assertion suites
+  (030 hosted GETs, join-redirect, brand, skin, a2hs, faab/money/sw math).
+- One environmental note: a PGLite WAL corruption from an unclean build
+  shutdown surfaced during review; repaired with `bun run db:repair`
+  (gitignored `data/pglite` only). Recurs occasionally after interrupted
+  `bun run build` — known, documented, not a regression.
+
+**Refreshed TODOs (this pass):**
+- 032 unchanged: zero drift on wager files since `84d684e`, finding live,
+  purely awaiting a week that quotes a line (ops condition, not code).
+
+**Owed next (not yet authored):** 049 voice codemod (microlabel/card
+utilities, per-skin `.push`/`.hl`; re-census counts first — 047's
+maintenance notes carry the spec seed) and 050 Box Score flourishes
+(ghost numerals, slot rails, agate tables, recap stamp; palette of record
+is the Box Score canvas). The Box Score release is not cut until both
+land. Operator items open: real-device iOS/Android install pass (048),
+iOS step-copy variant decision (048).
+
+## Prior reconcile
+
+2026-08-20 against `8f04751`. No BLOCKED / IN PROGRESS.
+
+Commits since prior reconcile (`84d684e`): unsigned league views bounce
+to login (`23e804e`), PGLite empty-reset + WIFFL seed (`5421c47`),
+guest/member/commish onboarding (`eaf1152`), Google+push operator docs
+(`18884ef`), plan-note refresh (`8f04751`). That landed the previously
+dirty account/home/auth/db work. Do not fold leftover product work into
+047/048.
 
 **Verified DONE (cheap):**
-- 035 `GOOGLE_CLIENT_*` + `configuredLoginSocials` · `112f48a`
-- 037 `public/sw.js` (no `cache.put`) + `void notifyRoster` on clock/trade/waiver · `07ca3c3`/`fc4ef7f`/`84d684e`
+- 035 `GOOGLE_CLIENT_*` + `configuredLoginSocials`
+- 037 `public/sw.js` (no `cache.put`) + `void notifyRoster` on clock/trade/waiver
 - 034 `exportLeague` · 046 `docker-compose.yml` + `OPENFF_SELF_TICK`
-- 038–044 / 045 still present from last reconcile
+- 030 `assertLeagueViewer` still on hosted GETs (`getDesk`)
+- 038 `getAgentContext` · 045 `commitImportPack`
 
-**Refreshed TODOs** (Planned-at → `84d684e`): 032, 047, 048.
+**Refreshed TODOs:**
+- 032 still ops; wager files unchanged since `84d684e`; finding live
+  (no `$1` path).
+- 047 excerpts still match HEAD (`data-skin` / `--r-xs` absent in
+  `src/`). Tightened `account.tsx` / `tokens.css` line pointers.
+  Planned-at stays `8f04751`.
+- 048 join `remember()` excerpt was wrong even at planned-at (object
+  form since `eaf1152`). Finding live (`InstallCoach` still
+  account-only). Planned-at stays `8f04751`.
 
-**Rejected:** none. Findings still live: no `$1` live-line click
-(`032` execute 2026-08-20 STOPPED: `wager-no-price`). No Yahoo importer.
+**Rejected:** none. Yahoo importer still YDN-gated.
 
-**Dirty tree (not this backlog):** uncommitted account/home/auth/db work
-plus `README.md` operator checklists for Google + push. Do not fold
-those into 047/048 without a separate plan.
+**Dirty tree:** only `plans/` (047/048 review-plan rewrite + this
+reconcile). Source tree clean.
 
 **Indexed from outside this chain:** `047` skin, `048` install drawer
-(not improve-template complete — `review-plan` before execute).
+(re-templated to executor grade at `8f04751`, 2026-08-20 review-plan pass).
 
-**Executable now:** `047`/`048` after `review-plan` (048 must **not**
-replace `/sw.js`). `032` when a week quotes a line. Yahoo still YDN-gated.
+**Executable now:** `032` when a week quotes a line (047 DONE `303e7a0`,
+048 DONE `505ccb2`). Yahoo still YDN-gated. Still to author: `049` voice codemod, `050` Box Score flourishes.
 
 ## Decisions locked in
 
@@ -251,8 +325,10 @@ replace `/sw.js`). `032` when a week quotes a line. Yahoo still YDN-gated.
 | 044  | Skills: migrate, lineup, book | P1 | S | 042 | DONE `969cf73` (worktree; not pushed) |
 | 045  | Canonical import pack; file fallback; no NFL scrape | P1 | L | 044 | DONE `6a0df03` (split `29f7a2e`; not pushed) |
 | 046  | Dead-simple self-host (Docker + in-process tick) | P1 | M | 025 | DONE `c1769d2` (secret persist `bb965bd`; not pushed) |
-| 047  | Runtime skin system (Ledger + Box Score) | P2 | L | 026 | TODO (design; review-plan first) |
-| 048  | Install drawer (dartwords-style A2HS) | P2 | M | 026 | TODO (design; 037 SW already ships — do not replace `/sw.js`) |
+| 047  | Runtime skin system (Ledger + Box Score) | P2 | M (slice 1) | 026 | DONE `ed6cdd4`+`303e7a0` (not pushed; reviewed/APPROVED 2026-08-20; slice 1 = tokens+plumbing+boxscore.css behind /account picker; voice codemod + flourishes still owed as 049/050 before the Box Score release is cut) |
+| 048  | Install drawer (dartwords-style A2HS) | P2 | M | 026, 047 | DONE `505ccb2` (not pushed; reviewed/APPROVED 2026-08-20; real-device iOS A2HS + Android native prompt PENDING OPERATOR; one sanctioned out-of-scope touch: scripts/join-redirect.test.mjs assertion updated for the InstallCoach removal) |
+| 049  | Voice codemod — semantic label/card classes per skin | P2 | M | 047 | DONE `cfbacc8`+`06091c8` (not pushed; reviewed/APPROVED 2026-08-20; 57 files, Ledger pixel-identical, Box Score voice live; one revision: state-driven `ring-card-lit` for the import dropzone) |
+| 050  | Box Score flourishes — ghost numerals, rails, stamp | P2 | M | 047, 049 | DONE `8e660ba` (not pushed; reviewed/APPROVED 2026-08-20; all CSS-gated, Ledger zero-change verified; **Box Score release complete: 047+049+050**) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
