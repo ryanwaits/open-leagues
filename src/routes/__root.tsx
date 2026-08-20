@@ -12,9 +12,8 @@ import appCss from "../styles.css?url";
 
 const APP_NAME = brand.name;
 const host = import.meta.env.VITE_PUBLIC_HOSTNAME;
-const ogImage = host
-  ? `https://og.grok.me/v1/card.png?host=${encodeURIComponent(host)}&title=${encodeURIComponent(APP_NAME)}`
-  : undefined;
+// Absolute URL when the public host is known at build time; scrapers want it.
+const ogImage = host ? `https://${host}/og.jpg` : undefined;
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   head: () => ({

@@ -24,6 +24,8 @@ services:
         value: "1"
       - key: BETTER_AUTH_URL
         value: https://leagues.waits.dev
+      - key: VITE_PUBLIC_HOSTNAME
+        value: leagues.waits.dev
       # Secrets — set values in the dashboard at blueprint launch; never here.
       - key: VAPID_PUBLIC_KEY
         sync: false

@@ -7,6 +7,7 @@ import { SignedIn, SignedOut, UserButton } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useLeagueStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { LogoMark } from "@/components/logo";
 import { brand } from "@/skin/brand";
 
 export type ShellTab = {
@@ -57,8 +58,11 @@ export function Shell({
               params={league ? { leagueId: league.leagueId } : undefined}
               className="shrink-0"
             >
-              <span className="font-display text-[26px] font-extrabold leading-none tracking-[-0.03em]">
-                {brand.name}
+              <span className="flex items-center gap-2">
+                <LogoMark className="size-6" />
+                <span className="font-display text-[24px] font-extrabold leading-none tracking-[-0.03em]">
+                  {brand.name}
+                </span>
               </span>
             </Link>
           ) : null}
