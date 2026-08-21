@@ -80,3 +80,8 @@ If it's not in this table, it is not a tool. Stop. Do not invent a table.
 | getPlayerSearch | spectator | read | Search players by name and position. |
 | getRecap | spectator | read | Week recap / dispatch copy. |
 | getSources | spectator | read | Probe upstream data sources. |
+| getAiSettings | spectator | read | Load your saved AI provider/model config, masked — never returns the key. |
+| saveAiSettings | spectator | workflow | Save your AI provider, model, and API key (BYOK), encrypted at rest. |
+| deleteAiSettings | spectator | atomic | Remove your saved AI key and provider config. |
+| testAiSettings | spectator | read | Test your saved AI key with a tiny round-trip call. |
+| analyzeImport | commish | read | Extract league settings from pasted text via the commissioner's AI key. |

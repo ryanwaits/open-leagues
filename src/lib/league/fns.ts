@@ -674,6 +674,63 @@ export const pullWager = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/* --------------------------------------------------------------- ai (BYOK) -- */
+
+export const getAiSettings = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const ai = await import("./ai.server");
+    return ai.getUserAiMasked(context.userId);
+  });
+
+export const saveAiSettings = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    z.object({
+      provider: z.enum(["anthropic", "openai", "google"]),
+      model: z.string().min(1).max(200),
+      apiKey: z.string().min(10).max(300).optional(),
+    }),
+  )
+  .handler(async ({ context, data }) => {
+    const ai = await import("./ai.server");
+    await ai.saveUserAi(context.userId, data);
+    return { ok: true };
+  });
+
+export const deleteAiSettings = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const ai = await import("./ai.server");
+    await ai.deleteUserAi(context.userId);
+    return { ok: true };
+  });
+
+export const testAiSettings = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const ai = await import("./ai.server");
+    return ai.testUserAi(context.userId);
+  });
+
+export const analyzeImport = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ text: z.string().min(40).max(400_000) }))
+  .handler(async ({ context, data }) => {
+    const ai = await import("./ai.server");
+    const hasKey = (await ai.getUserAiMasked(context.userId)) !== null;
+    if (!hasKey) return { available: false, analysis: null };
+    try {
+      const analyst = await import("./import-analyze.server");
+      const analysis = await analyst.analyzeImportText(context.userId, data.text);
+      return { available: true, analysis };
+    } catch {
+      // Never surface raw provider errors/HTML to the toast — the review
+      // step just falls back to "no settings detected".
+      return { available: true, analysis: null };
+    }
+  });
+
 /* ----------------------------------------------------------- agent tokens -- */
 
 export const mintAgentToken = createServerFn({ method: "POST" })

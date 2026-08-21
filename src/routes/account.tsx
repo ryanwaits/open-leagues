@@ -7,7 +7,15 @@ import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { listAgentTokens, mintAgentToken, revokeAgentToken } from "@/lib/league/fns";
+import {
+  deleteAiSettings,
+  getAiSettings,
+  listAgentTokens,
+  mintAgentToken,
+  revokeAgentToken,
+  saveAiSettings,
+  testAiSettings,
+} from "@/lib/league/fns";
 import { type SkinPref, setSkinPref, useSkin } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +36,7 @@ function AccountPage() {
         {user?.primaryEmail ? ` · ${user.primaryEmail}` : ""}
       </p>
       <AppearancePanel />
+      <AiSettingsPanel />
       <AgentTokensPanel />
       <div className="mt-10 max-w-lg">
         <InstallDrawerButton />
@@ -82,6 +91,176 @@ function AppearancePanel() {
             </button>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+type AiProvider = "anthropic" | "openai" | "google";
+
+const AI_PROVIDERS: { id: AiProvider; label: string }[] = [
+  { id: "anthropic", label: "Anthropic" },
+  { id: "openai", label: "OpenAI" },
+  { id: "google", label: "Google" },
+];
+
+/** Operator's model choice — mirrors ai.server.ts's DEFAULT_ANTHROPIC_MODEL.
+ * Kept as a plain literal rather than an import: `.server.ts` modules are
+ * stripped from the client bundle. */
+const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-5";
+
+/** BYOK: each commissioner supplies their own provider key, encrypted at
+ * rest, for AI features on desks they run (import analysis today; desk
+ * news / recaps later). */
+function AiSettingsPanel() {
+  const qc = useQueryClient();
+  const [provider, setProvider] = useState<AiProvider>("anthropic");
+  const [model, setModel] = useState(DEFAULT_ANTHROPIC_MODEL);
+  const [apiKey, setApiKey] = useState("");
+  const [synced, setSynced] = useState(false);
+
+  const settings = useQuery({
+    queryKey: ["ai-settings"],
+    queryFn: () => getAiSettings(),
+  });
+
+  useEffect(() => {
+    if (settings.data && !synced) {
+      setProvider(settings.data.provider);
+      setModel(settings.data.model);
+      setSynced(true);
+    }
+  }, [settings.data, synced]);
+
+  function onProviderChange(next: AiProvider) {
+    setProvider(next);
+    if (next === "anthropic" && !model.trim()) setModel(DEFAULT_ANTHROPIC_MODEL);
+    if (next !== "anthropic" && model === DEFAULT_ANTHROPIC_MODEL) setModel("");
+  }
+
+  const save = useMutation({
+    mutationFn: () =>
+      saveAiSettings({
+        data: { provider, model: model.trim(), apiKey: apiKey.trim() || undefined },
+      }),
+    onSuccess: () => {
+      setApiKey("");
+      void qc.invalidateQueries({ queryKey: ["ai-settings"] });
+      toast("AI settings saved.");
+    },
+    onError: (e) => toast(e instanceof Error ? e.message : "Could not save."),
+  });
+
+  const remove = useMutation({
+    mutationFn: () => deleteAiSettings(),
+    onSuccess: () => {
+      setApiKey("");
+      setProvider("anthropic");
+      setModel(DEFAULT_ANTHROPIC_MODEL);
+      setSynced(false);
+      void qc.invalidateQueries({ queryKey: ["ai-settings"] });
+      toast("AI key removed.");
+    },
+    onError: (e) => toast(e instanceof Error ? e.message : "Could not remove."),
+  });
+
+  const test = useMutation({
+    mutationFn: () => testAiSettings(),
+    onSuccess: (res) => toast(res.message),
+    onError: (e) => toast(e instanceof Error ? e.message : "Test failed."),
+  });
+
+  return (
+    <div className="mt-8 max-w-lg">
+      <h2 className="microlabel">AI</h2>
+      <p className="mt-1 text-sm text-muted">
+        Your key powers AI features on desks you run — imports, news, recaps. Stored encrypted;
+        never shown again.
+      </p>
+
+      <div
+        role="radiogroup"
+        aria-label="AI provider"
+        className="mt-3 flex w-fit shrink-0 items-center gap-0.5 rounded-pill bg-raised p-0.5"
+      >
+        {AI_PROVIDERS.map(({ id, label }) => {
+          const on = provider === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => onProviderChange(id)}
+              className={cn(
+                "rounded-pill px-4 py-1.5 text-sm font-medium transition-colors duration-150",
+                on ? "bg-surface text-fg shadow-[0_1px_2px_rgb(0_0_0/0.12)]" : "text-faint",
+                !on && "hover:text-muted",
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      <label className="mt-3 block" htmlFor="ai-model">
+        <span className="microlabel">Model</span>
+        <Input
+          id="ai-model"
+          className="mt-1.5"
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          placeholder={
+            provider === "anthropic"
+              ? DEFAULT_ANTHROPIC_MODEL
+              : "Model id (see your provider's docs)"
+          }
+        />
+      </label>
+
+      <label className="mt-3 block" htmlFor="ai-key">
+        <span className="microlabel">API key</span>
+        <Input
+          id="ai-key"
+          className="mt-1.5"
+          type="password"
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          placeholder={settings.data ? `•••• ${settings.data.keyLast4} saved` : "sk-…"}
+          autoComplete="off"
+        />
+      </label>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          size="sm"
+          disabled={save.isPending || !model.trim()}
+          onClick={() => save.mutate()}
+        >
+          {save.isPending ? "Saving…" : "Save"}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={test.isPending || !settings.data}
+          onClick={() => test.mutate()}
+        >
+          {test.isPending ? "Testing…" : "Test"}
+        </Button>
+        {settings.data ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={remove.isPending}
+            onClick={() => remove.mutate()}
+          >
+            Remove
+          </Button>
+        ) : null}
       </div>
     </div>
   );

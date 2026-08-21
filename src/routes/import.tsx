@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, Check, ChevronDown, FileUp, Plus, Trash2 } from "lucide-react";
-import { useMemo, useRef, useState, type DragEvent } from "react";
+import { type DragEvent, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { calendarOf, recentSeasons } from "@/lib/data/calendar";
 import { getPulse } from "@/lib/data/fns";
 import {
+  analyzeImport,
   importEspn,
   importLeague,
   importRebuild,
@@ -17,7 +18,9 @@ import {
   previewImport,
   previewRebuild,
 } from "@/lib/league/fns";
+import { type Analysis, mergeAnalysis } from "@/lib/league/import-analyze";
 import { SAMPLE_REBUILD } from "@/lib/league/rebuild";
+import { bookFromPreset, presetOf } from "@/lib/league/scoring";
 import { useLeagueStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -93,18 +96,14 @@ function toPayload(t: DraftTeam) {
 
 async function readDroppedFile(
   file: File,
-): Promise<{ paste?: string; known?: string; label: string }> {
+): Promise<{ paste?: string; known?: string; label: string; raw: string }> {
   const name = file.name;
   const isPdf = file.type === "application/pdf" || name.toLowerCase().endsWith(".pdf");
   if (isPdf) {
     const buf = await file.arrayBuffer();
     const latin1 = new TextDecoder("latin1").decode(buf);
-    if (
-      latin1.includes("907798861") ||
-      (/\bWIFFL\b/.test(latin1) && /draft\s+recap/i.test(latin1))
-    ) {
-      return { known: "wiffl-2026", label: name };
-    }
+    // Always extract strings, even down the known-pack shortcut below — the
+    // AI analyst gets a shot at real text even when parsing takes the fast path.
     const strings: string[] = [];
     const re = /\((?:\\.|[^\\)]){3,140}\)/g;
     let m: RegExpExecArray | null;
@@ -112,9 +111,71 @@ async function readDroppedFile(
       const s = m[0].slice(1, -1).replace(/\\n/g, "\n").replace(/\\\(/g, "(").replace(/\\\)/g, ")");
       if (/[A-Za-z]{3}/.test(s)) strings.push(s);
     }
-    return { paste: strings.join("\n"), label: name };
+    const raw = strings.join("\n");
+    if (
+      latin1.includes("907798861") ||
+      (/\bWIFFL\b/.test(latin1) && /draft\s+recap/i.test(latin1))
+    ) {
+      return { known: "wiffl-2026", label: name, raw };
+    }
+    return { paste: raw, label: name, raw };
   }
-  return { paste: await file.text(), label: name };
+  const text = await file.text();
+  return { paste: text, label: name, raw: text };
+}
+
+const BONUS_KEYS = [
+  "bonus_pass_yd_300",
+  "bonus_rush_yd_100",
+  "bonus_rec_yd_100",
+  "bonus_rush_rec_yd_100",
+];
+
+/** Review-step status line: what the AI analyst found, built from the same
+ * `mergeAnalysis` used to fill review defaults — display-only, never wired
+ * back into the committed pack (`import-pack.ts` stays read-only). */
+function AiDetectedLine({
+  pending,
+  available,
+  attempted,
+  analysis,
+  scoring,
+}: {
+  pending: boolean;
+  available: boolean | null;
+  attempted: boolean;
+  analysis: Analysis | null;
+  scoring: Scoring;
+}) {
+  if (pending) return <p className="mt-3 text-xs text-muted">Analyzing settings…</p>;
+  if (available === false) {
+    return (
+      <p className="mt-3 text-xs text-muted">
+        Add an AI key to auto-read league settings —{" "}
+        <Link to="/account" className="underline hover:text-fg">
+          /account
+        </Link>
+        .
+      </p>
+    );
+  }
+  if (analysis) {
+    const merged = mergeAnalysis(
+      { name: null, season: null, book: bookFromPreset(scoring), slots: null, playoffTeams: null },
+      analysis,
+    );
+    const preset = presetOf(merged.book);
+    const parts: string[] = [
+      preset === "ppr" ? "PPR" : preset === "half" ? "Half PPR" : "Standard",
+    ];
+    if (merged.book.pass_td === 6) parts.push("6-pt pass TD");
+    const bonusCount = BONUS_KEYS.filter((k) => (merged.book[k] ?? 0) > 0).length;
+    if (bonusCount) parts.push(`${bonusCount} bonus${bonusCount === 1 ? "" : "es"}`);
+    if (merged.slots?.length) parts.push(`${merged.slots.length} starters`);
+    return <p className="mt-3 text-xs text-muted">Detected: {parts.join(" · ")}</p>;
+  }
+  if (attempted) return <p className="mt-3 text-xs text-muted">No settings found.</p>;
+  return null;
 }
 
 function ImportPage() {
@@ -141,9 +202,41 @@ function ImportPage() {
   const [draft, setDraft] = useState<DraftTeam[]>([]);
   const [openTeam, setOpenTeam] = useState<number | null>(1);
   const [dragging, setDragging] = useState(false);
+  // Best-known raw text for AI analysis — kept out of `paste` state so the
+  // known-pack shortcut (which intentionally leaves the visible paste box
+  // empty) can still hand the analyst something to read.
+  const importTextRef = useRef("");
+  const analyzedRef = useRef(false);
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [aiAvailable, setAiAvailable] = useState<boolean | null>(null);
 
   const missed = useMemo(() => draft.reduce((n, t) => n + t.unmatched.length, 0), [draft]);
   const matched = useMemo(() => draft.reduce((n, t) => n + t.players, 0), [draft]);
+
+  const analyze = useMutation({
+    mutationFn: (text: string) => analyzeImport({ data: { text } }),
+    onSuccess: (res) => {
+      setAiAvailable(res.available);
+      setAnalysis(res.analysis);
+      if (res.analysis) {
+        const filled = mergeAnalysis(
+          {
+            name: name.trim() || null,
+            season,
+            book: bookFromPreset(scoring),
+            slots: null,
+            playoffTeams: null,
+          },
+          res.analysis,
+        );
+        if (!name.trim() && filled.name) setName(filled.name);
+        if (!season && filled.season) setSeason(filled.season);
+      }
+    },
+    onError: () => {
+      setAnalysis(null);
+    },
+  });
 
   function applyPreview(res: Preview) {
     const teams = res.teams.map((t, i) => ({
@@ -168,6 +261,11 @@ function ImportPage() {
     if (res.season) setSeason(res.season);
     setStep("review");
     setOpenTeam(teams[0]?.rosterId ?? 1);
+    const text = importTextRef.current.trim();
+    if (!analyzedRef.current && text.length >= 40) {
+      analyzedRef.current = true;
+      analyze.mutate(text);
+    }
   }
 
   const preview = useMutation({
@@ -254,6 +352,10 @@ function ImportPage() {
     try {
       const read = await readDroppedFile(file);
       setFileLabel(read.label);
+      importTextRef.current = read.raw;
+      analyzedRef.current = false;
+      setAnalysis(null);
+      setAiAvailable(null);
       if (read.known) {
         setKnown(read.known);
         setPaste("");
@@ -354,6 +456,14 @@ function ImportPage() {
               Back to source
             </button>
           </div>
+
+          <AiDetectedLine
+            pending={analyze.isPending}
+            available={aiAvailable}
+            attempted={analyzedRef.current}
+            analysis={analysis}
+            scoring={scoring}
+          />
 
           <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
             <label className="block">
@@ -650,6 +760,10 @@ function ImportPage() {
                       setKnown("wiffl-2026");
                       setName((n) => n.trim() || "WIFFL");
                       setSeason("2026");
+                      importTextRef.current = "";
+                      analyzedRef.current = false;
+                      setAnalysis(null);
+                      setAiAvailable(null);
                       preview.mutate({ known: "wiffl-2026" });
                     }}
                   >
@@ -677,6 +791,10 @@ function ImportPage() {
                     onClick={() => {
                       setPaste(SAMPLE_REBUILD);
                       setKnown(null);
+                      importTextRef.current = SAMPLE_REBUILD;
+                      analyzedRef.current = false;
+                      setAnalysis(null);
+                      setAiAvailable(null);
                     }}
                   >
                     Load sample
@@ -688,6 +806,7 @@ function ImportPage() {
                   onChange={(e) => {
                     setPaste(e.target.value);
                     setKnown(null);
+                    importTextRef.current = e.target.value;
                   }}
                   placeholder={`1 Bijan Robinson ATL, RB Chumheads\n2 Jahmyr Gibbs DET, RB Shardbearer\n…`}
                 />
