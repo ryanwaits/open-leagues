@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { Avatar } from "@/components/avatar";
 import type { MatchupSide } from "@/lib/data/types";
 import type { LineupHealth, Phase } from "@/lib/league/phase";
 import { cn, formatPts } from "@/lib/utils";
@@ -97,53 +96,8 @@ export function PhaseHero(props: {
     );
   }
 
-  if (phase === "live" && me) {
-    const winning = them ? me.points >= them.points : true;
-    return (
-      <Shell tone="good">
-        <div className="flex w-full flex-col gap-3">
-          <span className="flex items-center gap-2 microlabel-data text-muted">
-            <span className="size-1.5 animate-pulse rounded-pill bg-live" />
-            Live · week {week} · {health.yetToPlay} yet to play
-          </span>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-            <span className="flex min-w-0 items-center gap-2.5">
-              <Avatar src={me.avatar} name={me.teamName} className="size-9" tint />
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-bold">{me.teamName}</span>
-                <span className="block microlabel-data">you</span>
-              </span>
-            </span>
-            <span className="font-mono text-3xl font-semibold tabular-nums">
-              {formatPts(me.points, 1)}
-            </span>
-            <span className="font-mono text-xl text-faint">–</span>
-            <span className="font-mono text-3xl font-semibold tabular-nums text-muted">
-              {formatPts(them?.points ?? 0, 1)}
-            </span>
-            {them ? (
-              <span className="ml-auto flex min-w-0 items-center gap-2.5">
-                <span className="min-w-0 text-right">
-                  <span className="block truncate text-sm font-bold">{them.teamName}</span>
-                  <span className="block microlabel-data">{winning ? "trailing" : "ahead"}</span>
-                </span>
-                <Avatar src={them.avatar} name={them.teamName} className="size-9" tint />
-              </span>
-            ) : null}
-          </div>
-        </div>
-        <Link
-          to="/league/$leagueId/matchups"
-          params={{ leagueId }}
-          search={{ week }}
-          className="inline-flex h-11 shrink-0 items-center rounded-pill border border-line-strong px-5 text-sm font-semibold hover:bg-raised"
-        >
-          Open the box
-        </Link>
-      </Shell>
-    );
-  }
-
+  // Live weeks have no banner: the matchup card carries the score (and on a
+  // phone it moves up above the lineup), so a masthead would say it twice.
   // A 0-0 week has not been played, whatever the NFL scoreboard says.
   if (phase === "settled" && me && them && (me.points > 0 || them.points > 0)) {
     const margin = me.points - them.points;

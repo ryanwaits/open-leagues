@@ -5,13 +5,11 @@ import { toast } from "sonner";
 import { LineupBoard } from "@/components/lineup-board";
 import { MatchupCard } from "@/components/matchup-card";
 import { PhaseHero } from "@/components/phase-hero";
-import { PlayerFeed } from "@/components/player-feed";
 import { PlayerSheet, type SheetTarget } from "@/components/player-sheet";
 import { TeamMasthead } from "@/components/team-masthead";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fantasyStatKind } from "@/lib/data/calendar";
 import {
-  getActivity,
   getByeWeeks,
   getLeagueBundle,
   getMatchups,
@@ -21,7 +19,7 @@ import {
   getTeam,
   getWeekStats,
 } from "@/lib/data/fns";
-import { paintMatchup } from "@/lib/data/matchup-view";
+import { paintMatchup, pairHasStarted } from "@/lib/data/matchup-view";
 import { prefetchPlayerProfile, useWarmRosterProfiles } from "@/lib/data/player-view";
 import { projectionRosterKey } from "@/lib/data/projection-key";
 import { baseSlotLabel } from "@/lib/data/teams";
@@ -34,6 +32,7 @@ import { invalidateAfterLineup } from "@/lib/league/lineup-cache";
 import { lineupHealth, resolvePhase } from "@/lib/league/phase";
 import { applyPrototype } from "@/lib/league/prototype";
 import { bookFromLeague } from "@/lib/replay";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/league/$leagueId/")({
   component: MyTeamPage,
@@ -124,11 +123,6 @@ function MyTeamPage() {
       }),
     enabled: Boolean(season) && Boolean(roster?.length),
     staleTime: 60_000,
-  });
-
-  const activity = useQuery({
-    queryKey: ["activity", leagueId, week],
-    queryFn: () => getActivity({ data: { leagueId, week } }),
   });
 
   const cardPair = useMemo(() => {
@@ -267,16 +261,6 @@ function MyTeamPage() {
   );
 
   const projMap = projections.data;
-  /**
-   * The masthead's pre-kickoff number: this week's projected total for the
-   * lineup as set. getMatchups reports raw points (zero until games start),
-   * so the forecast comes from the same projections map the lineup rows use.
-   */
-  const projTotal = useMemo(() => {
-    const starters = (players ?? []).filter((p) => p.slot === "starter");
-    if (!projMap || starters.length === 0) return null;
-    return starters.reduce((sum, p) => sum + (projMap[p.player_id]?.points ?? 0), 0);
-  }, [players, projMap]);
   const realPlan = useMemo(
     () =>
       planAutoFill({
@@ -351,6 +335,7 @@ function MyTeamPage() {
   }
 
   const standings = league.data.standings;
+  const started = phase.phase === "live" || (cardPair ? pairHasStarted(cardPair) : false);
 
   return (
     <div className="flex flex-col gap-5">
@@ -373,25 +358,38 @@ function MyTeamPage() {
 
       <div className="grid gap-5 lg:grid-cols-[1.35fr_1fr] lg:items-start">
         <div id="lineup" className="flex min-w-0 flex-col gap-5 scroll-mt-20">
-          {/* The constant masthead: on a calm week the hero is null and this
-              strip is the page's top. Its rank cell replaces the old
-              "Where you sit" card — the full table is one tap away. */}
-          <TeamMasthead
-            leagueId={leagueId}
-            standings={standings}
-            rosterId={rosterId}
-            phase={phase.phase}
-            weekPts={
-              phase.phase === "live" || phase.phase === "settled"
-                ? (realMe?.points ?? null)
-                : projTotal
-            }
-            faab={league.data.faabRemaining ?? null}
-          />
+          {/* On a phone the agate strip still leads the page; on desktop it lives
+              in the rail as its own card (desk → you → the matchup). */}
+          <div className="lg:hidden">
+            <TeamMasthead
+              leagueId={leagueId}
+              standings={standings}
+              rosterId={rosterId}
+              week={week}
+              faab={league.data.faabRemaining ?? null}
+            />
+          </div>
+          {/* Once anyone has kicked off, a phone wants the score before the
+              lineup. Desktop keeps it in the rail, so this copy is phone-only. */}
+          {cardPair && started ? (
+            <div className="lg:hidden">
+              <MatchupCard
+                leagueId={leagueId}
+                week={week}
+                pair={cardPair}
+                rosterId={rosterId}
+                standings={standings}
+                phase={phase.phase}
+                projections={projections.data}
+              />
+            </div>
+          ) : null}
           {!team.data ? (
             <Skeleton className="h-96 rounded-xl" />
           ) : (
             <LineupBoard
+              title={team.data.teamName}
+              benchCollapsed
               team={{ ...team.data, players: players ?? team.data.players }}
               rosterPositions={league.data.league.roster_positions ?? []}
               editable={editable}
@@ -426,27 +424,31 @@ function MyTeamPage() {
               live week never stacks two banners before the lineup. */}
           {recap.data ? <DeskCard leagueId={leagueId} week={week} recap={recap.data} /> : null}
 
+          <div className="max-lg:hidden">
+            <TeamMasthead
+              leagueId={leagueId}
+              standings={standings}
+              rosterId={rosterId}
+              week={week}
+              faab={league.data.faabRemaining ?? null}
+            />
+          </div>
+
           {/* Rail reads story → the week → the risk. Like the hero, the
               matchup card only exists when there is a matchup. */}
           {cardPair ? (
-            <MatchupCard
-              leagueId={leagueId}
-              week={week}
-              pair={cardPair}
-              rosterId={rosterId}
-              standings={standings}
-              phase={phase.phase}
-              projections={projections.data}
-            />
+            <div className={cn(started && "max-lg:hidden")}>
+              <MatchupCard
+                leagueId={leagueId}
+                week={week}
+                pair={cardPair}
+                rosterId={rosterId}
+                standings={standings}
+                phase={phase.phase}
+                projections={projections.data}
+              />
+            </div>
           ) : null}
-
-          <PlayerFeed
-            phase={phase.phase}
-            players={players ?? []}
-            activity={activity.data ?? []}
-            news={pulse.data?.news ?? []}
-            loading={team.data == null && team.isPending}
-          />
         </div>
       </div>
 
