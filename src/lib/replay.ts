@@ -224,12 +224,27 @@ export function seedPairsForReplay(
   return { pairs: next, finals: bags };
 }
 
-/** 0 at kickoff, 1 at final. Same curve as unofficial points. */
+/**
+ * 0 at kickoff, 1 at final. Same curve as unofficial points.
+ *
+ * `phaseIndex` may be fractional (e.g. 2.5, halfway between phase 2 and
+ * phase 3) — the progress climbs linearly across the current phase's slice
+ * of the curve instead of jumping at the phase boundary. Integer inputs
+ * take the exact same code path as before and return the exact same value.
+ */
 export function replayProgress(playerId: string, phaseIndex: number, week: number): number {
   return replayPts(playerId, 1, phaseIndex, week);
 }
 
-/** Cumulative unofficial points at this phase. Last phase always equals the real final. */
+/**
+ * Cumulative unofficial points at this phase. Last phase always equals the
+ * real final.
+ *
+ * `phaseIndex` may be fractional — see `replayProgress`. The whole part
+ * selects how many full phase-weights are already banked; the fractional
+ * remainder linearly unlocks the *next* phase's weight, so a chart sampling
+ * this every 250ms draws a smooth ramp instead of nine vertical steps.
+ */
 export function replayPts(
   playerId: string,
   finalPts: number,
@@ -251,12 +266,21 @@ export function replayPts(
     sum += w;
   }
   const norm = weights.map((w) => w / (sum || 1));
+  // Integer phaseIndex: whole === phaseIndex, frac === 0, so this is byte-
+  // for-byte the original loop. Fractional phaseIndex adds a linear slice
+  // of the next weight on top.
+  const whole = Math.floor(phaseIndex);
+  const frac = phaseIndex - whole;
   let acc = 0;
-  for (let i = 0; i < phaseIndex; i++) acc += finalPts * (norm[i] ?? 0);
+  for (let i = 0; i < whole; i++) acc += finalPts * (norm[i] ?? 0);
+  if (frac > 0) acc += frac * finalPts * (norm[whole] ?? 0);
   return Math.round(acc * 10) / 10;
 }
 
-/** Unfold a Sleeper week-stat bag to this phase. Last phase is the real final. */
+/**
+ * Unfold a Sleeper week-stat bag to this phase. Last phase is the real
+ * final. `phaseIndex` may be fractional — see `replayProgress`.
+ */
 export function replayStats(
   playerId: string,
   final: Record<string, number> | null | undefined,
@@ -282,6 +306,7 @@ export function replayStats(
   return out;
 }
 
+/** Maps `replayStats` over a whole finals table. `phaseIndex` may be fractional. */
 export function replayStatMap(
   finals: Record<string, Record<string, number>>,
   phaseIndex: number,
@@ -294,13 +319,19 @@ export function replayStatMap(
   return out;
 }
 
+/**
+ * `phaseIndex` may be fractional for smooth points/stats — the play-by-play
+ * facing bits (`GameChip.state`/`detail`, drawn from `REPLAY_PHASES`) always
+ * floor it first, so the clock/label still steps discretely one phase at a
+ * time even while the painted totals climb continuously toward it.
+ */
 export function applyReplaySide(
   side: MatchupSide,
   week: number,
   phaseIndex: number,
   finals?: Record<string, Record<string, number>>,
 ): MatchupSide {
-  const phase = REPLAY_PHASES[phaseIndex] ?? REPLAY_PHASES[0]!;
+  const phase = REPLAY_PHASES[Math.floor(phaseIndex)] ?? REPLAY_PHASES[0]!;
   const starters = side.starters.map((line) => {
     const final = line.points ?? 0;
     const points = line.playerId ? replayPts(line.playerId, final, phaseIndex, week) : null;

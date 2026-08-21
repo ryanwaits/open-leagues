@@ -12,7 +12,7 @@ import { bagForPlayer, simulatePlayerGame } from "@/lib/data/sim-game";
 import { formatStatLine } from "@/lib/data/statline";
 import { baseSlotLabel, dstLabel, playerHeadshot, teamLogo } from "@/lib/data/teams";
 import type { GamePlay, GameSummary, SlimPlayer, StarterLine } from "@/lib/data/types";
-import { useSimPhase } from "@/lib/demo/store";
+import { useSimPhase, useSimProgress } from "@/lib/demo/store";
 import type { ScoringBook } from "@/lib/league/scoring";
 import { EMPTY_BOOK, useProjectionSeries } from "@/lib/live/use-projection-series";
 import { REPLAY_PHASES, replayPts, replayStats } from "@/lib/replay";
@@ -108,6 +108,9 @@ function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => vo
   // No transport of its own. If a simulated Sunday is running, this drawer is
   // part of it; otherwise it shows whatever the real box says.
   const simPhase = useSimPhase();
+  // Fractional twin of simPhase — drives only the shown points/stat line so
+  // they climb smoothly; the play-by-play below still builds off simPhase.
+  const simProgress = useSimProgress();
   const q = useQuery({
     queryKey: ["game", target.gameId],
     queryFn: () => getGameSummary({ data: { gameId: target.gameId! } }),
@@ -125,6 +128,7 @@ function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => vo
   // Real play-by-play always wins: a game that is actually being played does
   // not get a made-up one drawn over it.
   const phase = liveHasPlays ? null : simPhase;
+  const progress = liveHasPlays ? null : simProgress;
 
   const sim =
     phase != null
@@ -135,11 +139,11 @@ function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => vo
   const red = situationIsRedZone(g?.situation);
   const live = g?.state === "in";
   const shownBag =
-    sim && phase != null ? replayStats(target.player.player_id, bag, phase, 1) : target.stats;
+    sim && progress != null ? replayStats(target.player.player_id, bag, progress, 1) : target.stats;
   const shownLine = formatStatLine(target.player.position, shownBag) ?? target.line;
   const shownPts =
-    sim && phase != null
-      ? replayPts(target.player.player_id, target.points ?? 0, phase, 1)
+    sim && progress != null
+      ? replayPts(target.player.player_id, target.points ?? 0, progress, 1)
       : target.points;
   const name =
     target.player.position === "DEF" && target.player.team

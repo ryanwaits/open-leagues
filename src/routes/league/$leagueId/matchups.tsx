@@ -20,7 +20,7 @@ import {
 import { useWarmRosterProfiles } from "@/lib/data/player-view";
 import { baseSlotLabel } from "@/lib/data/teams";
 import { overlayBookLine, overlayPreLivePairs } from "@/lib/demo/pre-live";
-import { useDemoStore, useSimPhase } from "@/lib/demo/store";
+import { useDemoStore, useSimPhase, useSimProgress } from "@/lib/demo/store";
 import { usePreLiveFeed } from "@/lib/demo/use-pre-live-feed";
 import { getBook, getClaims } from "@/lib/league/fns";
 import {
@@ -47,7 +47,11 @@ function MatchupsPage() {
   const { leagueId } = Route.useParams();
   const search = Route.useSearch();
   // The transport lives in the demo toolbar; this page only reads the clock.
+  // `phase` (integer) indexes REPLAY_PHASES for labels/game state; `progress`
+  // (fractional, same value rounded down when paused) drives the painted
+  // point totals so the matchup chart moves smoothly instead of in cliffs.
   const phase = useSimPhase();
+  const progress = useSimProgress();
   const pre = usePreLiveFeed();
   const stopSim = useDemoStore((s) => s.stop);
   const [watch, setWatch] = useState<WatchTarget | null>(null);
@@ -160,14 +164,14 @@ function MatchupsPage() {
     if (pre.on) return sourcePairs;
     if (!seededPairs.length) return [];
     if (phase == null) return sourcePairs;
-    return applyReplayPairs(seededPairs, week, phase, finals);
-  }, [pre.on, sourcePairs, seededPairs, phase, week, finals]);
+    return applyReplayPairs(seededPairs, week, progress ?? phase, finals);
+  }, [pre.on, sourcePairs, seededPairs, phase, progress, week, finals]);
 
   const displayStats = useMemo(() => {
     if (pre.on) return pre.stats;
     if (phase == null) return liveFinals;
-    return replayStatMap(finals, phase, week);
-  }, [pre.on, pre.stats, phase, liveFinals, finals, week]);
+    return replayStatMap(finals, progress ?? phase, week);
+  }, [pre.on, pre.stats, phase, progress, liveFinals, finals, week]);
 
   const shown = useMemo(
     () => paintMatchups(rawShown, projections.data ?? {}, displayStats),
@@ -175,10 +179,10 @@ function MatchupsPage() {
   );
 
   const prevShown = useMemo(() => {
-    if (!seededPairs.length || phase == null || phase <= 0) return null;
-    const raw = applyReplayPairs(seededPairs, week, phase - 1, finals);
-    return paintMatchups(raw, projections.data ?? {}, replayStatMap(finals, phase - 1, week));
-  }, [seededPairs, phase, week, finals, projections.data]);
+    if (!seededPairs.length || progress == null || progress <= 0) return null;
+    const raw = applyReplayPairs(seededPairs, week, progress - 1, finals);
+    return paintMatchups(raw, projections.data ?? {}, replayStatMap(finals, progress - 1, week));
+  }, [seededPairs, progress, week, finals, projections.data]);
 
   // The page shows one matchup at a time. Yours is the default, but every game
   // in the week is one tap or one arrow key away.

@@ -38,7 +38,7 @@ import type {
   TeamBundle,
 } from "@/lib/data/types";
 import { overlayPreLivePairs, overlayPreLiveRoster } from "@/lib/demo/pre-live";
-import { useDemoStore, useSimPhase } from "@/lib/demo/store";
+import { useDemoStore, useSimPhase, useSimProgress } from "@/lib/demo/store";
 import { usePreLiveFeed } from "@/lib/demo/use-pre-live-feed";
 import type { ScoringBook } from "@/lib/league/scoring";
 import {
@@ -63,7 +63,11 @@ function MatchupPage() {
   const week = Number(weekParam);
   const matchupId = Number(idParam);
   // The transport lives in the demo toolbar; this page only reads the clock.
+  // `phase` (integer) indexes REPLAY_PHASES for labels/game state; `progress`
+  // (fractional, same value rounded down when paused) drives the painted
+  // point totals so the matchup chart moves smoothly instead of in cliffs.
   const phase = useSimPhase();
+  const progress = useSimProgress();
   const pre = usePreLiveFeed();
   const stopSim = useDemoStore((s) => s.stop);
   const [watch, setWatch] = useState<WatchTarget | null>(null);
@@ -197,12 +201,13 @@ function MatchupPage() {
     }
     if (!seeded) return null;
     if (phase == null) return rawPair;
+    const at = progress ?? phase;
     return {
       ...seeded.pair,
-      home: applyReplaySide(seeded.pair.home, week, phase, seeded.finals),
-      away: seeded.pair.away ? applyReplaySide(seeded.pair.away, week, phase, seeded.finals) : null,
+      home: applyReplaySide(seeded.pair.home, week, at, seeded.finals),
+      away: seeded.pair.away ? applyReplaySide(seeded.pair.away, week, at, seeded.finals) : null,
     };
-  }, [pre.on, pre.games, pre.stats, book, rawPair, seeded, phase, week]);
+  }, [pre.on, pre.games, pre.stats, book, rawPair, seeded, phase, progress, week]);
 
   const stats = useMemo(
     () =>
@@ -210,8 +215,8 @@ function MatchupPage() {
         ? pre.stats
         : phase == null
           ? finalsRaw
-          : replayStatMap(seeded?.finals ?? finalsRaw, phase, week),
-    [pre.on, pre.stats, finalsRaw, seeded, phase, week],
+          : replayStatMap(seeded?.finals ?? finalsRaw, progress ?? phase, week),
+    [pre.on, pre.stats, finalsRaw, seeded, phase, progress, week],
   );
 
   const pair = useMemo(
@@ -227,33 +232,37 @@ function MatchupPage() {
   }, [matchups.data, pre.on, pre.games, pre.stats, book, projections.data, stats]);
 
   const prevPair = useMemo(() => {
-    if (!seeded || phase == null || phase <= 0) return null;
+    if (!seeded || progress == null || progress <= 0) return null;
     const raw: MatchupPair = {
       ...seeded.pair,
-      home: applyReplaySide(seeded.pair.home, week, phase - 1, seeded.finals),
+      home: applyReplaySide(seeded.pair.home, week, progress - 1, seeded.finals),
       away: seeded.pair.away
-        ? applyReplaySide(seeded.pair.away, week, phase - 1, seeded.finals)
+        ? applyReplaySide(seeded.pair.away, week, progress - 1, seeded.finals)
         : null,
     };
-    return paintMatchup(raw, projections.data ?? {}, replayStatMap(seeded.finals, phase - 1, week));
-  }, [seeded, phase, week, projections.data]);
+    return paintMatchup(
+      raw,
+      projections.data ?? {},
+      replayStatMap(seeded.finals, progress - 1, week),
+    );
+  }, [seeded, progress, week, projections.data]);
 
   const viewHome = useMemo(() => {
-    const replayed = replayRoster(homeTeam.data, phase, week);
+    const replayed = replayRoster(homeTeam.data, phase, progress, week);
     if (!pre.on || !replayed) return replayed;
     return {
       ...replayed,
       players: overlayPreLiveRoster(replayed.players, pre.games, pre.stats, book),
     };
-  }, [homeTeam.data, phase, week, pre.on, pre.games, pre.stats, book]);
+  }, [homeTeam.data, phase, progress, week, pre.on, pre.games, pre.stats, book]);
   const viewAway = useMemo(() => {
-    const replayed = replayRoster(awayTeam.data, phase, week);
+    const replayed = replayRoster(awayTeam.data, phase, progress, week);
     if (!pre.on || !replayed) return replayed;
     return {
       ...replayed,
       players: overlayPreLiveRoster(replayed.players, pre.games, pre.stats, book),
     };
-  }, [awayTeam.data, phase, week, pre.on, pre.games, pre.stats, book]);
+  }, [awayTeam.data, phase, progress, week, pre.on, pre.games, pre.stats, book]);
 
   if (!Number.isFinite(week) || !Number.isFinite(matchupId)) {
     return <p className="text-sm text-muted">That matchup link is broken.</p>;
@@ -913,18 +922,25 @@ function benchOf(team?: TeamBundle) {
   return (team?.players ?? []).filter((p) => p.slot === "bench");
 }
 
+/**
+ * `phase` (integer) picks the `REPLAY_PHASES` entry for each bench player's
+ * game chip; `progress` (fractional, falls back to `phase`) drives the
+ * points so bench totals climb smoothly along with the starters.
+ */
 function replayRoster(
   team: TeamBundle | undefined,
   phase: number | null,
+  progress: number | null,
   week: number,
 ): TeamBundle | undefined {
   if (!team || phase == null) return team;
   const clock = REPLAY_PHASES[phase] ?? REPLAY_PHASES[0]!;
+  const at = progress ?? phase;
   return {
     ...team,
     players: team.players.map((p) => ({
       ...p,
-      weekPts: replayPts(p.player_id, p.weekPts ?? 0, phase, week),
+      weekPts: replayPts(p.player_id, p.weekPts ?? 0, at, week),
       game: p.game
         ? {
             state: clock.state,
