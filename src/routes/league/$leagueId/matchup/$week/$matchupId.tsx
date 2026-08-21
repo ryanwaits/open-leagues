@@ -420,10 +420,10 @@ function MatchupPage() {
                           stats: bag ?? null,
                         })
                       }
-                      className="flex w-full items-center gap-3 px-3 py-2.5 text-left sm:px-4 hover:bg-raised"
+                      className="flex min-h-13 w-full items-center gap-3 px-3 py-2 text-left sm:px-4 hover:bg-raised"
                     >
                       <div className="min-w-0 flex-1">
-                        <PlayerCell player={p} compact game={p.game} line={line} />
+                        <PlayerCell player={p} compact quiet game={p.game} line={line} />
                       </div>
                       <SlotPts
                         points={disp.points}
@@ -679,7 +679,7 @@ function StarterRow({
   const homeHot = bothIn && hp > ap;
   const awayHot = bothIn && ap > hp;
   return (
-    <li className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-t border-line px-3 py-2.5 first:border-t-0 sm:gap-3 sm:px-4">
+    <li className="grid min-h-13 grid-cols-[1fr_auto_1fr] items-center gap-2 border-t border-line px-3 py-2 first:border-t-0 sm:gap-3 sm:px-4">
       <Line
         side={home}
         align="left"
@@ -745,6 +745,7 @@ function Line({
           player={side.player}
           empty="—"
           compact
+          quiet
           game={side.game}
           align={align}
           line={line}
@@ -866,7 +867,7 @@ function BenchCell({
       )}
     >
       <div className="min-w-0 flex-1">
-        <PlayerCell player={player} compact game={player.game} align={align} line={line} />
+        <PlayerCell player={player} compact quiet game={player.game} align={align} line={line} />
       </div>
       <SlotPts
         points={disp.points}

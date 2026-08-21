@@ -34,7 +34,7 @@ const SPINE =
  * under the band. Exempting the first row instead would leave its content box a
  * pixel taller than the rest, since the border counts inside the min-height.
  */
-const ROW = "min-h-[68px]";
+const ROW = "min-h-13";
 
 /**
  * The matchup on a desktop.
@@ -256,6 +256,7 @@ function Half({
           empty="—"
           compact
           dense
+          quiet
           game={line?.game}
           line={statLine}
           align={flip ? "right" : "left"}
@@ -268,7 +269,7 @@ function Half({
         live={live}
         reserve
         align={flip ? "left" : "right"}
-        className="w-9 sm:w-16"
+        className="w-10 text-sm sm:w-14"
       />
     </button>
   );
