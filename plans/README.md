@@ -340,7 +340,7 @@ reconcile). Source tree clean.
 | 053  | Liveline foundation — `<LiveLine>` wrapper, series utils, dev gallery | P1 | M | — | DONE `89ced48` (not pushed; reviewed/APPROVED 2026-08-21; 17+3 tests; `/dev/liveline` gallery; executor fixed fractional-seconds label bug + import-rule test self-match) |
 | 054  | Player projection line — drawer, sheet, player page, lineup pace toggle | P1 | L | 053 | DONE `b4574bd` (not pushed; reviewed/APPROVED 2026-08-21; 10 new tests; executor fixed playWhen 900s offset + a render loop in the series hook; player page left without the block — no weekly projection on that route; bench rows on the box-score route not threaded) |
 | 055  | Matchup finals chart + home win-prob meter + `ff_ticks` writer (on read + tick) | P1 | L | 053, 054 | DONE `9b8f62e`+`fdfd48c`+`8c31e11`+`efabd40` (not pushed; reviewed/APPROVED 2026-08-21 after 2 revision rounds: no sample until outlooks load, caption clears the time axis; getTicks registered in the agent catalog — sanctioned out-of-scope touch) |
-| 056  | The book's line-movement strip (LinePanel + ticket) + in-play wagering spec | P2 | M | 055 | TODO |
+| 056  | The book's line-movement strip (LinePanel + ticket) + in-play wagering spec | P2 | M | 055 | DONE `7ce8cef` (not pushed; reviewed/APPROVED 2026-08-21; strip quiet + opened/now caption; in-play wagering left as spec in the plan file — not built) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
