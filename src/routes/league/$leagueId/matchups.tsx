@@ -23,6 +23,7 @@ import { overlayBookLine, overlayPreLivePairs } from "@/lib/demo/pre-live";
 import { useDemoStore, useSimPhase, useSimProgress } from "@/lib/demo/store";
 import { usePreLiveFeed } from "@/lib/demo/use-pre-live-feed";
 import { getBook, getClaims } from "@/lib/league/fns";
+import { pairIsFinal } from "@/lib/live/matchup-series";
 import {
   applyReplayPairs,
   bookFromLeague,
@@ -441,7 +442,14 @@ function MatchupsPage() {
                               : null) ??
                             wagerBook.data.lines.find((l) => l.matchupId === pair.matchupId);
                           return line ? (
-                            <LinePanel className="mt-6" line={line} onPick={setTicket} />
+                            <LinePanel
+                              className="mt-6"
+                              line={line}
+                              onPick={setTicket}
+                              leagueId={leagueId}
+                              week={week}
+                              final={pairIsFinal(pair)}
+                            />
                           ) : null;
                         })()
                       : null}
@@ -470,6 +478,7 @@ function MatchupsPage() {
             if (!next) setTicket(null);
           }}
           leagueId={leagueId}
+          week={week}
           target={ticket}
           book={wagerBook.data}
           claimsPending={pendingClaimTotal}

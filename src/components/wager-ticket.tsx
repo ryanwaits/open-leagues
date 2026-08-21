@@ -1,10 +1,14 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { LiveLine } from "@/components/live-line";
 import { Button } from "@/components/ui/button";
+import { getTicks } from "@/lib/data/fns";
+import { isHostedLeague } from "@/lib/data/types";
 import type { BookBundle } from "@/lib/league/book.server";
 import { placeWager } from "@/lib/league/fns";
+import { fmtSpread, spreadPoints, spreadSummary } from "@/lib/live/spread-series";
 import { cn } from "@/lib/utils";
 
 /**
@@ -35,6 +39,7 @@ export function WagerTicket({
   open,
   onOpenChange,
   leagueId,
+  week,
   target,
   book,
   /** Total already committed to pending waiver claims, for the collision warning. */
@@ -43,6 +48,7 @@ export function WagerTicket({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   leagueId: string;
+  week?: number;
   target: TicketTarget | null;
   book: BookBundle;
   claimsPending: number;
@@ -59,6 +65,17 @@ export function WagerTicket({
       setPlaced(false);
     }
   }, [open]);
+
+  // Same query key as `LinePanel` so the two share one cache entry.
+  const ticks = useQuery({
+    queryKey: ["ticks", leagueId, week, target?.matchupId],
+    queryFn: () =>
+      getTicks({ data: { leagueId, week: week ?? 0, matchupId: target?.matchupId ?? 0 } }),
+    enabled: Boolean(leagueId) && week != null && target != null && isHostedLeague(leagueId),
+    staleTime: 30_000,
+  });
+  const pts = spreadPoints(ticks.data ?? []);
+  const sum = spreadSummary(pts);
 
   const submit = useMutation({
     mutationFn: () =>
@@ -154,6 +171,25 @@ export function WagerTicket({
 
           <div className="min-h-0 flex-1 overflow-y-auto">
             <section className="border-b border-line px-5 py-4">
+              {sum ? (
+                <div className="mb-3">
+                  <span className="microlabel-data">
+                    opened {fmtSpread(sum.first)} · now {fmtSpread(sum.last)}
+                  </span>
+                  <LiveLine
+                    series={pts}
+                    value={sum.last}
+                    tone="brand"
+                    height={48}
+                    quiet
+                    smooth={false}
+                    windowSecs={43200}
+                    formatValue={fmtSpread}
+                    padding={{ top: 6, right: 8, bottom: 2, left: 0 }}
+                    ariaLabel="Spread today"
+                  />
+                </div>
+              ) : null}
               <span className="microlabel-data">Your stake</span>
               <div className="mt-2.5 flex items-center gap-3">
                 <StepButton

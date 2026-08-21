@@ -1,6 +1,12 @@
+import { useQuery } from "@tanstack/react-query";
 import type { TicketTarget } from "@/components/wager-ticket";
+import { getTicks } from "@/lib/data/fns";
+import { isHostedLeague } from "@/lib/data/types";
 import type { BookBundle, BookLine } from "@/lib/league/book.server";
+import { fmtClockOfDay } from "@/lib/live/series";
+import { fmtSpread, spreadPoints, spreadSummary } from "@/lib/live/spread-series";
 import { cn } from "@/lib/utils";
+import { LiveLine } from "./live-line";
 
 /**
  * The two prices for one matchup.
@@ -14,11 +20,29 @@ export function LinePanel({
   line,
   onPick,
   className,
+  leagueId,
+  week,
+  final = false,
 }: {
   line: BookLine;
   onPick: (t: TicketTarget) => void;
   className?: string;
+  leagueId?: string;
+  week?: number;
+  /** All of the week's games are over — freezes the strip instead of leaving it live. */
+  final?: boolean;
 }) {
+  const ticks = useQuery({
+    queryKey: ["ticks", leagueId, week, line.matchupId],
+    queryFn: () =>
+      getTicks({ data: { leagueId: leagueId ?? "", week: week ?? 0, matchupId: line.matchupId } }),
+    enabled: Boolean(leagueId) && week != null && isHostedLeague(leagueId ?? ""),
+    staleTime: 30_000,
+    refetchInterval: line.locked ? false : 60_000,
+  });
+  const pts = spreadPoints(ticks.data ?? []);
+  const sum = spreadSummary(pts);
+
   // A dead line still needs to say so. Returning null here meant a commissioner
   // could switch betting on, see nothing at all, and have no way to tell whether
   // the feature was broken or simply had nothing to price yet.
@@ -59,6 +83,31 @@ export function LinePanel({
         <h2 className="font-display text-lg font-bold tracking-[-0.03em]">The line</h2>
         <span className="microlabel-data">{line.locked ? "closed" : "suggested"}</span>
       </header>
+
+      {sum ? (
+        <div className="px-5 pb-1">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="microlabel-data">{line.homeName} spread · today</span>
+            <span className="microlabel-data">
+              opened {fmtSpread(sum.first)} at {fmtClockOfDay(sum.firstAt)} · now{" "}
+              {fmtSpread(sum.last)}
+            </span>
+          </div>
+          <LiveLine
+            series={pts}
+            value={sum.last}
+            tone="brand"
+            height={64}
+            quiet
+            smooth={false}
+            windowSecs={43200}
+            frozen={line.locked && final}
+            formatValue={fmtSpread}
+            padding={{ top: 8, right: 8, bottom: 4, left: 0 }}
+            ariaLabel={`${line.homeName} spread today`}
+          />
+        </div>
+      ) : null}
 
       <Row
         label="Spread"
@@ -244,9 +293,4 @@ function Fig({ n, label }: { n: string; label: string }) {
  */
 export function fmtOdds(mult: number): string {
   return `${mult >= 10 ? mult.toFixed(0) : mult.toFixed(2).replace(/0$/, "")}×`;
-}
-
-function fmtSpread(n: number): string {
-  if (Math.abs(n) < 0.005) return "PK";
-  return `${n > 0 ? "+" : "−"}${Math.abs(n).toFixed(1)}`;
 }
