@@ -1,5 +1,7 @@
 import { Link, Navigate } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useRef, useState } from "react";
+import { HeaderMenu } from "@/components/header-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { authEnabled, signOut } from "./client";
 import { useCurrentUser, useCurrentUserState } from "./use-current-user";
 
@@ -19,7 +21,7 @@ export const SIGN_IN_PATH = "/login";
 /** Render children only when a user is present (real session, or the disabled-auth dev user). */
 export function SignedIn({ children }: { children: ReactNode }) {
   const { user } = useCurrentUserState();
-  return user ? <>{children}</> : null;
+  return user ? children : null;
 }
 
 /**
@@ -53,29 +55,8 @@ export function RedirectToSignIn({ to = SIGN_IN_PATH }: { to?: string }) {
 export function UserButton({ leagueId }: { leagueId?: string | null }) {
   const user = useCurrentUser();
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => setOpen(false), []);
   const triggerRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onPress = (e: PointerEvent) => {
-      if (rootRef.current && e.target instanceof Node && !rootRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setOpen(false);
-        triggerRef.current?.focus();
-      }
-    };
-    window.addEventListener("pointerdown", onPress);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("pointerdown", onPress);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
 
   if (!user) return null;
   const label = user.displayName ?? user.primaryEmail ?? "Account";
@@ -84,7 +65,7 @@ export function UserButton({ leagueId }: { leagueId?: string | null }) {
     "block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-muted hover:bg-raised hover:text-fg";
 
   return (
-    <div ref={rootRef} className="relative">
+    <>
       <button
         ref={triggerRef}
         type="button"
@@ -102,42 +83,55 @@ export function UserButton({ leagueId }: { leagueId?: string | null }) {
           </span>
         )}
       </button>
-      {open ? (
-        <div
-          role="menu"
-          className="absolute right-0 top-full z-40 mt-2 w-52 rounded-lg bg-surface p-1.5 shadow-[0_0_0_1px_var(--color-line-strong),var(--shadow-lift)]"
-        >
-          <div className="border-b border-line px-3 pt-1.5 pb-2.5">
-            <span className="block truncate text-sm font-semibold">{label}</span>
-            {user.primaryEmail && user.displayName ? (
-              <span className="block truncate font-mono text-[11px] text-faint">
-                {user.primaryEmail}
-              </span>
-            ) : null}
+      <HeaderMenu
+        open={open}
+        onClose={close}
+        anchorRef={triggerRef}
+        align="right"
+        label="Account"
+        className="sm:w-56"
+      >
+        <div className="border-b border-line px-3 pt-1.5 pb-2.5">
+          <span className="block truncate text-sm font-semibold">{label}</span>
+          {user.primaryEmail && user.displayName ? (
+            <span className="block truncate font-mono text-[11px] text-faint">
+              {user.primaryEmail}
+            </span>
+          ) : null}
+        </div>
+        <div className="pt-1.5">
+          {/* Theme lives here now, not in the header: set once, rarely touched. */}
+          <div className="flex items-center justify-between gap-3 px-3 py-1.5">
+            <span className="text-sm font-medium text-muted">Theme</span>
+            <ThemeToggle />
           </div>
-          <div className="pt-1.5">
-            {leagueId ? (
-              <Link
-                to="/league/$leagueId/settings"
-                params={{ leagueId }}
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className={item}
-              >
-                League settings
-              </Link>
-            ) : null}
-            <Link to="/account" role="menuitem" onClick={() => setOpen(false)} className={item}>
-              Account
+          {leagueId ? (
+            <Link
+              to="/league/$leagueId/settings"
+              params={{ leagueId }}
+              role="menuitem"
+              onClick={close}
+              className={item}
+            >
+              League settings
             </Link>
-            {authEnabled && (
+          ) : null}
+          <Link to="/account" role="menuitem" onClick={close} className={item}>
+            Account
+          </Link>
+          <Link to="/" role="menuitem" onClick={close} className={item}>
+            The desk
+          </Link>
+          {authEnabled && (
+            <>
+              <div className="my-1.5 border-t border-line" />
               <button type="button" role="menuitem" onClick={() => void signOut()} className={item}>
                 Sign out
               </button>
-            )}
-          </div>
+            </>
+          )}
         </div>
-      ) : null}
-    </div>
+      </HeaderMenu>
+    </>
   );
 }
