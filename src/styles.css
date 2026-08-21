@@ -270,6 +270,17 @@
   animation: ledger-in 400ms var(--ease-out) 120ms both;
 }
 
+/* Live point delta: hold, then fade. Unmounted after 4.5s. */
+@keyframes score-flash {
+  0%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 /* The one character mark: the crest breathes. */
 @keyframes breathe {
   0%,

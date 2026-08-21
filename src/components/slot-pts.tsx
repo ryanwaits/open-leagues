@@ -1,44 +1,97 @@
+import { useEffect, useRef, useState } from "react";
 import { cn, formatPts } from "@/lib/utils";
+
+const FLASH_MS = 4500;
+
+/** Live unofficial only. Missing data and first established score never notify. */
+export function nextScoreFlash(
+  last: number | null,
+  points: number | null | undefined,
+  active: boolean,
+): { prev: number | null; delta: number } {
+  if (!active) return { prev: null, delta: 0 };
+  const curr = typeof points === "number" && Number.isFinite(points) ? points : null;
+  if (curr == null) return { prev: last, delta: 0 };
+  if (last == null) return { prev: curr, delta: 0 };
+  const delta = curr - last;
+  return { prev: curr, delta: Math.abs(delta) > 0.04 ? delta : 0 };
+}
+
+/** Delta since the last unofficial live total we actually painted. */
+export function useScoreFlash(points: number | null | undefined, active = true, holdMs = FLASH_MS): number {
+  const [flash, setFlash] = useState(0);
+  const prev = useRef<number | null>(null);
+  useEffect(() => {
+    const step = nextScoreFlash(prev.current, points, active);
+    prev.current = step.prev;
+    if (!active) {
+      setFlash(0);
+      return;
+    }
+    if (Math.abs(step.delta) <= 0.04) return;
+    setFlash(step.delta);
+    const t = window.setTimeout(() => setFlash(0), holdMs);
+    return () => window.clearTimeout(t);
+  }, [points, active, holdMs]);
+  return flash;
+}
 
 /** Points on a matchup row — unofficial, or a dimmed weekly forecast. */
 export function SlotPts({
   points,
   forecast,
-  bump = 0,
+  bump: _bump = 0,
   align = "right",
-  reserve = false,
+  reserve: _reserve = false,
+  expected,
+  live = false,
   className,
 }: {
   points: number | null | undefined;
   forecast?: "proj" | "bye" | "out";
   bump?: number;
   align?: "left" | "right";
-  /** Hold the note line's height even when there is no note to put in it. */
+  /** Kept so callers that reserved a note line do not have to change. */
   reserve?: boolean;
+  /** Live-adjusted expected final. Shown faintly while the game is still on. */
+  expected?: number | null;
+  /** Unofficial live scoring — never projections. */
+  live?: boolean;
   className?: string;
 }) {
   const note = forecast && forecast !== "proj" ? forecast : null;
-  const gain = !note && bump > 0.04 ? `+${formatPts(bump, 1)}` : null;
+  const flash = useScoreFlash(points, Boolean(live) && !note);
+  const gain =
+    !note && Math.abs(flash) > 0.04 ? `${flash > 0 ? "+" : ""}${formatPts(flash, 1)}` : null;
+  const rest = !note && !gain && expected != null && points != null && expected - points > 0.25;
   return (
     <span
       className={cn(
-        "w-16 shrink-0 font-mono text-xs tabular-nums",
-        align === "left" ? "text-left" : "text-right",
+        // min-h-8 matches the compact avatar so a lone score sits on the same
+        // midline as name + meta, including when a bye/out/gain line is absent.
+        "flex min-h-8 w-16 shrink-0 flex-col justify-center font-mono text-xs leading-none tabular-nums",
+        align === "left" ? "items-start text-left" : "items-end text-right",
         forecast && "text-muted",
         className,
       )}
     >
       {formatPts(points, 1)}
       {note ? (
-        <span className="block text-[10px] uppercase tracking-wide text-faint">{note}</span>
+        <span className="mt-0.5 text-[10px] leading-tight uppercase tracking-wide text-faint">
+          {note}
+        </span>
       ) : gain ? (
-        <span className="block text-[10px] text-accent-strong">{gain}</span>
-      ) : reserve ? (
-        // The gain arrives on one poll and is gone by the next. On a board where
-        // the two sides are read against each other, letting it push a row taller
-        // and shorter again is worse than the second of blank space it costs.
-        <span className="block text-[10px]" aria-hidden="true">
-          &nbsp;
+        <span
+          className={cn(
+            "mt-0.5 text-[10px] leading-tight motion-safe:animate-[score-flash_4.5s_ease-out_forwards]",
+            flash < 0 ? "text-loss" : "text-accent-strong",
+          )}
+        >
+          {gain}
+        </span>
+      ) : rest ? (
+        <span className="mt-0.5 text-[10px] leading-tight text-faint">
+          {formatPts(expected, 1)}
         </span>
       ) : null}
     </span>
