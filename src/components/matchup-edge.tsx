@@ -175,6 +175,7 @@ export function MatchupEdge({
               windows={WINDOWS}
               onWindowChange={setEdgeWindow}
               frozen={s.final}
+              padding={{ top: 8, right: 8, bottom: 26, left: 0 }}
               ariaLabel="Projected finals"
             />
           ) : edgeView === "pct" ? (
@@ -189,6 +190,7 @@ export function MatchupEdge({
               momentum={swing(s.pct, 300, 3).dir}
               formatValue={(v) => `${Math.round(v)}%`}
               frozen={s.final}
+              padding={{ top: 8, right: 8, bottom: 26, left: 0 }}
               ariaLabel="Win probability"
             />
           ) : (
@@ -203,11 +205,12 @@ export function MatchupEdge({
               momentum={marginMomentum}
               formatValue={(v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}`}
               frozen={s.final}
+              padding={{ top: 8, right: 8, bottom: 26, left: 0 }}
               ariaLabel="Projected margin"
             />
           )}
 
-          <div className="mt-1.5 flex justify-between microlabel-data">
+          <div className="mt-3 flex justify-between microlabel-data">
             <span>
               {a.teamName} {pct}%{live ? <span className="text-live"> · live</span> : null}
               {s.sinceOpened && !s.final ? " · since you opened" : null}
