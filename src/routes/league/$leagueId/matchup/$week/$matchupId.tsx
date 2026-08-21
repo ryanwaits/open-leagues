@@ -180,6 +180,7 @@ function MatchupPage() {
     return seedPairForReplay(rawPair, week, bags, book);
   }, [rawPair, week, finalsRaw, priorStats.data, book]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset the watched player whenever the week, matchup, or league changes, not just when its own value changes
   useEffect(() => {
     setWatch(null);
   }, [week, matchupId, leagueId]);
@@ -355,7 +356,7 @@ function MatchupPage() {
         <ul>
           {pair.home.starters.map((homeLine, i) => (
             <StarterRow
-              key={`${homeLine.slot}-${i}`}
+              key={homeLine.slot}
               home={homeLine}
               away={pair.away?.starters[i] ?? null}
               prevHome={prevPair?.home.starters[i] ?? null}
@@ -822,7 +823,7 @@ function BenchGrid({
         const a = right[i];
         return (
           <li
-            key={`${h?.player_id ?? "h"}-${a?.player_id ?? "a"}-${i}`}
+            key={`${h?.player_id ?? "h"}-${a?.player_id ?? "a"}`}
             className="grid grid-cols-2 gap-4 border-t border-line px-3 py-2.5 first:border-t-0 sm:px-4"
           >
             {h ? (

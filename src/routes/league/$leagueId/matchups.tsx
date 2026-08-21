@@ -201,6 +201,7 @@ function MatchupsPage() {
       : undefined,
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset the manual pick whenever the week or league changes, not just when its own value changes
   useEffect(() => {
     setPicked(null);
   }, [week, leagueId]);
@@ -223,6 +224,7 @@ function MatchupsPage() {
       right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
     });
   }, []);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-sync scroll edges when the strip's item count changes, since that resizes the scrollable area
   useEffect(() => {
     syncEdges();
     const el = stripRef.current;
@@ -232,6 +234,7 @@ function MatchupsPage() {
     return () => ro.disconnect();
   }, [syncEdges, shown.length]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-center the selected matchup whenever the week, default selection, or strip contents change
   useEffect(() => {
     if (picked != null) return;
     const on = stripRef.current?.querySelector('[aria-selected="true"]');
@@ -264,6 +267,7 @@ function MatchupsPage() {
       (matchups.isPending || matchups.isLoading || !matchups.isFetched) ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static list, no identity
             <Skeleton key={i} className="h-64" />
           ))}
         </div>
