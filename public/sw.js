@@ -24,18 +24,20 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("push", (event) => {
-  let payload = { title: "open-ff", body: "", url: "/" };
+  let payload = { title: "Open Leagues", body: "", url: "/" };
   try {
     if (event.data) payload = { ...payload, ...JSON.parse(event.data.text()) };
   } catch {
     /* keep defaults */
   }
-  const title = String(payload.title || "open-ff");
+  const title = String(payload.title || "Open Leagues");
   const body = String(payload.body || "");
   const url = String(payload.url || "/");
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
+      icon: "/__grok/icon-180.png",
+      badge: "/__grok/icon-180.png",
       data: { url },
     }),
   );
