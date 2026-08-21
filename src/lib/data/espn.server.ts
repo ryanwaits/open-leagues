@@ -344,6 +344,13 @@ type RawPlay = {
   awayScore?: number;
   homeScore?: number;
   statYardage?: number;
+  end?: {
+    down?: number;
+    distance?: number;
+    yardsToEndzone?: number;
+    shortDownDistanceText?: string;
+    possessionText?: string;
+  };
 };
 
 type RawDrive = {
@@ -377,16 +384,25 @@ type RawSummary = {
       date?: string;
       status?: { type?: { state?: string; shortDetail?: string; detail?: string } };
       situation?: {
+        possession?: string | number;
         shortDownDistanceText?: string;
         possessionText?: string;
         lastPlay?: { text?: string };
         downDistanceText?: string;
       };
       competitors?: Array<{
+        id?: string;
         homeAway: "home" | "away";
         score?: string;
         winner?: boolean;
-        team?: { abbreviation?: string; displayName?: string; logo?: string; logos?: EspnLogo[] };
+        possession?: boolean;
+        team?: {
+          id?: string;
+          abbreviation?: string;
+          displayName?: string;
+          logo?: string;
+          logos?: EspnLogo[];
+        };
         records?: Array<{ summary?: string }>;
       }>;
     }>;
@@ -490,11 +506,28 @@ export async function fetchGameSummary(eventId: string): Promise<GameSummary> {
     };
   }
 
-  const situationBits = [
-    comp?.situation?.shortDownDistanceText,
-    comp?.situation?.possessionText,
-  ].filter(Boolean);
+  // The summary's header situation is usually empty mid-game; the live drive's
+  // newest play carries where things stand, and competitors flag possession.
+  const curDrive = raw.drives?.current;
+  const curEnd = curDrive?.plays?.length
+    ? curDrive.plays[curDrive.plays.length - 1]?.end
+    : undefined;
+  const situationBits = (
+    comp?.situation?.shortDownDistanceText || comp?.situation?.possessionText
+      ? [comp?.situation?.shortDownDistanceText, comp?.situation?.possessionText]
+      : [curEnd?.shortDownDistanceText, curEnd?.possessionText]
+  ).filter(Boolean);
   const lastPlay = comp?.situation?.lastPlay?.text ?? null;
+  const possId = comp?.situation?.possession != null ? String(comp.situation.possession) : null;
+  const possession =
+    (possId
+      ? comp?.competitors?.find(
+          (c) => String(c.id ?? "") === possId || String(c.team?.id ?? "") === possId,
+        )?.team?.abbreviation
+      : null) ??
+    comp?.competitors?.find((c) => c.possession === true)?.team?.abbreviation ??
+    curDrive?.team?.abbreviation ??
+    null;
 
   const scoring: ScoringPlay[] = (raw.scoringPlays ?? []).map((s) => ({
     id: String(s.id ?? s.text ?? ""),
@@ -575,6 +608,7 @@ export async function fetchGameSummary(eventId: string): Promise<GameSummary> {
     home: teamOf(homeC),
     away: teamOf(awayC),
     situation: situationBits.length ? situationBits.join(" · ") : null,
+    possession: state === "in" ? possession : null,
     lastPlay: lastPlay ?? lastPlayText(drives),
     scoring,
     drives,

@@ -42,6 +42,11 @@ export const TEAMS: Record<string, TeamMeta> = {
 
 /** ESPN / historical codes that should resolve to a Sleeper team. */
 const TEAM_ALIASES: Record<string, string> = {
+  // ESPN play-by-play text spells a few clubs its own way.
+  HST: "HOU",
+  BLT: "BAL",
+  CLV: "CLE",
+  ARZ: "ARI",
   WSH: "WAS",
   WAS: "WAS",
   JAC: "JAX",

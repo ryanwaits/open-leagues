@@ -1,13 +1,6 @@
 import { demoStatBag, REPLAY_PHASES, replayStats } from "@/lib/replay";
-import { playerHeadshot, teamLogo } from "./teams";
-import type {
-  BoxGroup,
-  GameDrive,
-  GamePlay,
-  GameSummary,
-  ScoringPlay,
-  SlimPlayer,
-} from "./types";
+import { playerHeadshot, playerTeam, teamLogo } from "./teams";
+import type { BoxGroup, GameDrive, GamePlay, GameSummary, ScoringPlay, SlimPlayer } from "./types";
 
 const QB_NAMES = ["Geno", "Darnold", "Prescott", "Allen", "Williams", "Maye"];
 
@@ -117,7 +110,13 @@ export function buildPlayerScript(
       const phase = 1 + Math.floor((i / Math.max(1, chunks.length)) * 7);
       push(
         `(Shotgun) ${who} pass ${yd >= 20 ? "deep" : "short"} ${i % 2 ? "right" : "left"} to ${i % 3 === 0 ? "K.Walker" : "J.Smith-Njigba"} ${td ? `for ${yd} yards, TOUCHDOWN.` : `to ${opp} ${18 + (i % 20)} for ${yd} yards.`}`,
-        { yards: yd, scoring: td, type: td ? "Passing Touchdown" : "Pass", phase, newDrive: i === 0 || i % 3 === 0 },
+        {
+          yards: yd,
+          scoring: td,
+          type: td ? "Passing Touchdown" : "Pass",
+          phase,
+          newDrive: i === 0 || i % 3 === 0,
+        },
       );
     });
     for (let i = 0; i < ints; i++) {
@@ -162,7 +161,11 @@ export function buildPlayerScript(
       });
     }
     for (let i = 0; i < ints; i++) {
-      push(`${team} intercepted ${qb} at ${team} 22.`, { type: "Interception", phase: 3, newDrive: true });
+      push(`${team} intercepted ${qb} at ${team} 22.`, {
+        type: "Interception",
+        phase: 3,
+        newDrive: true,
+      });
     }
     if (tds) {
       push(`${team} fumble recovery, returned for a TOUCHDOWN.`, {
@@ -190,7 +193,13 @@ export function buildPlayerScript(
           `(Shotgun) ${qb} pass ${yd >= 18 ? "deep" : "short"} ${i % 2 ? "left" : "right"} to ${who} ${
             td ? `for ${yd} yards, TOUCHDOWN.` : `to ${opp} ${spot} for ${yd} yards.`
           }`,
-          { yards: yd, scoring: td, type: td ? "Passing Touchdown" : "Pass Reception", phase, newDrive: i === 0 || i === 2 },
+          {
+            yards: yd,
+            scoring: td,
+            type: td ? "Passing Touchdown" : "Pass Reception",
+            phase,
+            newDrive: i === 0 || i === 2,
+          },
         );
       });
     }
@@ -202,7 +211,13 @@ export function buildPlayerScript(
         const phase = 1 + Math.floor((i / Math.max(1, chunks.length)) * 7);
         push(
           `${who} ${td ? `up the middle for ${yd} yards, TOUCHDOWN.` : `left guard to ${team} ${20 + (i % 18)} for ${yd} yards.`}`,
-          { yards: yd, scoring: td, type: td ? "Rushing Touchdown" : "Rush", phase, newDrive: rec === 0 && i === 0 },
+          {
+            yards: yd,
+            scoring: td,
+            type: td ? "Rushing Touchdown" : "Rush",
+            phase,
+            newDrive: rec === 0 && i === 0,
+          },
         );
       });
     }
@@ -238,9 +253,7 @@ export function simulatePlayerGame(opts: {
   const player = opts.player;
   const team = (player.team ?? "SEA").toUpperCase();
   const realHome = (opts.base?.home.abbr ?? team).toUpperCase();
-  const realAway = (
-    opts.base?.away.abbr ?? (realHome === team ? "NE" : team)
-  ).toUpperCase();
+  const realAway = (opts.base?.away.abbr ?? (realHome === team ? "NE" : team)).toUpperCase();
 
   const script = buildPlayerScript(player, opts.bag, realHome, realAway);
   const last = REPLAY_PHASES.length - 1;
@@ -318,6 +331,7 @@ export function simulatePlayerGame(opts: {
       record: opts.base?.away.record ?? null,
     },
     situation,
+    possession: state === "in" ? (playerTeam(player) ?? null) : null,
     lastPlay: lastPlay?.text ?? null,
     scoring: shown
       .filter((p) => p.scoring)
@@ -372,7 +386,12 @@ function boxGroupsFor(
         rows: [
           {
             ...row,
-            stats: [`${cmp}/${cmp + inc}`, String(Math.round(n(shown, "pass_yd"))), String(n(shown, "pass_td")), String(n(shown, "pass_int"))],
+            stats: [
+              `${cmp}/${cmp + inc}`,
+              String(Math.round(n(shown, "pass_yd"))),
+              String(n(shown, "pass_td")),
+              String(n(shown, "pass_int")),
+            ],
           },
         ],
       },
@@ -384,7 +403,15 @@ function boxGroupsFor(
         name: "kicking",
         label: "Kicking",
         headers: ["FG", "XP"],
-        rows: [{ ...row, stats: [String(n(shown, "fgm") || n(shown, "fgm_30_39") + n(shown, "fgm_40_49")), String(n(shown, "xpm"))] }],
+        rows: [
+          {
+            ...row,
+            stats: [
+              String(n(shown, "fgm") || n(shown, "fgm_30_39") + n(shown, "fgm_40_49")),
+              String(n(shown, "xpm")),
+            ],
+          },
+        ],
       },
     ];
   }
@@ -397,7 +424,12 @@ function boxGroupsFor(
         rows: [
           {
             ...row,
-            stats: [String(n(shown, "sack")), String(n(shown, "int")), String(n(shown, "def_td")), String(n(shown, "pts_allow"))],
+            stats: [
+              String(n(shown, "sack")),
+              String(n(shown, "int")),
+              String(n(shown, "def_td")),
+              String(n(shown, "pts_allow")),
+            ],
           },
         ],
       },
@@ -409,7 +441,16 @@ function boxGroupsFor(
       name: "rushing",
       label: "Rushing",
       headers: ["CAR", "YDS", "TD"],
-      rows: [{ ...row, stats: [String(n(shown, "rush_att")), String(Math.round(n(shown, "rush_yd"))), String(n(shown, "rush_td"))] }],
+      rows: [
+        {
+          ...row,
+          stats: [
+            String(n(shown, "rush_att")),
+            String(Math.round(n(shown, "rush_yd"))),
+            String(n(shown, "rush_td")),
+          ],
+        },
+      ],
     });
   }
   if (n(bag, "rec") || n(bag, "rec_yd")) {
@@ -422,7 +463,12 @@ function boxGroupsFor(
       rows: [
         {
           ...row,
-          stats: [String(rec), String(yds), rec ? (yds / rec).toFixed(1) : "0", String(n(shown, "rec_td"))],
+          stats: [
+            String(rec),
+            String(yds),
+            rec ? (yds / rec).toFixed(1) : "0",
+            String(n(shown, "rec_td")),
+          ],
         },
       ],
     });
