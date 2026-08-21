@@ -1,8 +1,8 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useNavigate } from "@tanstack/react-router";
-import { Check, FlaskConical, Pause, Play, X } from "lucide-react";
+import { Check, FlaskConical, Pause, Play, Radio, X } from "lucide-react";
 import { useEffect } from "react";
-import { LAST_PHASE, useDemoOn, useDemoStore } from "@/lib/demo/store";
+import { LAST_PHASE, useDemoOn, useDemoStore, usePreLive } from "@/lib/demo/store";
 import { PROTOTYPE_LABELS, PROTOTYPE_STATES, type PrototypeState } from "@/lib/league/prototype";
 import { REPLAY_PHASES, REPLAY_TICK_MS } from "@/lib/replay";
 import { cn } from "@/lib/utils";
@@ -21,11 +21,13 @@ import { cn } from "@/lib/utils";
  */
 export function DemoToolbar({ state }: { state: PrototypeState | undefined }) {
   const on = useDemoOn();
+  const preLive = usePreLive();
   const phase = useDemoStore((s) => s.phase);
   const running = useDemoStore((s) => s.running);
   const toggle = useDemoStore((s) => s.toggle);
   const stop = useDemoStore((s) => s.stop);
   const step = useDemoStore((s) => s.step);
+  const setPreLive = useDemoStore((s) => s.setPreLive);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -53,6 +55,14 @@ export function DemoToolbar({ state }: { state: PrototypeState | undefined }) {
     // High enough to clear both the mobile tab bar and any page that parks a
     // fixed action rail above it. A dev toy must never sit on a real control.
     <div className="pointer-events-none fixed right-3 bottom-36 z-40 flex items-center gap-1.5 md:bottom-20">
+      <Chip
+        onClick={() => setPreLive(!preLive)}
+        label="Pre live"
+        title="Paint tonight's preseason games onto your matchups. Display only."
+        on={preLive}
+      >
+        <Radio className="size-3" strokeWidth={2.4} />
+      </Chip>
       {phase == null ? (
         <Chip onClick={toggle} label="Simulate" title="Unfold this week play by play">
           <Play className="size-3" strokeWidth={2.4} />
@@ -128,11 +138,13 @@ function Chip({
   onClick,
   label,
   title,
+  on,
   children,
 }: {
   onClick: () => void;
   label: string;
   title: string;
+  on?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -140,7 +152,12 @@ function Chip({
       type="button"
       onClick={onClick}
       title={title}
-      className="pointer-events-auto inline-flex h-8 items-center gap-1.5 rounded-pill border border-line bg-surface px-3 microlabel-data shadow-[var(--shadow-lift)] transition-colors duration-150 hover:text-muted"
+      className={cn(
+        "pointer-events-auto inline-flex h-8 items-center gap-1.5 rounded-pill border px-3 microlabel-data shadow-[var(--shadow-lift)] transition-colors duration-150",
+        on
+          ? "border-accent-strong bg-accent text-accent-fg"
+          : "border-line bg-surface hover:text-muted",
+      )}
     >
       {children}
       {label}

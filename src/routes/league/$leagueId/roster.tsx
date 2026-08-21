@@ -11,11 +11,21 @@ import { TradeSpineRow } from "@/components/trade-spine";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getActivity, getByeWeeks, getLeagueBundle, getProjections, getTeam } from "@/lib/data/fns";
+import { fantasyStatKind } from "@/lib/data/calendar";
+import {
+  getActivity,
+  getByeWeeks,
+  getLeagueBundle,
+  getProjections,
+  getTeam,
+  getWeekStats,
+} from "@/lib/data/fns";
 import { prefetchPlayerProfile, useWarmRosterProfiles } from "@/lib/data/player-view";
 import { projectionRosterKey } from "@/lib/data/projection-key";
 import { baseSlotLabel } from "@/lib/data/teams";
 import type { RosterPlayer } from "@/lib/data/types";
+import { overlayPreLiveRoster } from "@/lib/demo/pre-live";
+import { usePreLiveFeed } from "@/lib/demo/use-pre-live-feed";
 import {
   cancelClaim,
   cancelTradeFn,
@@ -26,6 +36,7 @@ import {
   voteTrade,
 } from "@/lib/league/fns";
 import { invalidateAfterLineup } from "@/lib/league/lineup-cache";
+import { bookFromLeague } from "@/lib/replay";
 import { cn, fmtRecord, formatPts } from "@/lib/utils";
 
 /** The card is a digest; the activity page is the full ledger. */
@@ -79,10 +90,22 @@ function MyTeamPage() {
   const rosterId = league.data?.myRosterId ?? null;
   const season = league.data?.league.season ?? "";
 
+  const pre = usePreLiveFeed();
+  const book = bookFromLeague(league.data?.league.scoring_settings);
   const team = useQuery({
     queryKey: ["team", leagueId, rosterId, week],
     queryFn: () => getTeam({ data: { leagueId, rosterId: Number(rosterId), week } }),
     enabled: rosterId != null,
+    refetchInterval: () => (league.data?.scoringLive || pre.on ? 4_000 : false),
+  });
+  const weekStats = useQuery({
+    queryKey: ["week-stats", season, week],
+    queryFn: () =>
+      getWeekStats({
+        data: { season, week, kind: fantasyStatKind() },
+      }),
+    enabled: Boolean(season) && !pre.on,
+    refetchInterval: () => (league.data?.scoringLive ? 4_000 : false),
   });
   const byes = useQuery({
     queryKey: ["byes", season],
@@ -90,7 +113,12 @@ function MyTeamPage() {
     enabled: Boolean(season),
     staleTime: 12 * 60 * 60 * 1000,
   });
-  const players = team.data?.players;
+  const players = useMemo(() => {
+    const list = team.data?.players;
+    if (!list) return list;
+    if (!pre.on) return list;
+    return overlayPreLiveRoster(list, pre.games, pre.stats, book);
+  }, [team.data?.players, pre.on, pre.games, pre.stats, book]);
   useWarmRosterProfiles(
     leagueId,
     players?.map((p) => p.player_id),
@@ -263,7 +291,10 @@ function MyTeamPage() {
     );
   }
 
-  const t = team.data;
+  const t = {
+    ...team.data,
+    players: players ?? team.data.players,
+  };
   const ops = league.data.ops;
   const seed = league.data.standings.findIndex((s) => s.rosterId === rosterId) + 1;
   // Only live claims. A cancelled or settled one is finished business and
@@ -347,6 +378,7 @@ function MyTeamPage() {
             byes={byes.data}
             week={week}
             projections={projections.data}
+            stats={pre.on ? pre.stats : (weekStats.data ?? {})}
             busy={start.isPending || sit.isPending || swap.isPending}
             onIntentPlayer={(p) => void prefetchPlayerProfile(qc, leagueId, p.player_id)}
             onOpenPlayer={openPlayer}

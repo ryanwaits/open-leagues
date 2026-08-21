@@ -7,15 +7,15 @@ import type {
   StandingRow,
   StarterLine,
 } from "@/lib/data/types";
+import { pairHasStarted, sideUnofficial } from "@/lib/data/matchup-view";
 import type { Phase } from "@/lib/league/phase";
 import { cn, fmtRecord, formatPts } from "@/lib/utils";
 
 /**
  * The week's stakes as a card: who you play, both totals, the balance
- * between them, and the two players most likely to decide it. The shell
- * never changes — the numbers walk Projected → Live → Final with the
- * phase. Like the hero, it only exists when there is a matchup; the
- * offseason page simply doesn't render it.
+ * between them. The shell never changes — the numbers walk Projected →
+ * Live → Final with the phase. Like the hero, it only exists when there
+ * is a matchup; the offseason page simply doesn't render it.
  *
  * getMatchups reports raw points, which are zero until games start, so
  * before kickoff every number here comes from the projections map instead
@@ -43,24 +43,28 @@ export function MatchupCard({
   if (!mine || !theirs) return null;
 
   const settled = phase === "settled";
-  const live = phase === "live";
-  const scoring = live || settled;
+  const kicked = pairHasStarted(pair);
+  const scoring = settled || kicked;
+  const live = scoring && !settled;
   const label = live ? "Live" : settled ? "Final" : "Projected";
 
   const lineValue = (l: StarterLine): number =>
     scoring
-      ? (l.points ?? 0)
+      ? l.forecast
+        ? 0
+        : (l.points ?? 0)
       : (projections?.[l.playerId ?? l.player?.player_id ?? ""]?.points ?? 0);
   const sideTotal = (side: MatchupSide): number =>
-    scoring ? side.points : side.starters.reduce((sum, l) => sum + lineValue(l), 0);
+    scoring ? sideUnofficial(side) : side.starters.reduce((sum, l) => sum + lineValue(l), 0);
 
   const myPts = sideTotal(mine);
   const theirPts = sideTotal(theirs);
   const total = myPts + theirPts;
   // Pre-kickoff with no projections loaded yet, every figure is a fake zero
-  // — say nothing rather than "0.0 · even".
-  const known = total > 0;
-  const share = known ? (myPts / total) * 100 : 50;
+  // — say nothing rather than "0.0 · even". Once the week is live, 0 is a
+  // real score and has to print.
+  const known = scoring || total > 0;
+  const share = total > 0 ? (myPts / total) * 100 : 50;
   const diff = myPts - theirPts;
 
   const delta = !known
@@ -70,9 +74,6 @@ export function MatchupCard({
       : settled
         ? `${diff > 0 ? "won" : "lost"} by ${formatPts(Math.abs(diff), 1)}`
         : `+${formatPts(Math.abs(diff), 1)} ${diff > 0 ? "you" : "them"}`;
-
-  const myBest = bestStarter(mine, lineValue);
-  const theirBest = bestStarter(theirs, lineValue);
 
   return (
     <section className="rounded-xl bg-surface ring-card">
@@ -102,18 +103,6 @@ export function MatchupCard({
       ) : (
         <div className="px-5 pt-1 pb-3" />
       )}
-
-      {known && myBest?.player && theirBest?.player ? (
-        <div className="space-y-1.5 border-t border-line px-5 py-3">
-          <WatchRow label="Your best" line={myBest} value={lineValue(myBest)} proj={!scoring} />
-          <WatchRow
-            label="Their threat"
-            line={theirBest}
-            value={lineValue(theirBest)}
-            proj={!scoring}
-          />
-        </div>
-      ) : null}
 
       <div className="border-t border-line px-5 py-3 text-right">
         <Link
@@ -171,46 +160,6 @@ function SideRow({
       </span>
     </div>
   );
-}
-
-function WatchRow({
-  label,
-  line,
-  value,
-  proj,
-}: {
-  label: string;
-  line: StarterLine;
-  value: number;
-  proj: boolean;
-}) {
-  const p = line.player;
-  if (!p) return null;
-  return (
-    <div className="flex min-w-0 items-baseline gap-2">
-      <span className="w-[74px] shrink-0 microlabel-data">{label}</span>
-      <span className="truncate text-[13px] font-semibold tracking-[-0.01em]">{p.full_name}</span>
-      {p.position ? (
-        <span className="inline-flex h-4 shrink-0 items-center rounded-xs bg-raised px-1.5 font-mono text-[9px] text-muted">
-          {p.position}
-        </span>
-      ) : null}
-      <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted">
-        {proj ? "proj " : ""}
-        {formatPts(value, 1)}
-      </span>
-    </div>
-  );
-}
-
-/** The starter most likely to decide the week — highest by the phase's number. */
-function bestStarter(side: MatchupSide, value: (l: StarterLine) => number): StarterLine | null {
-  let best: StarterLine | null = null;
-  for (const line of side.starters) {
-    if (!line.player) continue;
-    if (best == null || value(line) > value(best)) best = line;
-  }
-  return best;
 }
 
 function ordinalSuffix(n: number): string {

@@ -7,7 +7,7 @@ import { MatchupEdge } from "@/components/matchup-edge";
 import { PlayerCell } from "@/components/player-cell";
 import { PlayerSheet, type SheetTarget } from "@/components/player-sheet";
 import { PlayerWatch, type WatchTarget, watchFromLine } from "@/components/player-watch";
-import { SlotPts } from "@/components/slot-pts";
+import { SlotPts, useScoreFlash } from "@/components/slot-pts";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fantasyStatKind } from "@/lib/data/calendar";
@@ -18,7 +18,14 @@ import {
   getWeekProjections,
   getWeekStats,
 } from "@/lib/data/fns";
-import { liveStatLine, paintMatchup, pairIsProjected, slotDisplay } from "@/lib/data/matchup-view";
+import {
+  gameHasStarted,
+  liveStatLine,
+  paintMatchup,
+  paintMatchups,
+  pairPreviewScores,
+  slotDisplay,
+} from "@/lib/data/matchup-view";
 import { baseSlotLabel } from "@/lib/data/teams";
 import type {
   GameChip,
@@ -30,7 +37,9 @@ import type {
   StarterLine,
   TeamBundle,
 } from "@/lib/data/types";
+import { overlayPreLivePairs, overlayPreLiveRoster } from "@/lib/demo/pre-live";
 import { useDemoStore, useSimPhase } from "@/lib/demo/store";
+import { usePreLiveFeed } from "@/lib/demo/use-pre-live-feed";
 import {
   applyReplaySide,
   bookFromLeague,
@@ -54,6 +63,7 @@ function MatchupPage() {
   const matchupId = Number(idParam);
   // The transport lives in the demo toolbar; this page only reads the clock.
   const phase = useSimPhase();
+  const pre = usePreLiveFeed();
   const stopSim = useDemoStore((s) => s.stop);
   const [watch, setWatch] = useState<WatchTarget | null>(null);
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
@@ -178,6 +188,9 @@ function MatchupPage() {
   }, [rawPair, phase, stopSim]);
 
   const livePair = useMemo(() => {
+    if (pre.on && rawPair) {
+      return overlayPreLivePairs([rawPair], pre.games, pre.stats, book)[0] ?? rawPair;
+    }
     if (!seeded) return null;
     if (phase == null) return rawPair;
     return {
@@ -185,17 +198,29 @@ function MatchupPage() {
       home: applyReplaySide(seeded.pair.home, week, phase, seeded.finals),
       away: seeded.pair.away ? applyReplaySide(seeded.pair.away, week, phase, seeded.finals) : null,
     };
-  }, [rawPair, seeded, phase, week]);
+  }, [pre.on, pre.games, pre.stats, book, rawPair, seeded, phase, week]);
 
   const stats = useMemo(
-    () => (phase == null ? finalsRaw : replayStatMap(seeded?.finals ?? finalsRaw, phase, week)),
-    [finalsRaw, seeded, phase, week],
+    () =>
+      pre.on
+        ? pre.stats
+        : phase == null
+          ? finalsRaw
+          : replayStatMap(seeded?.finals ?? finalsRaw, phase, week),
+    [pre.on, pre.stats, finalsRaw, seeded, phase, week],
   );
 
   const pair = useMemo(
     () => (livePair ? paintMatchup(livePair, projections.data ?? {}, stats) : null),
     [livePair, projections.data, stats],
   );
+
+  const slate = useMemo(() => {
+    const rows = matchups.data ?? [];
+    if (!rows.length) return rows;
+    const overlaid = pre.on ? overlayPreLivePairs(rows, pre.games, pre.stats, book) : rows;
+    return paintMatchups(overlaid, projections.data ?? {}, stats);
+  }, [matchups.data, pre.on, pre.games, pre.stats, book, projections.data, stats]);
 
   const prevPair = useMemo(() => {
     if (!seeded || phase == null || phase <= 0) return null;
@@ -209,14 +234,22 @@ function MatchupPage() {
     return paintMatchup(raw, projections.data ?? {}, replayStatMap(seeded.finals, phase - 1, week));
   }, [seeded, phase, week, projections.data]);
 
-  const viewHome = useMemo(
-    () => replayRoster(homeTeam.data, phase, week),
-    [homeTeam.data, phase, week],
-  );
-  const viewAway = useMemo(
-    () => replayRoster(awayTeam.data, phase, week),
-    [awayTeam.data, phase, week],
-  );
+  const viewHome = useMemo(() => {
+    const replayed = replayRoster(homeTeam.data, phase, week);
+    if (!pre.on || !replayed) return replayed;
+    return {
+      ...replayed,
+      players: overlayPreLiveRoster(replayed.players, pre.games, pre.stats, book),
+    };
+  }, [homeTeam.data, phase, week, pre.on, pre.games, pre.stats, book]);
+  const viewAway = useMemo(() => {
+    const replayed = replayRoster(awayTeam.data, phase, week);
+    if (!pre.on || !replayed) return replayed;
+    return {
+      ...replayed,
+      players: overlayPreLiveRoster(replayed.players, pre.games, pre.stats, book),
+    };
+  }, [awayTeam.data, phase, week, pre.on, pre.games, pre.stats, book]);
 
   if (!Number.isFinite(week) || !Number.isFinite(matchupId)) {
     return <p className="text-sm text-muted">That matchup link is broken.</p>;
@@ -296,7 +329,6 @@ function MatchupPage() {
         leagueId={leagueId}
         standings={standings}
         status={status}
-        livePoints={[livePair?.home.points ?? 0, livePair?.away?.points ?? 0]}
         live={phase == null && Boolean(league.data?.scoringLive) && status.tone === "live"}
       />
 
@@ -410,11 +442,11 @@ function MatchupPage() {
         </section>
       )}
 
-      {matchups.data && matchups.data.length > 1 ? (
+      {slate.length > 1 ? (
         <section className="mt-8">
           <h2 className="microlabel">Rest of week {week}</h2>
           <ul className="mt-3 space-y-1.5">
-            {matchups.data
+            {slate
               .filter((p) => p.matchupId !== pair.matchupId)
               .map((p) => (
                 <li key={p.matchupId}>
@@ -429,7 +461,10 @@ function MatchupPage() {
                   >
                     <span className="min-w-0 flex-1 truncate">{p.home.teamName}</span>
                     <span className="shrink-0 font-mono tabular-nums text-muted">
-                      {formatPts(p.home.points, 1)}–{formatPts(p.away?.points ?? 0, 1)}
+                      {(() => {
+                        const s = pairPreviewScores(p);
+                        return `${formatPts(s.home, 1)}–${formatPts(s.away, 1)}`;
+                      })()}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-right">
                       {p.away?.teamName ?? "Bye"}
@@ -496,7 +531,6 @@ function Scoreboard({
   leagueId,
   standings,
   status,
-  livePoints,
   live,
 }: {
   pair: MatchupPair;
@@ -504,15 +538,15 @@ function Scoreboard({
   leagueId: string;
   standings: StandingRow[];
   status: { label: string; tone: "live" | "muted" | "win" };
-  livePoints: [number, number];
   live: boolean;
 }) {
   const away = pair.away;
-  const preview = pairIsProjected(pair);
+  const scores = pairPreviewScores(pair);
+  const preview = !scores.live;
   const decided = isDecided(pair);
-  const homeLeads = !away || pair.home.points > away.points;
-  const awayLeads = Boolean(away && away.points > pair.home.points);
-  const tied = Boolean(away && pair.home.points === away.points && decided);
+  const homeLeads = !away || scores.home > scores.away;
+  const awayLeads = Boolean(away && scores.away > scores.home);
+  const tied = Boolean(away && scores.home === scores.away && decided);
 
   return (
     <section className="rounded-xl bg-surface px-4 py-5 ring-card sm:px-6 sm:py-6">
@@ -537,21 +571,14 @@ function Scoreboard({
         <div className="text-center">
           <p className="font-display text-4xl tabular-nums tracking-tight sm:text-5xl">
             <span className={homeLeads && decided ? "text-fg" : "text-muted"}>
-              {formatPts(preview ? livePoints[0] : pair.home.points, 1)}
+              {formatPts(scores.home, 1)}
             </span>
             <span className="mx-1.5 text-2xl text-faint sm:mx-2">–</span>
             <span className={awayLeads && decided ? "text-fg" : "text-muted"}>
-              {formatPts(preview ? livePoints[1] : (away?.points ?? 0), 1)}
+              {formatPts(scores.away, 1)}
             </span>
           </p>
-          {preview ? (
-            <p className="mt-1 font-display text-xl tabular-nums tracking-tight text-faint">
-              {formatPts(pair.home.points, 1)}
-              <span className="mx-1.5 text-base">–</span>
-              {formatPts(away?.points ?? 0, 1)}
-              <span className="ml-2 microlabel-data">proj</span>
-            </p>
-          ) : null}
+          {preview ? <p className="mt-1 microlabel-data">proj</p> : null}
           {tied ? <p className="mt-1 microlabel">Tie</p> : null}
           {live ? (
             <p className="mt-1 microlabel text-live">Unofficial · {LIVE_POLL_MS / 1000}s</p>
@@ -628,8 +655,8 @@ function TeamHead({
 function StarterRow({
   home,
   away,
-  prevHome,
-  prevAway,
+  prevHome: _prevHome,
+  prevAway: _prevAway,
   bye,
   stats,
   homeClub,
@@ -651,15 +678,12 @@ function StarterRow({
   const bothIn = Boolean(home.player && away?.player);
   const homeHot = bothIn && hp > ap;
   const awayHot = bothIn && ap > hp;
-  const homeBump = home.forecast ? 0 : hp - (prevHome?.points ?? hp);
-  const awayBump = away?.forecast ? 0 : ap - (prevAway?.points ?? ap);
   return (
     <li className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-t border-line px-3 py-2.5 first:border-t-0 sm:gap-3 sm:px-4">
       <Line
         side={home}
         align="left"
         hot={homeHot}
-        bump={homeBump}
         stats={stats}
         club={homeClub}
         onWatch={onWatch}
@@ -672,7 +696,6 @@ function StarterRow({
           side={away}
           align="right"
           hot={awayHot}
-          bump={awayBump}
           stats={stats}
           club={awayClub}
           onWatch={onWatch}
@@ -686,7 +709,6 @@ function Line({
   side,
   align,
   hot,
-  bump,
   stats,
   club,
   onWatch,
@@ -694,11 +716,12 @@ function Line({
   side: StarterLine | null;
   align: "left" | "right";
   hot: boolean;
-  bump: number;
   stats: Record<string, Record<string, number>>;
   club: string;
   onWatch: (t: WatchTarget) => void;
 }) {
+  const live = Boolean(side && gameHasStarted(side.game) && !side.forecast);
+  const flash = useScoreFlash(side?.points, live);
   if (!side) {
     return <span className="text-sm text-faint">—</span>;
   }
@@ -713,7 +736,7 @@ function Line({
       className={cn(
         "flex min-w-0 items-center gap-2 rounded-md px-1 py-0.5 text-left transition-colors duration-150",
         align === "right" && "flex-row-reverse text-right",
-        bump > 0.04 && "bg-highlight/15",
+        flash > 0.04 && "bg-highlight/15",
         target && "hover:bg-raised",
       )}
     >
@@ -730,7 +753,8 @@ function Line({
       <SlotPts
         points={side.points}
         forecast={side.forecast}
-        bump={bump}
+        expected={side.expected}
+        live={live}
         align={align}
         className={cn("w-10 text-sm sm:w-12", !side.forecast && (hot ? "text-fg" : "text-muted"))}
       />

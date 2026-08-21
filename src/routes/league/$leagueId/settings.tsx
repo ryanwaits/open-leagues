@@ -702,10 +702,10 @@ function DemoMode() {
     <section className="border-t border-line pt-10">
       <h2 className="font-display text-2xl">Demo mode</h2>
       <p className="mt-1 max-w-prose text-sm text-muted">
-        Adds a toolbar in the corner for forcing the week into any phase and unfolding a Sunday play
-        by play from last season&rsquo;s numbers. Everything it shows is made up, so it is off until
-        you ask for it. This browser only &mdash; nobody else in the league sees it, and it never
-        reaches a deployed build.
+        Adds a toolbar in the corner: force a week phase, unfold a fake Sunday from last season, or
+        paint tonight&rsquo;s real preseason games onto your matchups (Pre live). Pre live is
+        display only &mdash; it never advances a week or writes scores. This browser only, and it
+        never reaches a deployed build.
       </p>
       {/* Deliberately below Save: this applies the instant you press it, and
           sitting inside the form would promise otherwise. */}

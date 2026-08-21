@@ -1,15 +1,27 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Avatar } from "@/components/avatar";
 import { PurseMeter } from "@/components/book-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getActivity, getLeagueBundle, getMatchups, getRecap } from "@/lib/data/fns";
+import { fantasyStatKind } from "@/lib/data/calendar";
+import {
+  getActivity,
+  getLeagueBundle,
+  getMatchups,
+  getRecap,
+  getWeekProjections,
+  getWeekStats,
+} from "@/lib/data/fns";
+import { paintMatchups, pairPreviewScores } from "@/lib/data/matchup-view";
 import type { LeagueBundle } from "@/lib/data/types";
+import { overlayPreLivePairs } from "@/lib/demo/pre-live";
+import { usePreLiveFeed } from "@/lib/demo/use-pre-live-feed";
 import { getBook, getTrades, pullWager } from "@/lib/league/fns";
+import { bookFromLeague } from "@/lib/replay";
 import { cn, fmtRecord, formatPts } from "@/lib/utils";
 
 export const Route = createFileRoute("/league/$leagueId/standings")({
@@ -28,19 +40,49 @@ function LeaguePage() {
   const { leagueId } = Route.useParams();
   const search = Route.useSearch();
   const qc = useQueryClient();
+  const pre = usePreLiveFeed();
 
   const league = useQuery({
     queryKey: ["league", leagueId],
     queryFn: () => getLeagueBundle({ data: { leagueId } }),
-    refetchInterval: (q) => (q.state.data?.scoringLive ? 15_000 : false),
+    refetchInterval: (q) => (q.state.data?.scoringLive || pre.on ? 15_000 : false),
   });
   const week = search.week ?? league.data?.currentWeek ?? 1;
+  const season = league.data?.league.season ?? "";
 
   const matchups = useQuery({
     queryKey: ["matchups", leagueId, week],
     queryFn: () => getMatchups({ data: { leagueId, week } }),
-    refetchInterval: () => (league.data?.scoringLive ? 15_000 : false),
+    refetchInterval: () => (league.data?.scoringLive || pre.on ? 4_000 : false),
   });
+  const projections = useQuery({
+    queryKey: ["week-projections", leagueId, week],
+    queryFn: () =>
+      getWeekProjections({
+        data: { leagueId, season, week },
+      }),
+    enabled: Boolean(season),
+    staleTime: 60_000,
+  });
+  const weekStats = useQuery({
+    queryKey: ["week-stats", season, week],
+    queryFn: () =>
+      getWeekStats({
+        data: { season, week, kind: fantasyStatKind() },
+      }),
+    enabled: Boolean(season) && !pre.on,
+    refetchInterval: () => (league.data?.scoringLive ? 4_000 : false),
+  });
+  const scoringBook = bookFromLeague(league.data?.league.scoring_settings);
+  const slate = useMemo(() => {
+    const rows = matchups.data ?? [];
+    const overlaid = pre.on ? overlayPreLivePairs(rows, pre.games, pre.stats, scoringBook) : rows;
+    return paintMatchups(
+      overlaid,
+      projections.data ?? {},
+      pre.on ? pre.stats : (weekStats.data ?? {}),
+    );
+  }, [matchups.data, pre.on, pre.games, pre.stats, scoringBook, projections.data, weekStats.data]);
   const activity = useQuery({
     queryKey: ["activity", leagueId, week],
     queryFn: () => getActivity({ data: { leagueId, week } }),
@@ -181,9 +223,12 @@ function LeaguePage() {
             </div>
           ) : (
             <ul>
-              {(matchups.data ?? []).map((pair) => {
-                const homeLeads = !pair.away || pair.home.points >= pair.away.points;
-                const decided = pair.home.points > 0 || (pair.away?.points ?? 0) > 0;
+              {slate.map((pair) => {
+                const scores = pairPreviewScores(pair);
+                const homePts = scores.home;
+                const awayPts = scores.away;
+                const homeLeads = !pair.away || homePts >= awayPts;
+                const decided = scores.live && (homePts > 0 || awayPts > 0);
                 const involvesMe = pair.home.rosterId === mine || pair.away?.rosterId === mine;
                 return (
                   <li key={pair.matchupId}>
@@ -202,11 +247,11 @@ function LeaguePage() {
                       </span>
                       <span className="shrink-0 font-mono text-sm tabular-nums">
                         <span className={homeLeads && decided ? "font-semibold" : "text-muted"}>
-                          {formatPts(pair.home.points, 1)}
+                          {formatPts(homePts, 1)}
                         </span>
                         <span className="mx-1.5 text-faint">–</span>
                         <span className={!homeLeads && decided ? "font-semibold" : "text-muted"}>
-                          {formatPts(pair.away?.points ?? 0, 1)}
+                          {formatPts(awayPts, 1)}
                         </span>
                       </span>
                       <span className="min-w-0 flex-1 truncate text-right text-sm">

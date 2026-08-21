@@ -16,8 +16,8 @@ import { REPLAY_PHASES } from "@/lib/replay";
  * what the league is, so it has no business in league state where it would
  * follow every other manager around.
  *
- * `enabled` persists. The transport — which phase, whether it is ticking —
- * deliberately does not: a reload should never come back mid-fake-Sunday.
+ * `enabled` and `preLive` persist. The transport — which phase, whether it is
+ * ticking — deliberately does not: a reload should never come back mid-fake-Sunday.
  */
 
 export const LAST_PHASE = REPLAY_PHASES.length - 1;
@@ -27,12 +27,15 @@ export const demoAvailable = import.meta.env.DEV;
 
 type DemoStore = {
   enabled: boolean;
+  /** Paint tonight's preseason slate onto matchups. Display only. */
+  preLive: boolean;
   /** Null means "no simulation" — every surface shows the real week. */
   phase: number | null;
   running: boolean;
   hasHydrated: boolean;
   markHydrated: () => void;
   setEnabled: (on: boolean) => void;
+  setPreLive: (on: boolean) => void;
   start: () => void;
   toggle: () => void;
   stop: () => void;
@@ -43,6 +46,7 @@ export const useDemoStore = create<DemoStore>()(
   persist(
     (set, get) => ({
       enabled: false,
+      preLive: false,
       phase: null,
       running: false,
       hasHydrated: false,
@@ -50,12 +54,16 @@ export const useDemoStore = create<DemoStore>()(
       setEnabled: (on) =>
         // Turning it off has to take the simulation with it, or the pages keep
         // rendering fake scores with no visible control to stop them.
-        set(on ? { enabled: true } : { enabled: false, phase: null, running: false }),
-      start: () => set({ phase: 0, running: true }),
+        set(
+          on ? { enabled: true } : { enabled: false, preLive: false, phase: null, running: false },
+        ),
+      setPreLive: (on) =>
+        set(on ? { preLive: true, phase: null, running: false } : { preLive: false }),
+      start: () => set({ preLive: false, phase: 0, running: true }),
       toggle: () => {
         const { phase, running } = get();
         if (phase == null || phase >= LAST_PHASE) {
-          set({ phase: 0, running: true });
+          set({ preLive: false, phase: 0, running: true });
           return;
         }
         set({ running: !running });
@@ -73,7 +81,7 @@ export const useDemoStore = create<DemoStore>()(
     }),
     {
       name: "ledger-demo",
-      partialize: (s) => ({ enabled: s.enabled }),
+      partialize: (s) => ({ enabled: s.enabled, preLive: s.preLive }),
       // Through the rehydrated state, never through the exported store —
       // localStorage reads synchronously, so this runs while `useDemoStore` is
       // still in its temporal dead zone.
@@ -97,5 +105,12 @@ export function useDemoOn(): boolean {
 
 /** The simulation phase, or null when nothing is being faked. */
 export function useSimPhase(): number | null {
-  return useDemoStore((s) => (demoAvailable && s.hasHydrated && s.enabled ? s.phase : null));
+  return useDemoStore((s) =>
+    demoAvailable && s.hasHydrated && s.enabled && !s.preLive ? s.phase : null,
+  );
+}
+
+/** Real preseason chips + stats on this browser's matchups. Dev only. */
+export function usePreLive(): boolean {
+  return useDemoStore((s) => demoAvailable && s.hasHydrated && s.enabled && s.preLive);
 }
