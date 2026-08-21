@@ -142,16 +142,16 @@
     </p>
 
     <div class="bar" id="variants">
-      <button class="chip on" data-v="swap">A · The swap</button>
-      <button class="chip" data-v="ticket">B · The ticket</button>
-      <button class="chip" data-v="inbox">C · The inbox</button>
+      <button type="button" class="chip on" data-v="swap">A · The swap</button>
+      <button type="button" class="chip" data-v="ticket">B · The ticket</button>
+      <button type="button" class="chip" data-v="inbox">C · The inbox</button>
     </div>
     <div class="bar" id="states">
-      <button class="chip on" data-s="receive">Receiving</button>
-      <button class="chip" data-s="empty">Compose empty</button>
-      <button class="chip" data-s="build">Compose built</button>
-      <button class="chip" data-s="eval">Evaluating</button>
-      <button class="chip" data-s="wait">Waiting</button>
+      <button type="button" class="chip on" data-s="receive">Receiving</button>
+      <button type="button" class="chip" data-s="empty">Compose empty</button>
+      <button type="button" class="chip" data-s="build">Compose built</button>
+      <button type="button" class="chip" data-s="eval">Evaluating</button>
+      <button type="button" class="chip" data-s="wait">Waiting</button>
     </div>
 
     <div class="stage">
@@ -329,14 +329,18 @@
       const b = e.target.closest("[data-v]");
       if (!b) return;
       v = b.dataset.v;
-      document.querySelectorAll("#variants .chip").forEach((c) => c.classList.toggle("on", c === b));
+      document.querySelectorAll("#variants .chip").forEach((c) => {
+        c.classList.toggle("on", c === b);
+      });
       render();
     };
     document.getElementById("states").onclick = (e) => {
       const b = e.target.closest("[data-s]");
       if (!b) return;
       s = b.dataset.s;
-      document.querySelectorAll("#states .chip").forEach((c) => c.classList.toggle("on", c === b));
+      document.querySelectorAll("#states .chip").forEach((c) => {
+        c.classList.toggle("on", c === b);
+      });
       render();
     };
     render();
