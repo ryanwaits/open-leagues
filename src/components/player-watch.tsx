@@ -2,15 +2,19 @@ import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Avatar } from "@/components/avatar";
+import { ProjectionBlock } from "@/components/projection-block";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getGameSummary } from "@/lib/data/fns";
+import { shortKickoff } from "@/lib/data/kickoff";
 import { playerPlays, playMentionsPlayer, situationIsRedZone } from "@/lib/data/player-plays";
 import { bagForPlayer, simulatePlayerGame } from "@/lib/data/sim-game";
 import { formatStatLine } from "@/lib/data/statline";
 import { baseSlotLabel, dstLabel, playerHeadshot, teamLogo } from "@/lib/data/teams";
 import type { GamePlay, GameSummary, SlimPlayer, StarterLine } from "@/lib/data/types";
 import { useSimPhase } from "@/lib/demo/store";
+import type { ScoringBook } from "@/lib/league/scoring";
+import { EMPTY_BOOK, useProjectionSeries } from "@/lib/live/use-projection-series";
 import { REPLAY_PHASES, replayPts, replayStats } from "@/lib/replay";
 import { cn, formatPts } from "@/lib/utils";
 
@@ -25,6 +29,9 @@ export type WatchTarget = {
   gameState: "pre" | "in" | "post" | null;
   club: string;
   stats?: Record<string, number> | null;
+  /** Pre-game projection this week — the projection line's baseline. */
+  projection?: number | null;
+  book?: ScoringBook | null;
 };
 
 export function watchFromLine(
@@ -32,6 +39,7 @@ export function watchFromLine(
   club: string,
   statLine: string | null,
   bag?: Record<string, number> | null,
+  extra?: { projection?: number | null; book?: ScoringBook | null },
 ): WatchTarget | null {
   if (!line.player) return null;
   return {
@@ -44,6 +52,8 @@ export function watchFromLine(
     gameState: line.game?.state ?? null,
     club,
     stats: bag ?? line.stats ?? null,
+    projection: extra?.projection ?? null,
+    book: extra?.book ?? null,
   };
 }
 
@@ -139,6 +149,13 @@ function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => vo
     target.player.position === "DEF"
       ? teamLogo(target.player.team ?? target.player.player_id)
       : playerHeadshot(target.player.player_id, target.player.espn_id);
+  const series = useProjectionSeries({
+    game: g,
+    player: target.player,
+    book: target.book ?? EMPTY_BOOK,
+    baseline: target.projection,
+    points: shownPts,
+  });
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -173,9 +190,11 @@ function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => vo
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
+        {series ? <ProjectionBlock s={series} kickoffLabel={shortKickoff(g?.detail)} /> : null}
+
         {!liveHasPlays && !(target.gameId && q.isLoading) ? (
-          <p className="mb-3 microlabel">
+          <p className="microlabel">
             {phase != null ? `Sim · ${REPLAY_PHASES[phase]?.label ?? ""}` : "No kickoff yet"}
           </p>
         ) : null}
@@ -191,7 +210,7 @@ function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => vo
           <>
             <GameStrip g={g} live={live} red={red} sim={Boolean(sim)} />
 
-            <div className="mt-4 flex gap-1">
+            <div className="flex gap-1.5">
               {(
                 [
                   ["drive", "Drive"],
@@ -203,8 +222,8 @@ function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => vo
                   type="button"
                   onClick={() => setTab(id)}
                   className={cn(
-                    "h-10 rounded-sm px-3 text-sm",
-                    tab === id ? "bg-accent text-accent-fg" : "bg-raised text-muted",
+                    "h-9 rounded-pill px-3 text-[13px] font-semibold transition-colors duration-150",
+                    tab === id ? "bg-fg text-bg" : "bg-raised text-muted hover:text-fg",
                   )}
                 >
                   {label}
@@ -242,7 +261,7 @@ function GameStrip({
   sim?: boolean;
 }) {
   return (
-    <section className={cn("rounded-lg px-3 py-3", red ? "bg-live/15" : "bg-raised")}>
+    <section className={cn("rounded-md px-3 py-3", red ? "bg-live/15" : "bg-raised")}>
       <div className="flex items-center justify-between gap-2">
         <p className="microlabel">
           {g.away.abbr} @ {g.home.abbr}

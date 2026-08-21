@@ -18,7 +18,11 @@ export function nextScoreFlash(
 }
 
 /** Delta since the last unofficial live total we actually painted. */
-export function useScoreFlash(points: number | null | undefined, active = true, holdMs = FLASH_MS): number {
+export function useScoreFlash(
+  points: number | null | undefined,
+  active = true,
+  holdMs = FLASH_MS,
+): number {
   const [flash, setFlash] = useState(0);
   const prev = useRef<number | null>(null);
   useEffect(() => {
@@ -44,6 +48,7 @@ export function SlotPts({
   align = "right",
   reserve: _reserve = false,
   expected,
+  expectedTone,
   live = false,
   className,
 }: {
@@ -55,6 +60,11 @@ export function SlotPts({
   reserve?: boolean;
   /** Live-adjusted expected final. Shown faintly while the game is still on. */
   expected?: number | null;
+  /**
+   * Colours the expected line and prefixes it "pace" instead of the default
+   * faint, unlabelled figure — the lineup toggle's on-state.
+   */
+  expectedTone?: "good" | "alarm" | null;
   /** Unofficial live scoring — never projections. */
   live?: boolean;
   className?: string;
@@ -90,7 +100,17 @@ export function SlotPts({
           {gain}
         </span>
       ) : rest ? (
-        <span className="mt-0.5 text-[10px] leading-tight text-faint">
+        <span
+          className={cn(
+            "mt-0.5 text-[10px] leading-tight",
+            expectedTone === "good"
+              ? "text-accent-strong"
+              : expectedTone === "alarm"
+                ? "text-loss"
+                : "text-faint",
+          )}
+        >
+          {expectedTone ? "pace " : ""}
           {formatPts(expected, 1)}
         </span>
       ) : null}

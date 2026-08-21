@@ -23,7 +23,7 @@ import {
 import { prefetchPlayerProfile, useWarmRosterProfiles } from "@/lib/data/player-view";
 import { projectionRosterKey } from "@/lib/data/projection-key";
 import { baseSlotLabel } from "@/lib/data/teams";
-import type { RosterPlayer } from "@/lib/data/types";
+import type { Projection, RosterPlayer } from "@/lib/data/types";
 import { overlayPreLiveRoster } from "@/lib/demo/pre-live";
 import { usePreLiveFeed } from "@/lib/demo/use-pre-live-feed";
 import {
@@ -45,6 +45,17 @@ const MOVES_SHOWN = 4;
 export const Route = createFileRoute("/league/$leagueId/roster")({
   component: MyTeamPage,
 });
+
+/** No baseline for a bye/out/no-data week — nothing to project against. */
+function baselineOf(
+  projections: Record<string, Projection> | undefined,
+  playerId: string | null | undefined,
+): number | null {
+  if (!playerId) return null;
+  const p = projections?.[playerId];
+  if (!p || p.reason === "bye" || p.reason === "out" || p.reason === "no-data") return null;
+  return p.points;
+}
 
 /**
  * The workbench.
@@ -78,6 +89,8 @@ function MyTeamPage() {
           ["Slot", baseSlotLabel(p.starterSlot) || (p.slot === "starter" ? "Starter" : p.slot)],
         ],
       },
+      projection: baselineOf(projections.data, p.player_id),
+      book,
     });
   }
 

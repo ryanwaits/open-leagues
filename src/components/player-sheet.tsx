@@ -20,11 +20,15 @@ import {
   usePlayerProfile,
 } from "@/lib/data/player-view";
 import type { GameChip, SlimPlayer } from "@/lib/data/types";
+import type { ScoringBook } from "@/lib/league/scoring";
 
 export type SheetTarget = {
   player: SlimPlayer;
   game?: GameChip | null;
   context?: LeagueContext;
+  /** Pre-game projection this week — the projection line's baseline. */
+  projection?: number | null;
+  book?: ScoringBook | null;
 };
 
 /**
@@ -87,7 +91,7 @@ function Body({
   leagueId: string;
   onClose: () => void;
 }) {
-  const { player, game, context } = target;
+  const { player, game, context, projection, book } = target;
   const qc = useQueryClient();
   const q = usePlayerProfile(leagueId, player.player_id);
   const p = q.data;
@@ -131,7 +135,13 @@ function Body({
             {p ? (
               <>
                 <ProfileNews notes={p.news} />
-                <ProfileThisWeek p={p} player={player} game={game} />
+                <ProfileThisWeek
+                  p={p}
+                  player={player}
+                  game={game}
+                  projection={projection}
+                  book={book}
+                />
                 <ProfileSchedule games={p.schedule} week={p.slateWeek} compact />
                 <ProfileGameLog weekly={p.weekly} bye={p.byeWeek} perGame={p.perGame} />
                 <ProfileSplits p={p} />

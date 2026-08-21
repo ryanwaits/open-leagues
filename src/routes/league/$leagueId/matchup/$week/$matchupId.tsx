@@ -40,6 +40,7 @@ import type {
 import { overlayPreLivePairs, overlayPreLiveRoster } from "@/lib/demo/pre-live";
 import { useDemoStore, useSimPhase } from "@/lib/demo/store";
 import { usePreLiveFeed } from "@/lib/demo/use-pre-live-feed";
+import type { ScoringBook } from "@/lib/league/scoring";
 import {
   applyReplaySide,
   bookFromLeague,
@@ -92,6 +93,8 @@ function MatchupPage() {
           ["This week", formatPts(t.points, 1)],
         ],
       },
+      projection: t.projection,
+      book: t.book,
     });
   }
 
@@ -361,6 +364,8 @@ function MatchupPage() {
               homeClub={pair.home.teamName}
               awayClub={pair.away?.teamName ?? ""}
               onWatch={openPlayer}
+              projections={projections.data ?? {}}
+              book={book}
             />
           ))}
         </ul>
@@ -652,6 +657,17 @@ function TeamHead({
   );
 }
 
+/** No baseline for a bye/out/no-data week — nothing to project against. */
+function baselineOf(
+  projections: Record<string, Projection>,
+  playerId: string | null | undefined,
+): number | null {
+  if (!playerId) return null;
+  const p = projections[playerId];
+  if (!p || p.reason === "bye" || p.reason === "out" || p.reason === "no-data") return null;
+  return p.points;
+}
+
 function StarterRow({
   home,
   away,
@@ -662,6 +678,8 @@ function StarterRow({
   homeClub,
   awayClub,
   onWatch,
+  projections,
+  book,
 }: {
   home: StarterLine;
   away: StarterLine | null;
@@ -672,6 +690,8 @@ function StarterRow({
   homeClub: string;
   awayClub: string;
   onWatch: (t: WatchTarget) => void;
+  projections: Record<string, Projection>;
+  book: ScoringBook;
 }) {
   const hp = home.points ?? 0;
   const ap = away?.points ?? 0;
@@ -687,6 +707,8 @@ function StarterRow({
         stats={stats}
         club={homeClub}
         onWatch={onWatch}
+        projection={baselineOf(projections, home.playerId)}
+        book={book}
       />
       <span className="w-8 text-center microlabel-data sm:w-10">{baseSlotLabel(home.slot)}</span>
       {bye ? (
@@ -699,6 +721,8 @@ function StarterRow({
           stats={stats}
           club={awayClub}
           onWatch={onWatch}
+          projection={baselineOf(projections, away?.playerId)}
+          book={book}
         />
       )}
     </li>
@@ -712,6 +736,8 @@ function Line({
   stats,
   club,
   onWatch,
+  projection,
+  book,
 }: {
   side: StarterLine | null;
   align: "left" | "right";
@@ -719,6 +745,8 @@ function Line({
   stats: Record<string, Record<string, number>>;
   club: string;
   onWatch: (t: WatchTarget) => void;
+  projection?: number | null;
+  book?: ScoringBook;
 }) {
   const live = Boolean(side && gameHasStarted(side.game) && !side.forecast);
   const flash = useScoreFlash(side?.points, live);
@@ -727,7 +755,7 @@ function Line({
   }
   const bag = side.stats ?? (side.playerId ? stats[side.playerId] : undefined);
   const line = liveStatLine(side.player?.position, side.game, bag);
-  const target = watchFromLine(side, club, line, bag);
+  const target = watchFromLine(side, club, line, bag, { projection, book });
   return (
     <button
       type="button"

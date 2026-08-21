@@ -1,10 +1,16 @@
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Avatar } from "@/components/avatar";
 import { GhostNum } from "@/components/ghost-num";
 import { InjuryMark, injuryMark } from "@/components/player-cell";
+import { ProjectionBlock } from "@/components/projection-block";
+import { getGameSummary } from "@/lib/data/fns";
+import { shortKickoff } from "@/lib/data/kickoff";
 import { displayName, headshotFor, type Profile } from "@/lib/data/player-view";
 import { isDefense } from "@/lib/data/teams";
 import type { GameChip, PlayerNote, PlayerScheduleGame, SlimPlayer } from "@/lib/data/types";
+import type { ScoringBook } from "@/lib/league/scoring";
+import { EMPTY_BOOK, useProjectionSeries } from "@/lib/live/use-projection-series";
 import { cn, formatPts } from "@/lib/utils";
 
 export type LeagueContext = { label: string; rows: [string, string][] } | null;
@@ -265,10 +271,15 @@ export function ProfileThisWeek({
   p,
   player,
   game,
+  projection,
+  book,
 }: {
   p: Profile;
   player: SlimPlayer;
   game?: GameChip | null;
+  /** Pre-game projection this week — the projection line's baseline. */
+  projection?: number | null;
+  book?: ScoringBook | null;
 }) {
   const bye = p.schedule.find((g) => g.bye)?.week ?? p.byeWeek;
   const slate = p.schedule.find((g) => g.week === p.slateWeek) ?? null;
@@ -276,8 +287,29 @@ export function ProfileThisWeek({
   const detail = game?.detail || slateDetail(slate);
   const mark = injuryMark(player.injury_status);
   const def = isDefense(player.position);
+
+  // The sheet does not poll games itself, so this fetches the summary on
+  // demand — the same ["game", id] key the watch drawer uses, so a game
+  // already open there is already in cache.
+  const gq = useQuery({
+    queryKey: ["game", game?.gameId],
+    queryFn: () => getGameSummary({ data: { gameId: game?.gameId ?? "" } }),
+    enabled: Boolean(game?.gameId) && projection != null,
+    staleTime: game?.state === "post" ? Number.POSITIVE_INFINITY : 60_000,
+    refetchInterval: game?.state === "in" ? 8_000 : false,
+  });
+  const s = useProjectionSeries({
+    game: gq.data ?? null,
+    player,
+    book: book ?? EMPTY_BOOK,
+    baseline: projection,
+  });
+
   return (
     <Section title="This week">
+      {s && game?.gameId ? (
+        <ProjectionBlock s={s} kickoffLabel={shortKickoff(game?.detail)} className="mx-5 mb-2" />
+      ) : null}
       <Row k="Opponent" v={opp} />
       <Row k="Game" v={detail} />
       {def ? null : (

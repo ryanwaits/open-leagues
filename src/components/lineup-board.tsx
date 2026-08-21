@@ -8,6 +8,8 @@ import type { Projection, RosterPlayer, TeamBundle } from "@/lib/data/types";
 import { liveProjection } from "@/lib/league/live-proj";
 import { onBye } from "@/lib/league/phase";
 import { labeledStartSlots, slotAccepts } from "@/lib/league/roster";
+import { projectionTone } from "@/lib/live/game-series";
+import { useLiveProjPref } from "@/lib/live/prefs";
 import { cn, formatPts } from "@/lib/utils";
 
 /**
@@ -86,6 +88,8 @@ export function LineupBoard({
 
   // One number for the board, not a label on every row.
   const anyStarted = starters.some((p) => gameHasStarted(p.game));
+  const liveProj = useLiveProjPref((s) => s.liveProjections);
+  const setLiveProj = useLiveProjPref((s) => s.setLiveProjections);
   const total = starters.reduce((sum, p) => {
     const disp = slotDisplay(p.game, p.weekPts, projections?.[p.player_id]);
     return sum + (disp.points ?? 0);
@@ -214,6 +218,35 @@ export function LineupBoard({
             {formatPts(total, 1)}
           </span>
         </span>
+        {anyStarted ? (
+          <div className="flex shrink-0 items-center gap-1.5">
+            <span className="microlabel-data whitespace-nowrap">Live projections</span>
+            <span className="flex rounded-pill bg-raised p-0.5">
+              <button
+                type="button"
+                aria-pressed={!liveProj}
+                onClick={() => setLiveProj(false)}
+                className={cn(
+                  "h-7 rounded-pill px-2.5 text-[12px] font-semibold transition-colors duration-150",
+                  !liveProj ? "bg-fg text-bg" : "text-muted",
+                )}
+              >
+                Off
+              </button>
+              <button
+                type="button"
+                aria-pressed={liveProj}
+                onClick={() => setLiveProj(true)}
+                className={cn(
+                  "h-7 rounded-pill px-2.5 text-[12px] font-semibold transition-colors duration-150",
+                  liveProj ? "bg-fg text-bg" : "text-muted",
+                )}
+              >
+                On
+              </button>
+            </span>
+          </div>
+        ) : null}
         {editable ? (
           <button
             type="button"
@@ -503,6 +536,7 @@ function Points({
   player: RosterPlayer | undefined;
   projection: Projection | undefined;
 }) {
+  const liveProj = useLiveProjPref((s) => s.liveProjections);
   if (!player) {
     return <span className="w-14 shrink-0 text-right font-mono text-sm text-faint">—</span>;
   }
@@ -516,16 +550,20 @@ function Points({
       projection.reason !== "no-data"
         ? projection.points
         : 0;
+    const expected = liveProjection({
+      baseline,
+      current: disp.points ?? 0,
+      game: player.game,
+      position: player.position,
+    });
     return (
       <SlotPts
         points={disp.points}
         live
-        expected={liveProjection({
-          baseline,
-          current: disp.points ?? 0,
-          game: player.game,
-          position: player.position,
-        })}
+        expected={liveProj ? expected : undefined}
+        expectedTone={
+          liveProj ? (projectionTone(expected, baseline) === "brand" ? "good" : "alarm") : null
+        }
         className="w-14 text-sm"
       />
     );

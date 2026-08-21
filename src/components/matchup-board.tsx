@@ -14,7 +14,8 @@ import {
 } from "@/lib/data/matchup-view";
 import { profileIntent } from "@/lib/data/player-view";
 import { baseSlotLabel } from "@/lib/data/teams";
-import type { MatchupSide, StarterLine } from "@/lib/data/types";
+import type { MatchupSide, Projection, StarterLine } from "@/lib/data/types";
+import type { ScoringBook } from "@/lib/league/scoring";
 import { cn, formatPts } from "@/lib/utils";
 
 /** Band, gutter and rows all sit on this one grid — that is what keeps the
@@ -55,6 +56,17 @@ const ROW = "min-h-13";
  * gain line holds its own space so a row does not twitch taller on the poll the
  * points land. Nothing on this board moves except the numbers.
  */
+/** No baseline for a bye/out/no-data week — nothing to project against. */
+function baselineOf(
+  projections: Record<string, Projection> | undefined,
+  playerId: string | null | undefined,
+): number | null {
+  if (!playerId) return null;
+  const p = projections?.[playerId];
+  if (!p || p.reason === "bye" || p.reason === "out" || p.reason === "no-data") return null;
+  return p.points;
+}
+
 export function MatchupBoard({
   title,
   action,
@@ -68,6 +80,8 @@ export function MatchupBoard({
   leagueId,
   stats,
   onPlayer,
+  projections,
+  book,
 }: {
   title: string;
   action: ReactNode;
@@ -81,6 +95,8 @@ export function MatchupBoard({
   leagueId: string;
   stats: Record<string, Record<string, number>>;
   onPlayer: (t: WatchTarget | null) => void;
+  projections?: Record<string, Projection>;
+  book?: ScoringBook;
 }) {
   const rows = home.starters.map((line, i) => {
     const b = away?.starters[i] ?? null;
@@ -140,6 +156,8 @@ export function MatchupBoard({
               statLine={r.aLine}
               leagueId={leagueId}
               onPlayer={onPlayer}
+              projection={baselineOf(projections, r.a.playerId)}
+              book={book}
             />
             <span className="flex items-center justify-center border-x border-line bg-raised/45">
               <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.1em] text-muted">
@@ -154,6 +172,8 @@ export function MatchupBoard({
               statLine={r.bLine}
               leagueId={leagueId}
               onPlayer={onPlayer}
+              projection={baselineOf(projections, r.b?.playerId)}
+              book={book}
               flip
             />
           </li>
@@ -220,6 +240,8 @@ function Half({
   statLine,
   leagueId,
   onPlayer,
+  projection,
+  book,
   flip = false,
 }: {
   line: StarterLine | null;
@@ -229,6 +251,8 @@ function Half({
   statLine: string | null;
   leagueId: string;
   onPlayer: (t: WatchTarget | null) => void;
+  projection?: number | null;
+  book?: ScoringBook;
   flip?: boolean;
 }) {
   const qc = useQueryClient();
@@ -241,7 +265,11 @@ function Half({
       type="button"
       disabled={!line?.player || !side}
       {...intent}
-      onClick={() => line && side && onPlayer(watchFromLine(line, side.teamName, statLine, bag))}
+      onClick={() =>
+        line &&
+        side &&
+        onPlayer(watchFromLine(line, side.teamName, statLine, bag, { projection, book }))
+      }
       className={cn(
         "flex min-w-0 items-center gap-1.5 px-2 py-2 text-left transition-colors duration-300 sm:gap-2 sm:px-5",
         "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-deep",

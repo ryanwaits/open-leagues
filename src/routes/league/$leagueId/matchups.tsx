@@ -68,6 +68,8 @@ function MatchupsPage() {
           ? { state: t.gameState ?? "pre", detail: t.gameDetail ?? "", opp: null, gameId: t.gameId }
           : null,
       context: { label: t.club, rows: [["Slot", baseSlotLabel(t.slot)]] },
+      projection: t.projection,
+      book: t.book,
     });
   }
 
@@ -411,6 +413,8 @@ function MatchupsPage() {
                         leagueId={leagueId}
                         stats={displayStats}
                         onPlayer={openPlayer}
+                        projections={projections.data ?? {}}
+                        book={book}
                       />
                     </article>
                     {wagerBook.data?.enabled
