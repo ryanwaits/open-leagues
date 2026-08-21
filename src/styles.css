@@ -127,11 +127,6 @@
     outline-offset: 2px;
   }
 
-  img {
-    outline: 1px solid var(--color-line);
-    outline-offset: -1px;
-  }
-
   /* Figures line up in columns everywhere in this app. */
   .font-mono,
   table {
