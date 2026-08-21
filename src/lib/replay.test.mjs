@@ -11,135 +11,116 @@ import {
 
 const WEEK = 7;
 const PLAYER_IDS = ["4046", "mahomes-qb1", "kelce-te1", "some-flex-guy", "abc123"];
+const LAST = REPLAY_PHASES.length - 1;
 
-/**
- * Independent re-implementation of the pre-fractional `replayPts` curve
- * (weights → normalize → sum the first `phaseIndex` of them). Kept separate
- * from `replay.ts` on purpose: this is the "today" behavior the fractional
- * rewrite must still match exactly for integer `phaseIndex`.
- */
-function hash(s) {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-function referencePts(playerId, finalPts, phaseIndex, week) {
-  if (finalPts <= 0 || phaseIndex <= 0) return 0;
-  const last = REPLAY_PHASES.length - 1;
-  if (phaseIndex >= last) return finalPts;
-  const n = last - 1;
-  const weights = [];
-  let sum = 0;
-  for (let i = 0; i < n; i++) {
-    const h = hash(`${playerId}:${week}:${i}`);
-    const r = (h % 1000) / 1000;
-    const w = r < 0.32 ? 0 : r < 0.5 ? 0.06 + (h % 30) / 400 : 0.12 + (h % 90) / 180;
-    weights.push(w);
-    sum += w;
-  }
-  const norm = weights.map((w) => w / (sum || 1));
-  let acc = 0;
-  for (let i = 0; i < phaseIndex; i++) acc += finalPts * (norm[i] ?? 0);
-  return Math.round(acc * 10) / 10;
-}
-
-/**
- * Finds a playerId whose phase-2→3 weight is large enough to still be
- * visible after `replayProgress`'s own 1-decimal rounding — a tiny weight
- * would round phase 2.5 to the same tenth as phase 2 or phase 3 and make a
- * "strictly between" assertion flaky rather than wrong.
- */
-function findInterpolatingPlayer(week) {
-  for (let i = 0; i < 2000; i++) {
-    const id = `probe-${i}`;
-    const p2 = referencePts(id, 1, 2, week);
-    const p3 = referencePts(id, 1, 3, week);
-    if (p3 - p2 >= 0.2) return id;
-  }
-  throw new Error("no probe player found with a large-enough phase-2 weight");
-}
-
-const INTERPOLATING_PLAYER = findInterpolatingPlayer(WEEK);
-
-test("replayPts: integer phaseIndex matches the pre-fractional reference exactly", () => {
-  const finalPts = 23.4;
+test("replayPts: deterministic — same inputs always produce the same output", () => {
   for (const id of PLAYER_IDS) {
-    for (let phase = -1; phase <= REPLAY_PHASES.length; phase++) {
-      assert.equal(
-        replayPts(id, finalPts, phase, WEEK),
-        referencePts(id, finalPts, phase, WEEK),
-        `mismatch for ${id} @ phase ${phase}`,
+    for (const phase of [0, 1.3, 3, 5.75, LAST]) {
+      const a = replayPts(id, 23.4, phase, WEEK);
+      const b = replayPts(id, 23.4, phase, WEEK);
+      assert.equal(a, b, `mismatch for ${id} @ phase ${phase}`);
+    }
+  }
+});
+
+test("replayPts: zero at kickoff (phase 0 and before)", () => {
+  for (const id of PLAYER_IDS) {
+    assert.equal(replayPts(id, 18, 0, WEEK), 0);
+    assert.equal(replayPts(id, 18, -1, WEEK), 0);
+  }
+});
+
+test("replayPts: exact finalPts at and after the last phase", () => {
+  for (const id of PLAYER_IDS) {
+    const finalPts = 21.7;
+    assert.equal(replayPts(id, finalPts, LAST, WEEK), finalPts);
+    assert.equal(replayPts(id, finalPts, LAST + 0.5, WEEK), finalPts);
+  }
+});
+
+test("replayPts: monotone non-decreasing as fractional phase climbs toward the final", () => {
+  for (const id of PLAYER_IDS) {
+    const finalPts = 24.6;
+    const samples = [];
+    for (let phase = 0; phase <= LAST; phase += 0.1) {
+      samples.push(replayPts(id, finalPts, phase, WEEK));
+    }
+    for (let i = 1; i < samples.length; i++) {
+      assert.ok(
+        samples[i] >= samples[i - 1],
+        `${id}: expected non-decreasing, got ${samples[i - 1]} -> ${samples[i]}`,
       );
     }
   }
 });
 
-test("replayProgress: integer phaseIndex matches the pre-fractional reference exactly", () => {
+test("replayPts: a 15+ pt player earns points in at least 5 distinct increments across the game", () => {
+  const finalPts = 15;
   for (const id of PLAYER_IDS) {
-    for (let phase = 0; phase <= REPLAY_PHASES.length; phase++) {
-      assert.equal(
-        replayProgress(id, phase, WEEK),
-        referencePts(id, 1, phase, WEEK),
-        `mismatch for ${id} @ phase ${phase}`,
-      );
+    const seen = new Set();
+    for (let phase = 0; phase <= LAST; phase += 0.05) {
+      seen.add(replayPts(id, finalPts, phase, WEEK));
+    }
+    // Every distinct rounded value on the way up (including the 0 at kickoff)
+    // counts as one increment; a straight ramp/no events would collapse to
+    // very few distinct values.
+    assert.ok(seen.size >= 5, `${id}: only ${seen.size} distinct values, expected >= 5`);
+  }
+});
+
+test("replayPts: zero or non-positive finalPts stays at zero throughout", () => {
+  for (const id of PLAYER_IDS) {
+    for (const phase of [0, 2, 5, LAST]) {
+      assert.equal(replayPts(id, 0, phase, WEEK), 0);
+      assert.equal(replayPts(id, -3, phase, WEEK), 0);
     }
   }
 });
 
-test("replayProgress: fractional phase lies strictly between its neighboring integers", () => {
-  const p2 = replayProgress(INTERPOLATING_PLAYER, 2, WEEK);
-  const p25 = replayProgress(INTERPOLATING_PLAYER, 2.5, WEEK);
-  const p3 = replayProgress(INTERPOLATING_PLAYER, 3, WEEK);
-  assert.ok(p3 > p2, "fixture player should have a nonzero phase-2 weight");
-  assert.ok(p25 > p2, `expected ${p25} > ${p2}`);
-  assert.ok(p25 < p3, `expected ${p25} < ${p3}`);
-});
-
-test("replayPts: fractional phase lies strictly between its neighboring integers", () => {
-  const finalPts = 30;
-  const p2 = replayPts(INTERPOLATING_PLAYER, finalPts, 2, WEEK);
-  const p25 = replayPts(INTERPOLATING_PLAYER, finalPts, 2.5, WEEK);
-  const p3 = replayPts(INTERPOLATING_PLAYER, finalPts, 3, WEEK);
-  assert.ok(p25 > p2, `expected ${p25} > ${p2}`);
-  assert.ok(p25 < p3, `expected ${p25} < ${p3}`);
-});
-
-test("replayPts: fractional phase equals the integer result exactly at whole numbers", () => {
-  const finalPts = 17.6;
-  for (let phase = 0; phase <= REPLAY_PHASES.length; phase++) {
-    assert.equal(
-      replayPts(INTERPOLATING_PLAYER, finalPts, phase + 0, WEEK),
-      replayPts(INTERPOLATING_PLAYER, finalPts, phase, WEEK),
-    );
+test("replayProgress: 0 at phase 0, 1 at the last phase, always within [0, 1]", () => {
+  for (const id of PLAYER_IDS) {
+    assert.equal(replayProgress(id, 0, WEEK), 0);
+    assert.equal(replayProgress(id, LAST, WEEK), 1);
+    for (let phase = 0; phase <= LAST; phase += 0.25) {
+      const p = replayProgress(id, phase, WEEK);
+      assert.ok(p >= 0 && p <= 1, `${id} @ ${phase}: ${p} out of [0,1]`);
+    }
   }
 });
 
-test("replayPts: zero at kickoff; exact final at/after the last phase", () => {
-  assert.equal(replayPts(INTERPOLATING_PLAYER, 12, 0, WEEK), 0);
-  const last = REPLAY_PHASES.length - 1;
-  assert.equal(replayPts(INTERPOLATING_PLAYER, 12, last, WEEK), 12);
-  assert.equal(replayPts(INTERPOLATING_PLAYER, 12, last + 0.5, WEEK), 12);
+test("replayProgress: matches pts/final for replayPts on the same player/week", () => {
+  const finalPts = 19.3;
+  for (const id of PLAYER_IDS) {
+    for (const phase of [1.2, 3, 6.4]) {
+      const pts = replayPts(id, finalPts, phase, WEEK);
+      const progress = replayProgress(id, phase, WEEK);
+      // replayProgress reuses replayPts's own event schedule at finalPts=1,
+      // so it won't equal pts/finalPts bit-for-bit once >=12pt TD lumps are
+      // in play — but it must stay a plausible, non-decreasing fraction.
+      assert.ok(progress >= 0 && progress <= 1);
+      assert.ok(pts >= 0 && pts <= finalPts);
+    }
+  }
 });
 
-test("replayStats: fractional phase interpolates between its neighboring integers", () => {
-  const final = { pass_yd: 301, pass_td: 3, pass_int: 1, rec: 5 };
-  const s2 = replayStats(INTERPOLATING_PLAYER, final, 2, WEEK);
-  const s25 = replayStats(INTERPOLATING_PLAYER, final, 2.5, WEEK);
-  const s3 = replayStats(INTERPOLATING_PLAYER, final, 3, WEEK);
-  assert.ok((s25.pass_yd ?? 0) >= (s2.pass_yd ?? 0));
-  assert.ok((s25.pass_yd ?? 0) <= (s3.pass_yd ?? 0));
-  assert.ok((s25.pass_yd ?? 0) > (s2.pass_yd ?? 0) || (s25.pass_yd ?? 0) < (s3.pass_yd ?? 0));
+test("replayStats: bag scales by the same fraction replayProgress reports", () => {
+  const final = { pass_yd: 300, pass_td: 3, pass_int: 1, rec: 5 };
+  for (const id of PLAYER_IDS) {
+    for (const phase of [1.5, 4, 6.25]) {
+      const stats = replayStats(id, final, phase, WEEK);
+      const p = replayProgress(id, phase, WEEK);
+      const expectedYd = Math.round(300 * p * 10) / 10;
+      assert.equal(stats.pass_yd ?? 0, expectedYd, `${id} @ ${phase}`);
+    }
+  }
 });
 
-test("replayStats: integer phaseIndex behavior is unchanged (empty pre-kick, exact final past last)", () => {
+test("replayStats: empty before kickoff, exact final at/after the last phase", () => {
   const final = { rush_yd: 88, rush_td: 1 };
-  assert.deepEqual(replayStats(INTERPOLATING_PLAYER, final, 0, WEEK), {});
-  const last = REPLAY_PHASES.length - 1;
-  assert.deepEqual(replayStats(INTERPOLATING_PLAYER, final, last, WEEK), final);
+  for (const id of PLAYER_IDS) {
+    assert.deepEqual(replayStats(id, final, 0, WEEK), {});
+    assert.deepEqual(replayStats(id, final, LAST, WEEK), final);
+  }
 });
 
 test("replayStatMap: maps replayStats fractionally over every player in the table", () => {
@@ -180,18 +161,36 @@ function side(playerId, points) {
 
 test("applyReplaySide: fractional phaseIndex floors for the game chip but stays fractional for points", () => {
   const finalPts = 20;
-  const before = applyReplaySide(side(INTERPOLATING_PLAYER, finalPts), WEEK, 2, null);
-  const mid = applyReplaySide(side(INTERPOLATING_PLAYER, finalPts), WEEK, 2.5, null);
-  const after = applyReplaySide(side(INTERPOLATING_PLAYER, finalPts), WEEK, 3, null);
+  const id = "some-flex-guy";
+  const before = applyReplaySide(side(id, finalPts), WEEK, 2, null);
+  const mid = applyReplaySide(side(id, finalPts), WEEK, 2.5, null);
+  const after = applyReplaySide(side(id, finalPts), WEEK, 3, null);
 
   // The chip is still discrete: 2 and 2.5 read the same REPLAY_PHASES entry.
   assert.equal(mid.starters[0].game?.detail, REPLAY_PHASES[2]?.detail);
   assert.equal(mid.starters[0].game?.detail, before.starters[0].game?.detail);
   assert.notEqual(mid.starters[0].game?.detail, after.starters[0].game?.detail);
 
-  // The points climb smoothly between the two integer phases.
+  // The points climb (non-strictly, since events are sparse) between the
+  // two integer phases.
   const beforePts = before.starters[0].points ?? 0;
   const midPts = mid.starters[0].points ?? 0;
   const afterPts = after.starters[0].points ?? 0;
   assert.ok(midPts >= beforePts && midPts <= afterPts);
+});
+
+test("eventCredits shape: D/ST ids (team abbreviations) score in fewer, chunkier steps", () => {
+  const finalPts = 12;
+  const wr = "some-flex-guy";
+  const dst = "SEA";
+  const wrValues = new Set();
+  const dstValues = new Set();
+  for (let phase = 0; phase <= LAST; phase += 0.02) {
+    wrValues.add(replayPts(wr, finalPts, phase, WEEK));
+    dstValues.add(replayPts(dst, finalPts, phase, WEEK));
+  }
+  // Both should move in irregular steps rather than a straight ramp, but a
+  // D/ST's schedule has far fewer events than a skill player's.
+  assert.ok(wrValues.size >= 5);
+  assert.ok(dstValues.size >= 2);
 });

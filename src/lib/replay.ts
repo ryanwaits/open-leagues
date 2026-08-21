@@ -1,7 +1,8 @@
+import { TEAMS } from "@/lib/data/teams";
 import type { GameChip, MatchupPair, MatchupSide } from "@/lib/data/types";
 import { applyBook, fromSleeperSettings, type ScoringBook } from "@/lib/league/scoring";
 
-export const REPLAY_TICK_MS = 4000;
+export const REPLAY_TICK_MS = 12_000;
 export const LIVE_POLL_MS = 15_000;
 
 export type ReplayPhase = {
@@ -83,6 +84,64 @@ export function pairingHasScores(pair: MatchupPair): boolean {
 
 function unit(playerId: string, week: number, salt: number): number {
   return (hash(`${playerId}:${week}:d${salt}`) % 1000) / 1000;
+}
+
+/** Same idea as `unit`, namespaced separately for the event-schedule draws below. */
+function eunit(playerId: string, week: number, salt: number): number {
+  return (hash(`${playerId}:${week}:e${salt}`) % 1000) / 1000;
+}
+
+/** D/ST rows use the team abbreviation as their player id (see `playerTeam`). */
+function looksLikeDst(playerId: string): boolean {
+  return Object.hasOwn(TEAMS, playerId.toUpperCase());
+}
+
+type ReplayCredit = { progress: number; raw: number };
+
+/**
+ * A deterministic per-player event schedule: a handful of small, irregularly
+ * timed "credits" that sum (before scaling) to roughly `finalPts`, standing
+ * in for the small play-sized chunks real unofficial scoring arrives in.
+ *
+ * Ordinary credits land 8-20 times for most players (a busy WR/RB/QB game),
+ * 3-6 times for D/ST-shaped ids (sacks/INTs/TDs are rare, discrete events,
+ * not a steady trickle). Players trending toward a real final of 12+ points
+ * also get one or two bigger "TD" lumps, so the accumulated line shows an
+ * occasional jump on top of its many small steps instead of only ever
+ * crawling.
+ *
+ * Progress values are kept off the exact 0/1 edges (`[0.02, 0.98]`) so no
+ * credit is mistaken for "already happened at kickoff" or double-counted
+ * against the exact-final short-circuit in `replayPts`.
+ *
+ * Raw magnitudes are *not* final point values — `replayPts` sums and rescales
+ * them so the total lands on `finalPts` exactly. They only set the relative
+ * shape: many small steps, occasionally one bigger jump.
+ */
+function eventCredits(playerId: string, finalPts: number, week: number): ReplayCredit[] {
+  const dst = looksLikeDst(playerId);
+  const [lo, hi] = dst ? [3, 6] : [8, 20];
+  const count = lo + (hash(`${playerId}:${week}:ecount`) % (hi - lo + 1));
+
+  const credits: ReplayCredit[] = [];
+  for (let i = 0; i < count; i++) {
+    credits.push({
+      progress: 0.02 + eunit(playerId, week, 100 + i) * 0.96,
+      raw: 0.3 + eunit(playerId, week, 300 + i) * 2.2,
+    });
+  }
+
+  if (finalPts >= 12) {
+    const lumps = eunit(playerId, week, 940) < 0.55 ? 1 : 2;
+    for (let j = 0; j < lumps; j++) {
+      credits.push({
+        progress: 0.02 + eunit(playerId, week, 700 + j) * 0.96,
+        raw: 5.5 + eunit(playerId, week, 800 + j) * 1,
+      });
+    }
+  }
+
+  return credits;
 }
 
 /** Plausible week bag when this season has no unofficial line yet. */
@@ -225,12 +284,13 @@ export function seedPairsForReplay(
 }
 
 /**
- * 0 at kickoff, 1 at final. Same curve as unofficial points.
+ * `pts / final` — the fraction of a player's final that's been earned so
+ * far, 0 at kickoff and 1 at the final. Reuses `replayPts`'s own event
+ * schedule with `finalPts = 1` so it's the same irregular, soft-staircase
+ * shape as points, just normalized to a fraction — this is what
+ * `replayStats` scales a raw stat bag by.
  *
- * `phaseIndex` may be fractional (e.g. 2.5, halfway between phase 2 and
- * phase 3) — the progress climbs linearly across the current phase's slice
- * of the curve instead of jumping at the phase boundary. Integer inputs
- * take the exact same code path as before and return the exact same value.
+ * `phaseIndex` may be fractional — see `replayPts`.
  */
 export function replayProgress(playerId: string, phaseIndex: number, week: number): number {
   return replayPts(playerId, 1, phaseIndex, week);
@@ -238,12 +298,16 @@ export function replayProgress(playerId: string, phaseIndex: number, week: numbe
 
 /**
  * Cumulative unofficial points at this phase. Last phase always equals the
- * real final.
+ * real final, exactly (see `eventCredits` — the short-circuit below never
+ * has to round a sum of scaled credits back onto `finalPts`).
  *
- * `phaseIndex` may be fractional — see `replayProgress`. The whole part
- * selects how many full phase-weights are already banked; the fractional
- * remainder linearly unlocks the *next* phase's weight, so a chart sampling
- * this every 250ms draws a smooth ramp instead of nine vertical steps.
+ * `phaseIndex` may be fractional (e.g. 2.5, halfway between phase 2 and
+ * phase 3, or any real number from `useSimProgress()`'s wall-clock
+ * interpolation) — it maps onto continuous game progress `p = phaseIndex /
+ * last` and sums every event credit whose (also continuous, irregular)
+ * progress has already passed. Because credits land at arbitrary points
+ * in `[0.02, 0.98]` rather than at phase boundaries, sampling this on a
+ * timer draws a soft, irregular staircase instead of nine flats-and-cliffs.
  */
 export function replayPts(
   playerId: string,
@@ -255,25 +319,15 @@ export function replayPts(
   const last = REPLAY_PHASES.length - 1;
   if (phaseIndex >= last) return finalPts;
 
-  const n = last - 1;
-  const weights: number[] = [];
-  let sum = 0;
-  for (let i = 0; i < n; i++) {
-    const h = hash(`${playerId}:${week}:${i}`);
-    const r = (h % 1000) / 1000;
-    const w = r < 0.32 ? 0 : r < 0.5 ? 0.06 + (h % 30) / 400 : 0.12 + (h % 90) / 180;
-    weights.push(w);
-    sum += w;
-  }
-  const norm = weights.map((w) => w / (sum || 1));
-  // Integer phaseIndex: whole === phaseIndex, frac === 0, so this is byte-
-  // for-byte the original loop. Fractional phaseIndex adds a linear slice
-  // of the next weight on top.
-  const whole = Math.floor(phaseIndex);
-  const frac = phaseIndex - whole;
+  const p = phaseIndex / last;
+  const credits = eventCredits(playerId, finalPts, week);
+  const rawSum = credits.reduce((s, c) => s + c.raw, 0) || 1;
+  const scale = finalPts / rawSum;
+
   let acc = 0;
-  for (let i = 0; i < whole; i++) acc += finalPts * (norm[i] ?? 0);
-  if (frac > 0) acc += frac * finalPts * (norm[whole] ?? 0);
+  for (const c of credits) {
+    if (c.progress <= p) acc += c.raw * scale;
+  }
   return Math.round(acc * 10) / 10;
 }
 
