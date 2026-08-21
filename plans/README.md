@@ -338,7 +338,7 @@ reconcile). Source tree clean.
 | 050  | Box Score flourishes — ghost numerals, rails, stamp | P2 | M | 047, 049 | DONE `8e660ba` (not pushed; reviewed/APPROVED 2026-08-20; all CSS-gated, Ledger zero-change verified; **Box Score release complete: 047+049+050**) |
 | 052  | BYOK AI foundation + import analyst (AI SDK multi-provider) | P2 | L | — | DONE `38186f9` (not pushed→pushed; reviewed/APPROVED 2026-08-20; one mid-flight STOP correctly raised: agent-catalog parity — resolved by registering the 5 fns; follow-up: scoring-record extraction thinner than slots in live smoke test — prompt/schema tuning candidate 053) |
 | 053  | Liveline foundation — `<LiveLine>` wrapper, series utils, dev gallery | P1 | M | — | DONE `89ced48` (not pushed; reviewed/APPROVED 2026-08-21; 17+3 tests; `/dev/liveline` gallery; executor fixed fractional-seconds label bug + import-rule test self-match) |
-| 054  | Player projection line — drawer, sheet, player page, lineup pace toggle | P1 | L | 053 | TODO |
+| 054  | Player projection line — drawer, sheet, player page, lineup pace toggle | P1 | L | 053 | DONE `b4574bd` (not pushed; reviewed/APPROVED 2026-08-21; 10 new tests; executor fixed playWhen 900s offset + a render loop in the series hook; player page left without the block — no weekly projection on that route; bench rows on the box-score route not threaded) |
 | 055  | Matchup finals chart + home win-prob meter + `ff_ticks` writer (on read + tick) | P1 | L | 053, 054 | TODO |
 | 056  | The book's line-movement strip (LinePanel + ticket) + in-play wagering spec | P2 | M | 055 | TODO |
 
