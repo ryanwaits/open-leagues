@@ -329,6 +329,7 @@ reconcile). Source tree clean.
 | 048  | Install drawer (dartwords-style A2HS) | P2 | M | 026, 047 | DONE `505ccb2` (not pushed; reviewed/APPROVED 2026-08-20; real-device iOS A2HS + Android native prompt PENDING OPERATOR; one sanctioned out-of-scope touch: scripts/join-redirect.test.mjs assertion updated for the InstallCoach removal) |
 | 049  | Voice codemod — semantic label/card classes per skin | P2 | M | 047 | DONE `cfbacc8`+`06091c8` (not pushed; reviewed/APPROVED 2026-08-20; 57 files, Ledger pixel-identical, Box Score voice live; one revision: state-driven `ring-card-lit` for the import dropzone) |
 | 050  | Box Score flourishes — ghost numerals, rails, stamp | P2 | M | 047, 049 | DONE `8e660ba` (not pushed; reviewed/APPROVED 2026-08-20; all CSS-gated, Ledger zero-change verified; **Box Score release complete: 047+049+050**) |
+| 052  | BYOK AI foundation + import analyst (AI SDK multi-provider) | P2 | L | — | DONE `38186f9` (not pushed→pushed; reviewed/APPROVED 2026-08-20; one mid-flight STOP correctly raised: agent-catalog parity — resolved by registering the 5 fns; follow-up: scoring-record extraction thinner than slots in live smoke test — prompt/schema tuning candidate 053) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
