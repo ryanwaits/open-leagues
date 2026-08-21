@@ -4,8 +4,14 @@ import type { ReactNode } from "react";
 import { PlayerCell } from "@/components/player-cell";
 import type { WatchTarget } from "@/components/player-watch";
 import { watchFromLine } from "@/components/player-watch";
-import { SlotPts, TeamTotal } from "@/components/slot-pts";
-import { liveStatLine, sideIsProjected } from "@/lib/data/matchup-view";
+import { SlotPts, TeamTotal, useScoreFlash } from "@/components/slot-pts";
+import {
+  gameHasStarted,
+  liveStatLine,
+  sideExpected,
+  sideStillOpen,
+  sideUnofficial,
+} from "@/lib/data/matchup-view";
 import { profileIntent } from "@/lib/data/player-view";
 import { baseSlotLabel } from "@/lib/data/teams";
 import type { MatchupSide, StarterLine } from "@/lib/data/types";
@@ -13,7 +19,8 @@ import { cn, formatPts } from "@/lib/utils";
 
 /** Band, gutter and rows all sit on this one grid — that is what keeps the
  *  centre channel unbroken from the scoreboard to the bottom of the card. */
-const SPINE = "grid grid-cols-[minmax(0,1fr)_56px_minmax(0,1fr)]";
+const SPINE =
+  "grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_56px_minmax(0,1fr)]";
 
 /**
  * A roster row is this tall whether or not its game has started.
@@ -91,15 +98,15 @@ export function MatchupBoard({
   });
 
   return (
-    <div className="hidden sm:block">
+    <div>
       <div className="bg-raised">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-4 pb-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-3 pt-4 pb-3 sm:px-5">
           <h2 className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-faint">
             {title}
           </h2>
           {action}
         </div>
-        {label ? <p className="px-5 pb-3 microlabel text-live">{label}</p> : null}
+        {label ? <p className="px-3 pb-3 microlabel text-live sm:px-5">{label}</p> : null}
         <div className={cn(SPINE, "items-end")}>
           <BandSide side={home} prev={prevHome} live={liveHome} leagueId={leagueId} />
           <span className="flex items-end justify-center self-stretch pb-4">
@@ -110,7 +117,7 @@ export function MatchupBoard({
           {away ? (
             <BandSide side={away} prev={prevAway} live={liveAway} leagueId={leagueId} flip />
           ) : (
-            <p className="px-5 pb-4 text-right text-sm text-muted">Bye week</p>
+            <p className="px-3 pb-4 text-right text-sm text-muted sm:px-5">Bye week</p>
           )}
         </div>
       </div>
@@ -158,8 +165,8 @@ export function MatchupBoard({
 
 function BandSide({
   side,
-  prev,
-  live,
+  prev: _prev,
+  live: _live,
   leagueId,
   flip = false,
 }: {
@@ -169,12 +176,12 @@ function BandSide({
   leagueId: string;
   flip?: boolean;
 }) {
-  const projected = sideIsProjected(side);
-  // A swing since the last poll, on the team's own line. Parking it beside the
-  // total made the total share its width with a number that is usually absent.
-  const delta = prev && !projected ? side.points - prev.points : 0;
+  const open = sideStillOpen(side);
+  const unofficial = sideUnofficial(side);
+  const scoring = side.starters.some((s) => gameHasStarted(s.game) && !s.forecast);
+  const flash = useScoreFlash(unofficial, scoring);
   return (
-    <div className={cn("min-w-0 px-5 pb-4", flip && "text-right")}>
+    <div className={cn("min-w-0 px-3 pb-4 sm:px-5", flip && "text-right")}>
       <p
         className={cn(
           "flex items-baseline gap-2 text-[15px] font-semibold",
@@ -188,14 +195,16 @@ function BandSide({
         >
           {side.teamName}
         </Link>
-        {delta > 0.04 ? (
-          <span className="shrink-0 font-mono text-xs text-win">+{formatPts(delta, 1)}</span>
+        {flash > 0.04 ? (
+          <span className="shrink-0 font-mono text-xs text-win motion-safe:animate-[score-flash_4.5s_ease-out_forwards]">
+            +{formatPts(flash, 1)}
+          </span>
         ) : null}
       </p>
       <TeamTotal
-        live={live}
-        projected={side.points}
-        showProjected={projected}
+        live={unofficial}
+        projected={sideExpected(side)}
+        showProjected={open}
         flip={flip}
         reserve
       />
@@ -206,7 +215,7 @@ function BandSide({
 function Half({
   line,
   side,
-  prev,
+  prev: _prev,
   bag,
   statLine,
   leagueId,
@@ -223,7 +232,8 @@ function Half({
   flip?: boolean;
 }) {
   const qc = useQueryClient();
-  const bump = line && !line.forecast ? (line.points ?? 0) - (prev?.points ?? 0) : 0;
+  const live = Boolean(line && gameHasStarted(line.game) && !line.forecast);
+  const flash = useScoreFlash(line?.points, live);
   const intent = line?.player ? profileIntent(qc, leagueId, line.player.player_id) : {};
 
   return (
@@ -233,11 +243,11 @@ function Half({
       {...intent}
       onClick={() => line && side && onPlayer(watchFromLine(line, side.teamName, statLine, bag))}
       className={cn(
-        "flex min-w-0 items-center gap-2 px-5 py-2 text-left transition-colors duration-300",
+        "flex min-w-0 items-center gap-1.5 px-2 py-2 text-left transition-colors duration-300 sm:gap-2 sm:px-5",
         "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-deep",
         "disabled:cursor-default",
         flip && "flex-row-reverse text-right",
-        bump > 0.04 && "bg-highlight/15",
+        flash > 0.04 && "bg-highlight/15",
       )}
     >
       <span className="min-w-0 flex-1">
@@ -245,6 +255,7 @@ function Half({
           player={line?.player}
           empty="—"
           compact
+          dense
           game={line?.game}
           line={statLine}
           align={flip ? "right" : "left"}
@@ -253,9 +264,11 @@ function Half({
       <SlotPts
         points={line?.points}
         forecast={line?.forecast}
-        bump={bump}
+        expected={line?.expected}
+        live={live}
         reserve
         align={flip ? "left" : "right"}
+        className="w-9 sm:w-16"
       />
     </button>
   );

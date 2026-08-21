@@ -50,10 +50,25 @@ export function InjuryMark({ status, className }: { status?: string | null; clas
   );
 }
 
+/**
+ * `Christian McCaffrey` does not fit in half a phone; `C. McCaffrey` does. A
+ * formatter, not a data change — the full name is one breakpoint away.
+ */
+export function shortName(player: SlimPlayer): string {
+  if (player.position === "DEF") return dstLabel(player.team);
+  const [first = "", ...rest] = player.full_name.trim().split(/\s+/);
+  if (rest.length === 0) return player.full_name;
+  // A first name that is already initials — A.J., D.K., T.J. — is shorter than
+  // anything we would replace it with, and cutting it to "A." loses the person.
+  const lead = /^[A-Z]\.[A-Z]\.?$/i.test(first) ? first : `${first[0]}.`;
+  return `${lead} ${rest.join(" ")}`;
+}
+
 export function PlayerCell({
   player,
   empty = "Empty",
   compact = false,
+  dense = false,
   game = null,
   align = "left",
   line = null,
@@ -61,6 +76,8 @@ export function PlayerCell({
   player: SlimPlayer | null | undefined;
   empty?: string;
   compact?: boolean;
+  /** Phone-width squeeze: smaller mark, initial + surname under `sm`. */
+  dense?: boolean;
   game?: GameChip | null;
   align?: "left" | "right";
   line?: string | null;
@@ -73,19 +90,21 @@ export function PlayerCell({
     ? teamLogo(player.team ?? player.player_id)
     : playerHeadshot(player.player_id, player.espn_id);
   const name = isDef && player.team ? dstLabel(player.team) : player.full_name;
+  const short = dense ? shortName(player) : name;
   const meta = [player.position, player.team].filter(Boolean).join(" · ");
 
   return (
     <span
       className={cn(
         "flex min-w-0 items-center gap-2.5",
+        dense && "gap-2 sm:gap-2.5",
         align === "right" && "flex-row-reverse text-right",
       )}
     >
       <Avatar
         src={src}
         name={name}
-        className={compact ? "size-8" : "size-9"}
+        className={dense ? "size-7 sm:size-8" : compact ? "size-8" : "size-9"}
         textClassName="text-[10px]"
       >
         {game?.state === "in" ? (
@@ -99,7 +118,21 @@ export function PlayerCell({
             align === "right" && "flex-row-reverse",
           )}
         >
-          <span className="truncate text-sm font-medium text-fg">{name}</span>
+          <span
+            className={cn(
+              "truncate text-sm font-medium text-fg",
+              dense && "text-[13px] sm:text-sm",
+            )}
+          >
+            {dense && short !== name ? (
+              <>
+                <span className="sm:hidden">{short}</span>
+                <span className="max-sm:hidden">{name}</span>
+              </>
+            ) : (
+              name
+            )}
+          </span>
           {isDef ? null : <InjuryMark status={player.injury_status} />}
         </span>
         <span className="block truncate microlabel">

@@ -5,17 +5,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LinePanel } from "@/components/book-panel";
 import { MatchupBoard } from "@/components/matchup-board";
 import { MatchupEdge } from "@/components/matchup-edge";
-import { MatchupSpine } from "@/components/matchup-spine";
 import { PlayerSheet, type SheetTarget } from "@/components/player-sheet";
 import { PlayerWatch, type WatchTarget, watchFromLine } from "@/components/player-watch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type TicketTarget, WagerTicket } from "@/components/wager-ticket";
 import { fantasyStatKind } from "@/lib/data/calendar";
 import { getLeagueBundle, getMatchups, getWeekProjections, getWeekStats } from "@/lib/data/fns";
-import { liveStatLine, paintMatchups, pairIsProjected } from "@/lib/data/matchup-view";
+import {
+  liveStatLine,
+  paintMatchups,
+  pairIsProjected,
+  pairPreviewScores,
+} from "@/lib/data/matchup-view";
 import { useWarmRosterProfiles } from "@/lib/data/player-view";
 import { baseSlotLabel } from "@/lib/data/teams";
+import { overlayBookLine, overlayPreLivePairs } from "@/lib/demo/pre-live";
 import { useDemoStore, useSimPhase } from "@/lib/demo/store";
+import { usePreLiveFeed } from "@/lib/demo/use-pre-live-feed";
 import { getBook, getClaims } from "@/lib/league/fns";
 import {
   applyReplayPairs,
@@ -42,6 +48,7 @@ function MatchupsPage() {
   const search = Route.useSearch();
   // The transport lives in the demo toolbar; this page only reads the clock.
   const phase = useSimPhase();
+  const pre = usePreLiveFeed();
   const stopSim = useDemoStore((s) => s.stop);
   const [watch, setWatch] = useState<WatchTarget | null>(null);
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
@@ -142,16 +149,23 @@ function MatchupsPage() {
   }, [matchups.data, week, liveFinals, priorStats.data, hasLiveStats, book]);
   const finals = seeded.finals;
   const seededPairs = seeded.pairs;
+  const sourcePairs = useMemo(() => {
+    const rows = matchups.data ?? [];
+    if (!pre.on) return rows;
+    return overlayPreLivePairs(rows, pre.games, pre.stats, book);
+  }, [matchups.data, pre.on, pre.games, pre.stats, book]);
   const rawShown = useMemo(() => {
+    if (pre.on) return sourcePairs;
     if (!seededPairs.length) return [];
-    if (phase == null) return matchups.data ?? [];
+    if (phase == null) return sourcePairs;
     return applyReplayPairs(seededPairs, week, phase, finals);
-  }, [matchups.data, seededPairs, phase, week, finals]);
+  }, [pre.on, sourcePairs, seededPairs, phase, week, finals]);
 
   const displayStats = useMemo(() => {
+    if (pre.on) return pre.stats;
     if (phase == null) return liveFinals;
     return replayStatMap(finals, phase, week);
-  }, [phase, liveFinals, finals, week]);
+  }, [pre.on, pre.stats, phase, liveFinals, finals, week]);
 
   const shown = useMemo(
     () => paintMatchups(rawShown, projections.data ?? {}, displayStats),
@@ -230,16 +244,17 @@ function MatchupsPage() {
 
   // A week already playing out for real has nothing to replay, and a fake Q3
   // sitting on top of live scores is the worst thing this page could do.
-  const weekLive = (matchups.data ?? []).some(pairingIsLive);
+  const weekLive = sourcePairs.some(pairingIsLive);
   useEffect(() => {
     if (weekLive && phase != null) stopSim();
   }, [weekLive, phase, stopSim]);
 
   return (
     <div>
-      {league.data?.scoringLive && phase == null ? (
+      {(league.data?.scoringLive || (pre.on && pre.live)) && phase == null ? (
         <p className="mb-3 microlabel text-live">
-          Live unofficial · ticks every {LIVE_POLL_MS / 1000}s
+          {pre.on ? "Preseason overlay · display only · " : "Live unofficial · "}
+          ticks every {pre.on ? 4 : LIVE_POLL_MS / 1000}s
         </p>
       ) : null}
 
@@ -292,9 +307,12 @@ function MatchupsPage() {
               >
                 {shown.map((p, i) => {
                   const on = i === selected;
-                  const preview = pairIsProjected(p);
-                  const homeLeads = !p.away || p.home.points >= p.away.points;
-                  const decided = !preview && (p.home.points > 0 || (p.away?.points ?? 0) > 0);
+                  const scores = pairPreviewScores(p);
+                  const preview = !scores.live && pairIsProjected(p);
+                  const homePts = scores.home;
+                  const awayPts = scores.away;
+                  const homeLeads = !p.away || homePts >= awayPts;
+                  const decided = scores.live && (homePts > 0 || awayPts > 0);
                   const yours =
                     p.home.rosterId === mineRosterId || p.away?.rosterId === mineRosterId;
                   return (
@@ -334,7 +352,7 @@ function MatchupsPage() {
                             preview && "text-muted",
                           )}
                         >
-                          {formatPts(p.home.points, 1)}
+                          {formatPts(homePts, 1)}
                         </span>
                       </span>
                       <span className="mt-0.5 flex items-baseline justify-between gap-2">
@@ -349,7 +367,7 @@ function MatchupsPage() {
                             preview && "text-muted",
                           )}
                         >
-                          {formatPts(p.away?.points ?? 0, 1)}
+                          {formatPts(awayPts, 1)}
                         </span>
                       </span>
                     </button>
@@ -368,60 +386,6 @@ function MatchupsPage() {
                 return (
                   <>
                     <article className="overflow-hidden rounded-xl bg-surface ring-card">
-                      {/* Two columns is right the moment there is room for two columns.
-                    Under `sm` there is not, and stacking the rosters buries the
-                    comparison — so the phone gets the same data paired by slot,
-                    and its own header, since the band would not fit. */}
-                      <div className="p-4 sm:hidden">
-                        {pair.label ? (
-                          <p className="mb-3 microlabel text-live">{pair.label}</p>
-                        ) : null}
-                        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                          <h2 className="font-display text-lg font-bold tracking-[-0.03em]">
-                            {title}
-                          </h2>
-                          <Link
-                            to="/league/$leagueId/matchup/$week/$matchupId"
-                            params={{
-                              leagueId,
-                              week: String(week),
-                              matchupId: String(pair.matchupId),
-                            }}
-                            className="microlabel text-accent-strong"
-                          >
-                            Full box score
-                          </Link>
-                        </div>
-                        {pair.away ? (
-                          <MatchupSpine
-                            home={pair.home}
-                            away={pair.away}
-                            liveHome={rawShown[selected]?.home.points ?? 0}
-                            liveAway={rawShown[selected]?.away?.points ?? 0}
-                            stats={displayStats}
-                            leagueId={leagueId}
-                            onPlayer={(line, side) =>
-                              openPlayer(
-                                watchFromLine(
-                                  line,
-                                  side.teamName,
-                                  liveStatLine(
-                                    line.player?.position,
-                                    line.game,
-                                    line.stats ??
-                                      (line.playerId ? displayStats[line.playerId] : undefined),
-                                  ),
-                                  line.stats ??
-                                    (line.playerId ? displayStats[line.playerId] : undefined),
-                                ),
-                              )
-                            }
-                          />
-                        ) : (
-                          <p className="text-sm text-muted">Bye week</p>
-                        )}
-                      </div>
-
                       <MatchupBoard
                         title={title}
                         label={pair.label}
@@ -451,9 +415,19 @@ function MatchupsPage() {
                     </article>
                     {wagerBook.data?.enabled
                       ? (() => {
-                          const line = wagerBook.data.lines.find(
-                            (l) => l.matchupId === pair.matchupId,
-                          );
+                          const inIt =
+                            mineRosterId != null &&
+                            (pair.home.rosterId === mineRosterId ||
+                              pair.away?.rosterId === mineRosterId);
+                          const line =
+                            (pre.on
+                              ? overlayBookLine(
+                                  pair,
+                                  projections.data ?? {},
+                                  inIt ? mineRosterId : null,
+                                )
+                              : null) ??
+                            wagerBook.data.lines.find((l) => l.matchupId === pair.matchupId);
                           return line ? (
                             <LinePanel className="mt-6" line={line} onPick={setTicket} />
                           ) : null;
