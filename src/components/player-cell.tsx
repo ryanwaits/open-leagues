@@ -1,5 +1,6 @@
 import { Avatar } from "@/components/avatar";
 import { Badge } from "@/components/ui/badge";
+import { shortKickoff } from "@/lib/data/kickoff";
 import { canonTeam, dstLabel, playerHeadshot, teamLogo } from "@/lib/data/teams";
 import type { GameChip, SlimPlayer } from "@/lib/data/types";
 import { cn } from "@/lib/utils";
@@ -69,6 +70,7 @@ export function PlayerCell({
   empty = "Empty",
   compact = false,
   dense = false,
+  quiet = false,
   game = null,
   align = "left",
   line = null,
@@ -78,6 +80,12 @@ export function PlayerCell({
   compact?: boolean;
   /** Phone-width squeeze: smaller mark, initial + surname under `sm`. */
   dense?: boolean;
+  /**
+   * The ledger voice: one sentence-case sub-line — team · opp · kickoff — in
+   * place of the uppercase position/team/detail string. The slot rail beside
+   * the row already says the position.
+   */
+  quiet?: boolean;
   game?: GameChip | null;
   align?: "left" | "right";
   line?: string | null;
@@ -135,17 +143,67 @@ export function PlayerCell({
           </span>
           {isDef ? null : <InjuryMark status={player.injury_status} />}
         </span>
-        <span className="block truncate microlabel">
-          {meta}
-          {gameLabel(game, player.team)}
-        </span>
-        {line ? (
+        {quiet ? (
+          <span className="block truncate text-xs text-faint">{quietLine(player, game, line)}</span>
+        ) : (
+          <span className="block truncate microlabel">
+            {meta}
+            {gameLabel(game, player.team)}
+          </span>
+        )}
+        {line && !quiet ? (
           <span className="mt-0.5 block truncate font-mono text-[11px] text-muted normal-case tracking-normal">
             {line}
           </span>
         ) : null}
       </span>
     </span>
+  );
+}
+
+/**
+ * One line, every state, so rows never change height:
+ *   pre      DAL · @ NYG · Sun 8:20
+ *   live     @ NYG · Q3 8:53 · 6/10, 47 yds   (clock in coral, ball dot if they have it)
+ *   final    @ NYG · Final · 14/21, 186 yds · 1 TD
+ * Once the game is on, the own-team mark gives way to the stat line — the
+ * player already says which team; the opponent is the context that stays.
+ */
+function quietLine(player: SlimPlayer, game: GameChip | null, line?: string | null) {
+  const team = player.position === "DEF" ? null : player.team;
+  if (!game) return [team].filter(Boolean).join(" · ") || "—";
+  const started = game.state === "in" || game.state === "post";
+  const when =
+    game.state === "pre"
+      ? (shortKickoff(game.detail) ?? game.detail)
+      : game.state === "post"
+        ? "Final"
+        : [game.detail, game.situation].filter(Boolean).join(" · ") || "Live";
+  const ball =
+    game.state === "in" &&
+    Boolean(game.possession) &&
+    canonTeam(game.possession) != null &&
+    canonTeam(game.possession) === canonTeam(player.team);
+  const lead = started
+    ? [game.opp].filter(Boolean).join(" · ")
+    : [team, game.opp].filter(Boolean).join(" · ");
+  return (
+    <>
+      {lead}
+      {when ? (
+        <span className={game.state === "in" ? "text-live" : undefined}>
+          {lead ? " · " : ""}
+          {when}
+          {ball ? (
+            <span
+              className="ml-1 inline-block size-1.5 translate-y-[-1px] rounded-pill bg-live align-middle"
+              title="Has the ball"
+            />
+          ) : null}
+        </span>
+      ) : null}
+      {started && line ? <span className="text-muted">{` · ${line}`}</span> : null}
+    </>
   );
 }
 

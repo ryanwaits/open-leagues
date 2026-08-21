@@ -1,4 +1,4 @@
-import { ArrowUpDown, Lock } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Lock } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { PlayerCell } from "@/components/player-cell";
 import { SlotPts } from "@/components/slot-pts";
@@ -22,6 +22,8 @@ import { cn, formatPts } from "@/lib/utils";
  * separate add/remove logic.
  */
 export function LineupBoard({
+  title,
+  benchCollapsed = false,
   team,
   rosterPositions,
   editable,
@@ -36,6 +38,10 @@ export function LineupBoard({
   onSit,
   onSwap,
 }: {
+  /** Replaces the "Starting lineup" header — e.g. the team name on the home page. */
+  title?: string;
+  /** Start with the bench folded to one row (the home page). Editing unfolds it. */
+  benchCollapsed?: boolean;
   team: TeamBundle;
   rosterPositions: string[];
   editable: boolean;
@@ -70,6 +76,21 @@ export function LineupBoard({
   const bySlot = new Map(starters.map((p) => [p.starterSlot ?? "", p]));
   const bags = stats ?? {};
   const locked = (p: RosterPlayer | null | undefined) => Boolean(p && gameHasStarted(p.game));
+
+  // Moving is a mode, not a column: the ⇅ controls exist only behind Edit, so
+  // a lineup you are merely reading has one fewer thing per row.
+  const [editing, setEditing] = useState(false);
+  const [benchOpen, setBenchOpen] = useState(!benchCollapsed);
+  const showMove = editable && editing;
+  const benchShown = benchOpen || showMove;
+
+  // One number for the board, not a label on every row.
+  const anyStarted = starters.some((p) => gameHasStarted(p.game));
+  const total = starters.reduce((sum, p) => {
+    const disp = slotDisplay(p.game, p.weekPts, projections?.[p.player_id]);
+    return sum + (disp.points ?? 0);
+  }, 0);
+  const questionable = bench.filter((p) => /^q/i.test(p.injury_status ?? "")).length;
 
   /**
    * The row whose move button was pressed. Stored as a reference, not a
@@ -183,11 +204,34 @@ export function LineupBoard({
 
   return (
     <section className="rounded-xl bg-surface ring-card">
-      <header className="flex flex-wrap items-baseline justify-between gap-3 px-5 pt-5 pb-3">
-        <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Starting lineup</h2>
-        <span className="microlabel-data">
-          {editable ? `Week ${team.week} · tap ⇅ to move` : `Week ${team.week}`}
+      <header className="flex items-center gap-3 px-5 pt-4 pb-3">
+        <h2 className="min-w-0 flex-1 truncate font-display text-lg font-bold tracking-[-0.03em]">
+          {title ?? "Starting lineup"}
+        </h2>
+        <span className="microlabel-data whitespace-nowrap">
+          {anyStarted ? "Live" : "Proj"}{" "}
+          <span className="font-semibold text-fg normal-case tracking-normal tabular-nums">
+            {formatPts(total, 1)}
+          </span>
         </span>
+        {editable ? (
+          <button
+            type="button"
+            aria-pressed={editing}
+            onClick={() => {
+              if (editing) cancel();
+              setEditing((v) => !v);
+            }}
+            className={cn(
+              "inline-flex h-8 shrink-0 items-center rounded-pill px-3 text-[13px] font-semibold transition-colors duration-150",
+              editing
+                ? "bg-accent text-accent-fg"
+                : "text-muted shadow-[0_0_0_1px_var(--color-line)] hover:bg-raised hover:text-fg",
+            )}
+          >
+            {editing ? "Done" : "Edit"}
+          </button>
+        ) : null}
       </header>
 
       <ul>
@@ -206,7 +250,7 @@ export function LineupBoard({
               }}
               className={cn(
                 "scroll-mt-20 scroll-mb-40 md:scroll-mb-24",
-                "flex items-center gap-3 border-b border-line px-5 py-2.5 last:border-0",
+                "flex min-h-13 items-center gap-3 border-b border-line px-5 py-2 last:border-0",
                 broken && !src && "bg-[color-mix(in_oklab,var(--alarm)_9%,transparent)]",
                 // While a row is armed the board answers one question only, so
                 // rows it cannot trade with recede rather than compete.
@@ -216,7 +260,7 @@ export function LineupBoard({
               )}
             >
               <span className="w-9 shrink-0 microlabel-data slot-rail">{label}</span>
-              {editable ? (
+              {showMove ? (
                 p && locked(p) ? (
                   <LockedMark name={p.full_name} />
                 ) : (
@@ -254,6 +298,7 @@ export function LineupBoard({
                   <PlayerCell
                     player={p}
                     compact
+                    quiet
                     game={p.game}
                     line={liveStatLine(p.position, p.game, bags[p.player_id])}
                   />
@@ -277,71 +322,95 @@ export function LineupBoard({
         })}
       </ul>
 
-      <header className="border-t border-line px-5 pt-4 pb-2">
-        <h3 className="microlabel">Bench</h3>
-      </header>
-      <ul className="pb-2">
-        {bench.length === 0 ? (
-          <li className="px-5 py-3 text-sm text-muted">Nobody on the bench.</li>
-        ) : null}
-        {bench.map((p) => {
-          const isSrc = src?.kind === "bench" && src.player.player_id === p.player_id;
-          const takes = src ? benchEligible(p) : false;
-          const canStart = slots.some(({ label }) => slotAccepts(p.position, label));
-          return (
-            <li
-              key={p.player_id}
-              className={cn(
-                "flex items-center gap-3 border-b border-line px-5 py-2.5 last:border-0",
-                src && !isSrc && !takes && "opacity-40",
-                isSrc && "bg-[color-mix(in_oklab,var(--brand)_14%,transparent)]",
-                takes && "bg-[color-mix(in_oklab,var(--brand)_7%,transparent)]",
-              )}
-            >
-              <span className="w-9 shrink-0 microlabel-data">{p.position ?? ""}</span>
-              {editable ? (
-                locked(p) ? (
-                  <LockedMark name={p.full_name} />
-                ) : canStart || takes ? (
-                  <MoveButton
-                    state={isSrc ? "source" : src ? (takes ? "target" : "off") : "idle"}
-                    busy={busy}
-                    label={
-                      isSrc ? "Cancel move" : src ? `Send ${p.full_name} in` : `Move ${p.full_name}`
-                    }
-                    onPress={() =>
-                      isSrc
-                        ? cancel()
-                        : src
-                          ? chooseBench(p)
-                          : setPicked({ kind: "bench", playerId: p.player_id })
-                    }
-                  />
-                ) : (
-                  <span className="size-8 shrink-0" />
-                )
-              ) : null}
-              <button
-                type="button"
-                className="min-w-0 flex-1 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
-                onPointerEnter={() => onIntentPlayer?.(p)}
-                onPointerDown={() => onIntentPlayer?.(p)}
-                onFocus={() => onIntentPlayer?.(p)}
-                onClick={() => (takes && !busy ? chooseBench(p) : onOpenPlayer?.(p))}
+      <button
+        type="button"
+        aria-expanded={benchShown}
+        onClick={() => setBenchOpen((v) => !v)}
+        className="flex min-h-12 w-full items-center gap-2 border-t border-line px-5 text-left hover:bg-raised"
+      >
+        <span className="microlabel">Bench</span>
+        <span className="microlabel-data">
+          · {bench.length}
+          {questionable ? ` · ${questionable} questionable` : ""}
+        </span>
+        <ChevronDown
+          className={cn(
+            "ml-auto size-4 text-faint transition-transform duration-150 motion-reduce:transition-none",
+            benchShown && "rotate-180",
+          )}
+          strokeWidth={1.75}
+          aria-hidden
+        />
+      </button>
+      {benchShown ? (
+        <ul className="border-t border-line pb-1">
+          {bench.length === 0 ? (
+            <li className="px-5 py-3 text-sm text-muted">Nobody on the bench.</li>
+          ) : null}
+          {bench.map((p) => {
+            const isSrc = src?.kind === "bench" && src.player.player_id === p.player_id;
+            const takes = src ? benchEligible(p) : false;
+            const canStart = slots.some(({ label }) => slotAccepts(p.position, label));
+            return (
+              <li
+                key={p.player_id}
+                className={cn(
+                  "flex min-h-13 items-center gap-3 border-b border-line px-5 py-2 last:border-0",
+                  src && !isSrc && !takes && "opacity-40",
+                  isSrc && "bg-[color-mix(in_oklab,var(--brand)_14%,transparent)]",
+                  takes && "bg-[color-mix(in_oklab,var(--brand)_7%,transparent)]",
+                )}
               >
-                <PlayerCell
-                  player={p}
-                  compact
-                  game={p.game}
-                  line={liveStatLine(p.position, p.game, bags[p.player_id])}
-                />
-              </button>
-              {onBye(p, byes, week) ? <Badge tone="loss">Bye</Badge> : null}
-              <Points player={p} projection={projections?.[p.player_id]} />
-            </li>
-          );
-        })}
-      </ul>
+                <span className="w-9 shrink-0 microlabel-data">{p.position ?? ""}</span>
+                {showMove ? (
+                  locked(p) ? (
+                    <LockedMark name={p.full_name} />
+                  ) : canStart || takes ? (
+                    <MoveButton
+                      state={isSrc ? "source" : src ? (takes ? "target" : "off") : "idle"}
+                      busy={busy}
+                      label={
+                        isSrc
+                          ? "Cancel move"
+                          : src
+                            ? `Send ${p.full_name} in`
+                            : `Move ${p.full_name}`
+                      }
+                      onPress={() =>
+                        isSrc
+                          ? cancel()
+                          : src
+                            ? chooseBench(p)
+                            : setPicked({ kind: "bench", playerId: p.player_id })
+                      }
+                    />
+                  ) : (
+                    <span className="size-8 shrink-0" />
+                  )
+                ) : null}
+                <button
+                  type="button"
+                  className="min-w-0 flex-1 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
+                  onPointerEnter={() => onIntentPlayer?.(p)}
+                  onPointerDown={() => onIntentPlayer?.(p)}
+                  onFocus={() => onIntentPlayer?.(p)}
+                  onClick={() => (takes && !busy ? chooseBench(p) : onOpenPlayer?.(p))}
+                >
+                  <PlayerCell
+                    player={p}
+                    compact
+                    quiet
+                    game={p.game}
+                    line={liveStatLine(p.position, p.game, bags[p.player_id])}
+                  />
+                </button>
+                {onBye(p, byes, week) ? <Badge tone="loss">Bye</Badge> : null}
+                <Points player={p} projection={projections?.[p.player_id]} />
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
 
       {/* Pinned rather than placed: the lit row can be a screen away from
           where you armed, so the way out follows you. Moves commit on the
@@ -464,14 +533,17 @@ function Points({
   if (!projection || projection.reason === "no-data") {
     return <span className="w-14 shrink-0 text-right font-mono text-sm text-faint">—</span>;
   }
+  const note = projection.reason === "bye" ? "bye" : projection.reason === "out" ? "out" : null;
   return (
     <span className="w-14 shrink-0 text-right">
-      <span className="block font-mono text-sm tabular-nums text-muted">
+      {/* A forecast is muted on purpose: only points actually scored (the
+          live/final branch above) get the primary colour. */}
+      <span
+        className={cn("block font-mono text-sm tabular-nums", note ? "text-faint" : "text-muted")}
+      >
         {formatPts(projection.points, 1)}
       </span>
-      <span className="block microlabel-data">
-        {projection.reason === "bye" ? "bye" : projection.reason === "out" ? "out" : "proj"}
-      </span>
+      {note ? <span className="block microlabel-data">{note}</span> : null}
     </span>
   );
 }
