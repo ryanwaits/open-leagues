@@ -66,7 +66,13 @@ export function playerBoxHits(
         const idHit = espn && row.id === espn;
         const nameHit = last.length > 2 && row.name.toLowerCase().includes(last);
         if (idHit || nameHit) {
-          hits.push({ team: team.abbr, logo: team.logo, group: group.label, headers: group.headers, row });
+          hits.push({
+            team: team.abbr,
+            logo: team.logo,
+            group: group.label,
+            headers: group.headers,
+            row,
+          });
         }
       }
     }

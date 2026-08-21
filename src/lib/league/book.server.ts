@@ -1,15 +1,15 @@
 import { getSql } from "@/lib/db";
-import type { PlayerOutlook } from "./win-probability";
 import {
   atRisk,
   ensureWagerSchema,
   poolBalance,
-  quoteFrom,
   type Quote,
+  quoteFrom,
   spendable,
   type WagerKind,
   type WagerStatus,
 } from "./wagers.server";
+import type { PlayerOutlook } from "./win-probability";
 
 /**
  * Everything the book surfaces need, in one round trip.
@@ -160,9 +160,8 @@ export async function loadBook(
     const eng = await import("./engine.server");
     const pairs = await eng.loadMatchups(leagueId, week);
     const season = String(
-      (
-        await sql<{ season: string }>`select season from ff_leagues where id = ${leagueId}`
-      )[0]?.season ?? "",
+      (await sql<{ season: string }>`select season from ff_leagues where id = ${leagueId}`)[0]
+        ?.season ?? "",
     );
 
     const ids = pairs.flatMap((p) =>
@@ -171,9 +170,7 @@ export async function loadBook(
         .filter((x): x is string => Boolean(x)),
     );
     const { outlooksFor } = await import("@/lib/data/projections.server");
-    const outlooks = ids.length
-      ? await outlooksFor({ leagueId, season, playerIds: ids })
-      : {};
+    const outlooks = ids.length ? await outlooksFor({ leagueId, season, playerIds: ids }) : {};
 
     for (const pair of pairs) {
       if (!pair.away) continue;
@@ -252,9 +249,7 @@ export async function loadBook(
   const all = rows.map(shape);
   // Open positions stay private until the book closes; after that the whole
   // league sees who was on what, which is both fairer and better material.
-  const open = all
-    .filter((p) => p.status === "placed")
-    .filter((p) => p.mine || locked);
+  const open = all.filter((p) => p.status === "placed").filter((p) => p.mine || locked);
   const settled = all.filter((p) => p.status !== "placed" && p.status !== "pulled");
 
   /* -------------------------------------------------------------- purse -- */

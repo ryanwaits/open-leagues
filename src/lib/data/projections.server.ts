@@ -28,7 +28,14 @@ function loadSeed(): Map<string, StatSeed> {
   return byId;
 }
 
-const META_KEYS = new Set(["player_id", "gp", "pts_ppr", "pts_half_ppr", "pts_std", "pos_rank_ppr"]);
+const META_KEYS = new Set([
+  "player_id",
+  "gp",
+  "pts_ppr",
+  "pts_half_ppr",
+  "pts_std",
+  "pos_rank_ppr",
+]);
 function components(row: StatSeed): Record<string, number> {
   const out: Record<string, number> = {};
   for (const [k, v] of Object.entries(row)) {
@@ -68,8 +75,7 @@ export function perGameUnder(book: ScoringBook, playerId: string): number | null
   // scoring does not vary with reception rules; a league with custom kicker
   // values will be slightly off until per-week stats cover them.
   const preset = presetOf(book);
-  const total =
-    preset === "ppr" ? row.pts_ppr : preset === "half" ? row.pts_half_ppr : row.pts_std;
+  const total = preset === "ppr" ? row.pts_ppr : preset === "half" ? row.pts_half_ppr : row.pts_std;
   if (typeof total !== "number" || total === 0) return null;
   return round1(total / gp);
 }
@@ -196,7 +202,12 @@ export async function projectPlayers(input: {
   leagueId: string;
   season: string;
   week: number;
-  players: { player_id: string; team?: string | null; injury_status?: string | null; status?: string | null }[];
+  players: {
+    player_id: string;
+    team?: string | null;
+    injury_status?: string | null;
+    status?: string | null;
+  }[];
 }): Promise<Record<string, Projection>> {
   const book = await scoringBookFor(input.leagueId);
   const byes = await byeWeeks(input.season).catch(() => ({}) as Record<string, number>);

@@ -13,8 +13,8 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { chromium } from "playwright";
-import { checkedOutputPath, checkedUrl } from "./browser-guard.mjs";
 import { computeBrandWarnings } from "./brand-check.mjs";
+import { checkedOutputPath, checkedUrl } from "./browser-guard.mjs";
 
 const url = checkedUrl(process.argv[2] || "http://127.0.0.1:8080/");
 const outPng = checkedOutputPath(
@@ -46,7 +46,12 @@ try {
 
   const title = await page.title();
   const hasCanvas = (await page.locator("canvas").count()) > 0;
-  const bodyTextLen = (await page.locator("body").innerText().catch(() => "")).trim().length;
+  const bodyTextLen = (
+    await page
+      .locator("body")
+      .innerText()
+      .catch(() => "")
+  ).trim().length;
 
   await page.screenshot({ path: outPng, fullPage: false });
 

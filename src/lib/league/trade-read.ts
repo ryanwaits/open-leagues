@@ -53,9 +53,7 @@ export function readTrade(input: {
       clauses.push(`${bestLoss.slot} is left empty`);
     } else {
       const cost = Math.abs(bestLoss.delta).toFixed(1);
-      clauses.push(
-        `${shortName(bestLoss.to)} has to cover ${bestLoss.slot}, which costs ${cost}`,
-      );
+      clauses.push(`${shortName(bestLoss.to)} has to cover ${bestLoss.slot}, which costs ${cost}`);
     }
   }
 

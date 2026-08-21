@@ -127,7 +127,12 @@ export function demoStatBag(
   }
   if (p === "K") {
     const fg = 1 + Math.floor(u(1) * 3);
-    return { fgm: fg, fgm_30_39: Math.min(fg, 1), fgm_40_49: Math.max(0, fg - 1), xpm: 1 + Math.floor(u(2) * 3) };
+    return {
+      fgm: fg,
+      fgm_30_39: Math.min(fg, 1),
+      fgm_40_49: Math.max(0, fg - 1),
+      xpm: 1 + Math.floor(u(2) * 3),
+    };
   }
   if (p === "DEF" || p === "DST") {
     return {
@@ -298,9 +303,7 @@ export function applyReplaySide(
   const phase = REPLAY_PHASES[phaseIndex] ?? REPLAY_PHASES[0]!;
   const starters = side.starters.map((line) => {
     const final = line.points ?? 0;
-    const points = line.playerId
-      ? replayPts(line.playerId, final, phaseIndex, week)
-      : null;
+    const points = line.playerId ? replayPts(line.playerId, final, phaseIndex, week) : null;
     const game: GameChip | null = line.player
       ? {
           state: phase.state,

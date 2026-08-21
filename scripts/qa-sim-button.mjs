@@ -28,7 +28,10 @@ if (await page.getByRole("button", { name: /Simulate this week|Watch it tick/ })
   await page.waitForTimeout(6500);
   const mid = await page.locator("body").innerText();
   console.log("after tick phase", mid.match(/Q\d[^·\n]+/)?.[0]);
-  console.log("sample line", mid.match(/\d+\/\d+, \d+ yds/)?.[0] ?? mid.match(/\d+ rec, \d+ yds/)?.[0]);
+  console.log(
+    "sample line",
+    mid.match(/\d+\/\d+, \d+ yds/)?.[0] ?? mid.match(/\d+ rec, \d+ yds/)?.[0],
+  );
   await page.screenshot({ path: "/workspace/screenshots/sim-week1.png" });
 }
 

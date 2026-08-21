@@ -194,7 +194,10 @@ function dstYards(book: ScoringBook, yards: number | undefined): number {
   return book.yds_allow_450p ?? 0;
 }
 
-export function applyBook(book: ScoringBook, stats: Record<string, number> | null | undefined): number {
+export function applyBook(
+  book: ScoringBook,
+  stats: Record<string, number> | null | undefined,
+): number {
   if (!stats) return 0;
   let pts = 0;
   for (const [k, w] of Object.entries(book)) {
@@ -227,7 +230,10 @@ export function isClassicPreset(book: ScoringBook): boolean {
   return true;
 }
 
-export function parseBook(raw: string | null | undefined, fallback: "ppr" | "half" | "std"): ScoringBook {
+export function parseBook(
+  raw: string | null | undefined,
+  fallback: "ppr" | "half" | "std",
+): ScoringBook {
   if (raw) {
     try {
       const v = JSON.parse(raw) as unknown;

@@ -1,5 +1,5 @@
-import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
+import { chromium } from "playwright";
 
 mkdirSync("/workspace/screenshots", { recursive: true });
 const browser = await chromium.launch({
@@ -19,10 +19,17 @@ await page.goto("http://127.0.0.1:8080/league/lg_backyard/matchup/14/1", {
 });
 await page.waitForTimeout(2500);
 const allen = page.getByRole("button", { name: /Josh Allen/ }).first();
-console.log("allen buttons", await page.getByRole("button", { name: /Josh Allen|Dak Prescott/ }).count());
+console.log(
+  "allen buttons",
+  await page.getByRole("button", { name: /Josh Allen|Dak Prescott/ }).count(),
+);
 await allen.click();
 await page.waitForTimeout(3000);
-const drawer = await page.locator("[data-vaul-drawer], [vaul-drawer], .fixed.z-50").last().innerText().catch(() => "");
+const drawer = await page
+  .locator("[data-vaul-drawer], [vaul-drawer], .fixed.z-50")
+  .last()
+  .innerText()
+  .catch(() => "");
 const body = await page.locator("body").innerText();
 console.log("has His plays?", body.includes("His plays"));
 console.log("has Live/Final/Scheduled?", /Live|Final|Scheduled|Kickoff/.test(body));
@@ -35,12 +42,18 @@ await mobile.goto("http://127.0.0.1:8080/league/lg_backyard/matchup/14/1", {
   timeout: 45000,
 });
 await mobile.waitForTimeout(2000);
-await mobile.getByRole("button", { name: /Josh Allen/ }).first().click();
+await mobile
+  .getByRole("button", { name: /Josh Allen/ })
+  .first()
+  .click();
 await mobile.waitForTimeout(2500);
 await mobile.screenshot({ path: "/workspace/screenshots/player-watch-mobile.png" });
 const mob = await mobile.locator("body").innerText();
 console.log("mobile his plays", mob.includes("His plays"));
-console.log("mobile overflow", await mobile.evaluate(() => document.documentElement.scrollWidth > 400));
+console.log(
+  "mobile overflow",
+  await mobile.evaluate(() => document.documentElement.scrollWidth > 400),
+);
 
 await browser.close();
 console.log("ERRORS", errors.filter((e) => !/favicon|404/.test(e)).slice(0, 8));

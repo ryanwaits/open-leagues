@@ -145,8 +145,12 @@ export function buildDispatchContext(input: {
         awayPts: p.away!.points,
         homeStud: studOf(p.home),
         awayStud: studOf(p.away!),
-        homeNames: namesOf(p.home).length ? namesOf(p.home) : topNames(input.rosters, p.home.teamName),
-        awayNames: namesOf(p.away!).length ? namesOf(p.away!) : topNames(input.rosters, p.away!.teamName),
+        homeNames: namesOf(p.home).length
+          ? namesOf(p.home)
+          : topNames(input.rosters, p.home.teamName),
+        awayNames: namesOf(p.away!).length
+          ? namesOf(p.away!)
+          : topNames(input.rosters, p.away!.teamName),
       })),
     rosters: input.rosters,
     moves: input.activity.slice(0, 12).map((a) => ({
@@ -360,7 +364,12 @@ function composeRecapLead(
       const loser = homeWins ? g.away : g.home;
       const wPts = homeWins ? g.homePts : g.awayPts;
       const lPts = homeWins ? g.awayPts : g.homePts;
-      return { winner, loser, score: `${wPts.toFixed(1)}–${lPts.toFixed(1)}`, margin: Math.abs(wPts - lPts) };
+      return {
+        winner,
+        loser,
+        score: `${wPts.toFixed(1)}–${lPts.toFixed(1)}`,
+        margin: Math.abs(wPts - lPts),
+      };
     })
     .sort((a, b) => b.margin - a.margin);
   const blow = box[0];
@@ -373,7 +382,9 @@ function composeRecapLead(
   const body: string[] = [];
   if (blow) body.push(`${named(blow.winner)} beat ${named(blow.loser)} ${blow.score}.`);
   if (high?.stud) {
-    body.push(`${high.stud.name} led the week with ${high.stud.pts.toFixed(1)} for ${named(high.team)}.`);
+    body.push(
+      `${high.stud.name} led the week with ${high.stud.pts.toFixed(1)} for ${named(high.team)}.`,
+    );
   }
   weaveFacts(body, facts);
   return article(
@@ -381,8 +392,12 @@ function composeRecapLead(
     "recap",
     `week-${ctx.week}-recap`,
     `Week ${ctx.week} recap`,
-    blow ? `${named(blow.winner)} puts ${named(blow.loser)} in the dirt` : `Week ${ctx.week} is on the books`,
-    high ? `High water ${high.pts.toFixed(1)} from ${named(high.team)}.` : `Week ${ctx.week} posted.`,
+    blow
+      ? `${named(blow.winner)} puts ${named(blow.loser)} in the dirt`
+      : `Week ${ctx.week} is on the books`,
+    high
+      ? `High water ${high.pts.toFixed(1)} from ${named(high.team)}.`
+      : `Week ${ctx.week} posted.`,
     body,
     { box, focus: blow ? [blow.winner, blow.loser] : [] },
   );
@@ -462,7 +477,11 @@ function composeFeature(
       [
         `The draft board sent ${profile.rbs[0].name} and ${profile.rbs[1].name} to ${team}. That is a two-headed backfield before a snap has counted.`,
         `Prep week is about the split. Who starts. Who vultures. The book will settle it; the recap only tells us they both belong to this club.`,
-        extra ?? `Around them: ${profile.card.players.slice(2, 6).map((p) => p.name).join(", ")}.`,
+        extra ??
+          `Around them: ${profile.card.players
+            .slice(2, 6)
+            .map((p) => p.name)
+            .join(", ")}.`,
       ],
       { focus: [profile.card.team] },
     );
@@ -514,7 +533,9 @@ function composeRestOfCard(ctx: DispatchContext, named: (t: string) => string): 
 }
 
 /** Single-article fallback used by older recap callers. */
-export function composeDispatch(ctx: DispatchContext): Omit<DispatchArticle, "id" | "leagueId" | "createdAt"> {
+export function composeDispatch(
+  ctx: DispatchContext,
+): Omit<DispatchArticle, "id" | "leagueId" | "createdAt"> {
   return composeDesk(ctx).articles[0]!;
 }
 

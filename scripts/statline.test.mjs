@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { formatStatLine } from "../src/lib/data/statline.ts";
 import {
   gameHasStarted,
   liveStatLine,
@@ -8,6 +7,7 @@ import {
   pairIsProjected,
   slotDisplay,
 } from "../src/lib/data/matchup-view.ts";
+import { formatStatLine } from "../src/lib/data/statline.ts";
 
 describe("formatStatLine", () => {
   it("returns null when the bag is empty or all zeros", () => {
@@ -114,7 +114,10 @@ describe("paintMatchup", () => {
     assert.equal(painted.home.starters[1].points, 12.5);
     assert.equal(painted.away.starters[0].forecast, "proj");
     assert.equal(painted.home.points, 16.6);
-    assert.equal(liveStatLine("QB", painted.home.starters[0].game, painted.home.starters[0].stats), "8/12, 80 yds");
+    assert.equal(
+      liveStatLine("QB", painted.home.starters[0].game, painted.home.starters[0].stats),
+      "8/12, 80 yds",
+    );
     assert.equal(painted.home.starters[1].stats, null);
     assert.equal(pairIsProjected(painted), false);
     const idle = paintMatchup(

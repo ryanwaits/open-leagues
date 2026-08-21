@@ -33,8 +33,16 @@ test("lineup writes invalidate matchups even if the observer unmounts", () => {
     "src/routes/league/$leagueId/team/$rosterId.tsx",
   ]) {
     const file = src(rel);
-    assert.match(file, /invalidateAfterLineup\(qc, leagueId\)/, `${rel} must invalidate matchups after a lineup write`);
-    assert.match(file, /await startPlayer/, `${rel} must invalidate inside mutationFn, not only onSuccess`);
+    assert.match(
+      file,
+      /invalidateAfterLineup\(qc, leagueId\)/,
+      `${rel} must invalidate matchups after a lineup write`,
+    );
+    assert.match(
+      file,
+      /await startPlayer/,
+      `${rel} must invalidate inside mutationFn, not only onSuccess`,
+    );
   }
 });
 

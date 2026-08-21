@@ -60,7 +60,10 @@ function parseRecord(raw: string): { w: number; l: number; t: number } | null {
 }
 
 function parseHeader(line: string): Omit<RebuildTeamIn, "names"> | null {
-  const parts = line.split("|").map((p) => p.trim()).filter(Boolean);
+  const parts = line
+    .split("|")
+    .map((p) => p.trim())
+    .filter(Boolean);
   if (!parts.length) return null;
   const teamName = parts[0]!;
   if (teamName.length < 2) return null;
@@ -86,7 +89,15 @@ function parseHeader(line: string): Omit<RebuildTeamIn, "names"> | null {
     }
     if (manager === "Manager") manager = bit;
   }
-  return { teamName: teamName.slice(0, 40), manager: manager.slice(0, 32), wins, losses, ties, pf, pa };
+  return {
+    teamName: teamName.slice(0, 40),
+    manager: manager.slice(0, 32),
+    wins,
+    losses,
+    ties,
+    pf,
+    pa,
+  };
 }
 
 export function parseRebuildPaste(raw: string): RebuildTeamIn[] {

@@ -11,7 +11,14 @@ const player = (id, first, last, team, position = "WR") => ({
   team,
 });
 
-const t = (p, side = "mine") => ({ player: p, side, slot: "WR", club: "Club", points: 1, stats: null });
+const t = (p, side = "mine") => ({
+  player: p,
+  side,
+  slot: "WR",
+  club: "Club",
+  points: 1,
+  stats: null,
+});
 
 const collins = t(player("1", "Nico", "Collins", "HOU"));
 const stroud = t(player("2", "C.J.", "Stroud", "HOU", "QB"));
@@ -19,17 +26,23 @@ const smith = t(player("3", "Geno", "Smith", "LV", "QB"), "opp");
 const stBrown = t(player("4", "Amon-Ra", "St. Brown", "DET"));
 
 test("tags ESPN initial.last mentions", () => {
-  const segs = tagPlayText("(Shotgun) C.Stroud pass short right to N.Collins to LV 38 for 11 yards.", [
-    collins,
-    stroud,
-  ]);
+  const segs = tagPlayText(
+    "(Shotgun) C.Stroud pass short right to N.Collins to LV 38 for 11 yards.",
+    [collins, stroud],
+  );
   const players = segs.filter((s) => s.kind === "player").map((s) => s.tracked.player.player_id);
   assert.deepEqual(players, ["2", "1"]);
-  assert.equal(segs.map((s) => s.text).join(""), "(Shotgun) C.Stroud pass short right to N.Collins to LV 38 for 11 yards.");
+  assert.equal(
+    segs.map((s) => s.text).join(""),
+    "(Shotgun) C.Stroud pass short right to N.Collins to LV 38 for 11 yards.",
+  );
 });
 
 test("tags full names in scoring summaries", () => {
-  const segs = tagPlayText("Nico Collins 20 Yd pass from C.J. Stroud (Ka'imi Fairbairn Kick)", [collins, stroud]);
+  const segs = tagPlayText("Nico Collins 20 Yd pass from C.J. Stroud (Ka'imi Fairbairn Kick)", [
+    collins,
+    stroud,
+  ]);
   assert.equal(segs.filter((s) => s.kind === "player").length, 2);
 });
 
@@ -58,7 +71,13 @@ test("trackedForGame picks both sides' starters in this game, mine first", () =>
       points: 10,
       starters: [
         { slot: "QB", playerId: "2", player: stroud.player, points: 14.4, game: null },
-        { slot: "WR", playerId: "9", player: player("9", "Puka", "Nacua", "LAR"), points: 3, game: null },
+        {
+          slot: "WR",
+          playerId: "9",
+          player: player("9", "Puka", "Nacua", "LAR"),
+          points: 3,
+          game: null,
+        },
       ],
     },
     away: {

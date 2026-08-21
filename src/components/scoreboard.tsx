@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
+import { Badge } from "@/components/ui/badge";
 import type { ScoreGame } from "@/lib/data/types";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 function TeamRow({
   abbr,

@@ -15,7 +15,9 @@ export function fantasyStatKind(): "regular" {
 
 export function calendarOf(state: NflState): NflCalendar {
   const seasonNum = Number(state.season);
-  const previous = String(state.previous_season || (Number.isFinite(seasonNum) ? seasonNum - 1 : seasonNum));
+  const previous = String(
+    state.previous_season || (Number.isFinite(seasonNum) ? seasonNum - 1 : seasonNum),
+  );
   const kind: NflCalendar["kind"] =
     state.season_type === "pre" || state.season_type === "post" ? state.season_type : "regular";
   return {

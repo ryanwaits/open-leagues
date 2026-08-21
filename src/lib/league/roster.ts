@@ -1,4 +1,4 @@
-import { slotLabel, START_SLOTS } from "@/lib/data/teams";
+import { START_SLOTS, slotLabel } from "@/lib/data/teams";
 
 export type SlotKey =
   | "QB"
@@ -39,27 +39,111 @@ export const ROSTER_PRESETS: Array<{ id: string; label: string; slots: string[] 
   {
     id: "classic",
     label: "Classic",
-    slots: ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "K", "DEF", "BN", "BN", "BN", "BN", "BN", "BN"],
+    slots: [
+      "QB",
+      "RB",
+      "RB",
+      "WR",
+      "WR",
+      "TE",
+      "FLEX",
+      "K",
+      "DEF",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+    ],
   },
   {
     id: "3wr",
     label: "3 WR",
-    slots: ["QB", "RB", "RB", "WR", "WR", "WR", "TE", "FLEX", "K", "DEF", "BN", "BN", "BN", "BN", "BN", "BN"],
+    slots: [
+      "QB",
+      "RB",
+      "RB",
+      "WR",
+      "WR",
+      "WR",
+      "TE",
+      "FLEX",
+      "K",
+      "DEF",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+    ],
   },
   {
     id: "3wr-wr",
     label: "3 WR + W/R",
-    slots: ["QB", "RB", "RB", "WR", "WR", "WR", "TE", "WRRB_FLEX", "K", "DEF", "BN", "BN", "BN", "BN", "BN", "BN"],
+    slots: [
+      "QB",
+      "RB",
+      "RB",
+      "WR",
+      "WR",
+      "WR",
+      "TE",
+      "WRRB_FLEX",
+      "K",
+      "DEF",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+    ],
   },
   {
     id: "superflex",
     label: "Superflex",
-    slots: ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "SUPER_FLEX", "K", "DEF", "BN", "BN", "BN", "BN", "BN", "BN"],
+    slots: [
+      "QB",
+      "RB",
+      "RB",
+      "WR",
+      "WR",
+      "TE",
+      "FLEX",
+      "SUPER_FLEX",
+      "K",
+      "DEF",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+    ],
   },
   {
     id: "2qb",
     label: "2 QB",
-    slots: ["QB", "QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "K", "DEF", "BN", "BN", "BN", "BN", "BN", "BN"],
+    slots: [
+      "QB",
+      "QB",
+      "RB",
+      "RB",
+      "WR",
+      "WR",
+      "TE",
+      "FLEX",
+      "K",
+      "DEF",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+    ],
   },
 ];
 
@@ -161,7 +245,10 @@ export function invertSlotKey(label: string | null | undefined): string {
 }
 
 /** Can this position occupy this starter slot key (QB, FLEX, WR2, …). */
-export function slotAccepts(pos: string | null | undefined, slot: string | null | undefined): boolean {
+export function slotAccepts(
+  pos: string | null | undefined,
+  slot: string | null | undefined,
+): boolean {
   const p = (pos ?? "").toUpperCase();
   if (!p) return false;
   const s = invertSlotKey(slot);

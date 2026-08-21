@@ -120,10 +120,7 @@ export function onBye(
 }
 
 /** Bench players who could legally fill a broken slot, best guess first. */
-export function benchFor(
-  slotLabel: string,
-  players: RosterPlayer[],
-): RosterPlayer[] {
+export function benchFor(slotLabel: string, players: RosterPlayer[]): RosterPlayer[] {
   return players
     .filter((p) => p.slot === "bench" && slotAccepts(p.position, slotLabel))
     .sort((a, b) => (b.weekPts ?? 0) - (a.weekPts ?? 0));

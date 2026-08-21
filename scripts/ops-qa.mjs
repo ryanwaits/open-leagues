@@ -99,10 +99,19 @@ try {
   process.exit(0);
 } catch (err) {
   await page.screenshot({ path: "/workspace/screenshots/ops-qa-fail.png" }).catch(() => {});
-  const text = await page.locator("body").innerText().catch(() => "");
+  const text = await page
+    .locator("body")
+    .innerText()
+    .catch(() => "");
   console.error(
     JSON.stringify(
-      { ok: false, error: String(err?.message || err), url: page.url(), errors, text: text.slice(0, 800) },
+      {
+        ok: false,
+        error: String(err?.message || err),
+        url: page.url(),
+        errors,
+        text: text.slice(0, 800),
+      },
       null,
       2,
     ),

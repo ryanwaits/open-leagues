@@ -94,12 +94,7 @@ describe("lineup-value", () => {
 
   it("FLEX: receiver fills FLEX when WR slots are taken", () => {
     const rosterPositions = ["WR", "WR", "FLEX"];
-    const players = [
-      rp("wr1", "WR"),
-      rp("wr2", "WR"),
-      rp("wr3", "WR"),
-      rp("rb1", "RB"),
-    ];
+    const players = [rp("wr1", "WR"), rp("wr2", "WR"), rp("wr3", "WR"), rp("rb1", "RB")];
     const projections = proj({ wr1: 18, wr2: 16, wr3: 14, rb1: 12 });
 
     const filled = fillLineup(players, rosterPositions, projections);

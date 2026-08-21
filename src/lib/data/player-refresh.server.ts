@@ -54,8 +54,12 @@ async function ensureSchema(): Promise<void> {
   await sql.query(`alter table ff_player_status add column if not exists news_updated timestamptz`);
   await sql.query(`alter table ff_player_status add column if not exists injury_body_part text`);
   await sql.query(`alter table ff_player_status add column if not exists injury_notes text`);
-  await sql.query(`alter table ff_player_status add column if not exists practice_participation text`);
-  await sql.query(`alter table ff_player_status add column if not exists practice_description text`);
+  await sql.query(
+    `alter table ff_player_status add column if not exists practice_participation text`,
+  );
+  await sql.query(
+    `alter table ff_player_status add column if not exists practice_description text`,
+  );
   await sql.query(`alter table ff_player_status add column if not exists depth_chart_order int`);
   await sql.query(`alter table ff_player_status add column if not exists rotowire_id text`);
   await sql.query(
@@ -69,9 +73,7 @@ async function ensureSchema(): Promise<void> {
 
 async function lastRunAt(key: string): Promise<number | null> {
   const sql = await getSql();
-  const row = (
-    await sql<{ at: string }>`select at from ff_refresh_log where key = ${key}`
-  )[0];
+  const row = (await sql<{ at: string }>`select at from ff_refresh_log where key = ${key}`)[0];
   return row ? new Date(row.at).getTime() : null;
 }
 
@@ -107,7 +109,9 @@ export async function refreshPlayerStatus(opts: { force?: boolean } = {}): Promi
   let force = Boolean(opts.force);
   if (!force) {
     const seeded = (
-      await sql<{ ok: number }>`select 1 as ok from ff_player_status where rotowire_id is not null limit 1`
+      await sql<{
+        ok: number;
+      }>`select 1 as ok from ff_player_status where rotowire_id is not null limit 1`
     )[0];
     if (!seeded) force = true;
   }
@@ -146,9 +150,8 @@ export async function refreshPlayerStatus(opts: { force?: boolean } = {}): Promi
     const practice = norm(p.practice_participation);
     const practiceDesc = norm(p.practice_description);
     const depth = intOrNull(p.depth_chart_order);
-    const rotowireId = p.rotowire_id != null && String(p.rotowire_id).trim() !== ""
-      ? String(p.rotowire_id)
-      : null;
+    const rotowireId =
+      p.rotowire_id != null && String(p.rotowire_id).trim() !== "" ? String(p.rotowire_id) : null;
 
     if (prior.has(id)) {
       const was = prior.get(id) ?? null;
@@ -189,9 +192,7 @@ export async function refreshPlayerStatus(opts: { force?: boolean } = {}): Promi
   return { skipped: false, scanned, changed };
 }
 
-export async function statusOverlay(
-  playerIds: string[],
-): Promise<Record<string, StatusOverlay>> {
+export async function statusOverlay(playerIds: string[]): Promise<Record<string, StatusOverlay>> {
   if (playerIds.length === 0) return {};
   try {
     await ensureSchema();

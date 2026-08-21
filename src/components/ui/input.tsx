@@ -1,4 +1,4 @@
-import { useId, type InputHTMLAttributes } from "react";
+import { type InputHTMLAttributes, useId } from "react";
 import { cn } from "@/lib/utils";
 
 export function Input({ className, id, name, ...props }: InputHTMLAttributes<HTMLInputElement>) {

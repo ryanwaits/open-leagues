@@ -21,10 +21,10 @@ export const useLeagueStore = create<LeagueStore>()(
       hasHydrated: false,
       markHydrated: () => set({ hasHydrated: true }),
       remember: (league) => {
-        const next = [
-          league,
-          ...get().recent.filter((r) => r.leagueId !== league.leagueId),
-        ].slice(0, 8);
+        const next = [league, ...get().recent.filter((r) => r.leagueId !== league.leagueId)].slice(
+          0,
+          8,
+        );
         set({ recent: next });
       },
     }),

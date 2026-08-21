@@ -34,12 +34,7 @@ function toolShapedBackticks(md) {
 
 test("four open-ff skills exist", () => {
   const names = readdirSync(skillsDir).sort();
-  assert.deepEqual(names, [
-    "open-ff-book",
-    "open-ff-lineup",
-    "open-ff-migrate",
-    "open-ff-week",
-  ]);
+  assert.deepEqual(names, ["open-ff-book", "open-ff-lineup", "open-ff-migrate", "open-ff-week"]);
 });
 
 test("skill backtick tool ids ⊆ AGENT_CORE ∪ PWA_ONLY", () => {

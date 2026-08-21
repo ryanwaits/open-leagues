@@ -1,5 +1,5 @@
-import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
+import { chromium } from "playwright";
 
 mkdirSync("/workspace/screenshots", { recursive: true });
 const browser = await chromium.launch({

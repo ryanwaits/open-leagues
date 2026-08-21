@@ -1,5 +1,5 @@
-import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
+import { chromium } from "playwright";
 
 mkdirSync("/workspace/screenshots", { recursive: true });
 
@@ -52,7 +52,9 @@ await run("scores-mobile", { width: 390, height: 844 }, async (page) => {
     timeout: 45000,
   });
   await page.waitForTimeout(2000);
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2,
+  );
   console.log("mobile overflow", overflow);
   await page.screenshot({ path: "/workspace/screenshots/game-mobile.png", fullPage: false });
 });
@@ -73,7 +75,10 @@ await run("matchup", { width: 1280, height: 900 }, async (page) => {
     await page.screenshot({ path: "/workspace/screenshots/matchup-page.png", fullPage: false });
   } else {
     console.log("no matchup cards on backyard");
-    await page.screenshot({ path: "/workspace/screenshots/standings-nomatch.png", fullPage: false });
+    await page.screenshot({
+      path: "/workspace/screenshots/standings-nomatch.png",
+      fullPage: false,
+    });
   }
 });
 

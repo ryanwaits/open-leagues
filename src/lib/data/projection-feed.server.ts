@@ -46,9 +46,7 @@ function refreshKey(season: string, week: number): string {
 
 async function lastRunAt(key: string): Promise<number | null> {
   const sql = await getSql();
-  const row = (
-    await sql<{ at: string }>`select at from ff_refresh_log where key = ${key}`
-  )[0];
+  const row = (await sql<{ at: string }>`select at from ff_refresh_log where key = ${key}`)[0];
   return row ? new Date(row.at).getTime() : null;
 }
 
