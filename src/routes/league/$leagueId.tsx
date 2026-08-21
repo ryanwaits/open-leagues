@@ -185,7 +185,7 @@ function LeagueLayout() {
    * to draw their own seventeen-button strip; now they share one control that
    * writes the same search param.
    */
-  const WEEKLY = ["/matchups", "/activity", "/recap"];
+  const WEEKLY = ["/matchups", "/activity", "/recap", "/roster", "/standings"];
   const usesWeek = WEEKLY.some((seg) => pathname.startsWith(`/league/${leagueId}${seg}`));
   const playoffStart =
     q.data?.ops?.playoffStartWeek ?? q.data?.league.settings.playoff_week_start ?? 15;
