@@ -19,6 +19,7 @@ import { Route as NewRouteImport } from './routes/new'
 import { Route as PlayersRouteImport } from './routes/players'
 import { Route as ScoresRouteImport } from './routes/scores'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
+import { Route as DevLivelineRouteImport } from './routes/dev/liveline'
 import { Route as LeagueLeagueIdRouteImport } from './routes/league/$leagueId'
 import { Route as ScoresGameIdRouteImport } from './routes/scores_.$gameId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -86,6 +87,11 @@ const ScoresRoute = ScoresRouteImport.update({
 const ApiMcpRoute = ApiMcpRouteImport.update({
   id: '/api/mcp',
   path: '/api/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevLivelineRoute = DevLivelineRouteImport.update({
+  id: '/dev/liveline',
+  path: '/dev/liveline',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeagueLeagueIdRoute = LeagueLeagueIdRouteImport.update({
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/players': typeof PlayersRoute
   '/scores': typeof ScoresRoute
   '/api/mcp': typeof ApiMcpRoute
+  '/dev/liveline': typeof DevLivelineRoute
   '/league/$leagueId': typeof LeagueLeagueIdRouteWithChildren
   '/scores/$gameId': typeof ScoresGameIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -223,6 +230,7 @@ export interface FileRoutesByTo {
   '/players': typeof PlayersRoute
   '/scores': typeof ScoresRoute
   '/api/mcp': typeof ApiMcpRoute
+  '/dev/liveline': typeof DevLivelineRoute
   '/scores/$gameId': typeof ScoresGameIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/league/tick': typeof ApiLeagueTickRoute
@@ -253,6 +261,7 @@ export interface FileRoutesById {
   '/players': typeof PlayersRoute
   '/scores': typeof ScoresRoute
   '/api/mcp': typeof ApiMcpRoute
+  '/dev/liveline': typeof DevLivelineRoute
   '/league/$leagueId': typeof LeagueLeagueIdRouteWithChildren
   '/scores_/$gameId': typeof ScoresGameIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -285,6 +294,7 @@ export interface FileRouteTypes {
     | '/players'
     | '/scores'
     | '/api/mcp'
+    | '/dev/liveline'
     | '/league/$leagueId'
     | '/scores/$gameId'
     | '/api/auth/$'
@@ -315,6 +325,7 @@ export interface FileRouteTypes {
     | '/players'
     | '/scores'
     | '/api/mcp'
+    | '/dev/liveline'
     | '/scores/$gameId'
     | '/api/auth/$'
     | '/api/league/tick'
@@ -344,6 +355,7 @@ export interface FileRouteTypes {
     | '/players'
     | '/scores'
     | '/api/mcp'
+    | '/dev/liveline'
     | '/league/$leagueId'
     | '/scores_/$gameId'
     | '/api/auth/$'
@@ -375,6 +387,7 @@ export interface RootRouteChildren {
   PlayersRoute: typeof PlayersRoute
   ScoresRoute: typeof ScoresRoute
   ApiMcpRoute: typeof ApiMcpRoute
+  DevLivelineRoute: typeof DevLivelineRoute
   LeagueLeagueIdRoute: typeof LeagueLeagueIdRouteWithChildren
   ScoresGameIdRoute: typeof ScoresGameIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -451,6 +464,13 @@ declare module '@tanstack/react-router' {
       path: '/api/mcp'
       fullPath: '/api/mcp'
       preLoaderRoute: typeof ApiMcpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dev/liveline': {
+      id: '/dev/liveline'
+      path: '/dev/liveline'
+      fullPath: '/dev/liveline'
+      preLoaderRoute: typeof DevLivelineRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/league/$leagueId': {
@@ -632,6 +652,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlayersRoute: PlayersRoute,
   ScoresRoute: ScoresRoute,
   ApiMcpRoute: ApiMcpRoute,
+  DevLivelineRoute: DevLivelineRoute,
   LeagueLeagueIdRoute: LeagueLeagueIdRouteWithChildren,
   ScoresGameIdRoute: ScoresGameIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
