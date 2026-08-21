@@ -1,23 +1,37 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft } from "lucide-react";
-import { useState } from "react";
+import { ChevronLeft, Star } from "lucide-react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { Avatar } from "@/components/avatar";
+import { PlayerPeek } from "@/components/player-peek";
 import { Shell } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getGameSummary } from "@/lib/data/fns";
-import { drivesForLiveFeed, withLiveSnap } from "@/lib/data/game-feed";
-import { teamLogo } from "@/lib/data/teams";
-import type { GameDrive, GameSummary, TeamBox } from "@/lib/data/types";
+import { drivesForLiveFeed, fieldPct, spotFromSituation, withLiveSnap } from "@/lib/data/game-feed";
+import { formatPlayPts, playCredits } from "@/lib/data/play-points";
+import { type PlaySegment, type TrackedPlayer, tagPlayText } from "@/lib/data/play-tags";
+import { canonTeam, isDefense, playerHeadshot, playerTeam, teamLogo } from "@/lib/data/teams";
+import type { BoxRow, GameDrive, GamePlay, GameSummary, TeamBox } from "@/lib/data/types";
+import { type GameTracking, useGameTracking } from "@/lib/data/use-game-tracking";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/scores_/$gameId")({
   component: GamePage,
 });
 
+type Tab = "plays" | "box" | "scoring";
+type Filter = "all" | "scoring";
+
+/** Which name is open, and on which play — so a 4s refetch does not close it. */
+type Peek = { key: string; tracked: TrackedPlayer };
+
 function GamePage() {
   const { gameId } = Route.useParams();
-  const [tab, setTab] = useState<"plays" | "box">("plays");
+  const [tab, setTab] = useState<Tab>("plays");
+  const [filter, setFilter] = useState<Filter>("all");
+  const [peek, setPeek] = useState<Peek | null>(null);
+  const closePeek = useCallback(() => setPeek(null), []);
   const q = useQuery({
     queryKey: ["game", gameId],
     queryFn: () => getGameSummary({ data: { gameId } }),
@@ -28,6 +42,7 @@ function GamePage() {
       return false;
     },
   });
+  const tracking = useGameTracking(q.data);
 
   if (q.data == null && q.isPending) {
     return (
@@ -49,61 +64,69 @@ function GamePage() {
 
   const g = q.data;
   const live = g.state === "in";
+  const tracked = tracking.tracked;
+  const activeFilter: Filter = filter;
 
   return (
     <Shell>
       <Back />
       <ScoreHead g={g} live={live} />
 
-      {g.scoring.length ? (
-        <section className="mt-6">
-          <h2 className="microlabel">Scoring</h2>
-          <ol className="mt-2 divide-y divide-line rounded-xl bg-surface ring-card">
-            {g.scoring.map((s) => (
-              <li key={s.id} className="flex items-start gap-3 px-3 py-2.5 sm:px-4">
-                {s.logo ? (
-                  <img src={s.logo} alt="" className="mt-0.5 size-5 object-contain" />
-                ) : (
-                  <span className="mt-0.5 w-5 font-mono text-[10px] text-faint">{s.team}</span>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm">{s.text}</p>
-                  <p className="font-mono text-[11px] text-faint">
-                    Q{s.period} {s.clock}
-                    {s.type ? ` · ${s.type}` : ""}
-                  </p>
-                </div>
-                <span className="shrink-0 font-mono text-sm tabular-nums text-muted">
-                  {s.awayScore}–{s.homeScore}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </section>
-      ) : null}
-
-      <div className="mt-6 flex gap-1">
-        {(
-          [
-            ["plays", "Plays"],
-            ["box", "Box"],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setTab(id)}
-            className={cn(
-              "h-10 rounded-sm px-4 text-sm",
-              tab === id ? "bg-accent text-accent-fg" : "bg-raised text-muted",
-            )}
-          >
-            {label}
-          </button>
-        ))}
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex gap-1">
+          {(
+            [
+              ["plays", "Plays"],
+              ["box", "Box"],
+              ["scoring", g.scoring.length ? `Scoring · ${g.scoring.length}` : "Scoring"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={cn(
+                "h-10 rounded-sm px-4 text-sm",
+                tab === id ? "bg-accent text-accent-fg" : "bg-raised text-muted",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {tab === "plays" && g.drives.length ? (
+          <div className="flex gap-1">
+            <FilterChip on={activeFilter === "all"} onClick={() => setFilter("all")}>
+              All
+            </FilterChip>
+            <FilterChip on={activeFilter === "scoring"} onClick={() => setFilter("scoring")}>
+              Scoring
+            </FilterChip>
+          </div>
+        ) : null}
       </div>
 
-      {tab === "plays" ? <PlayFeed g={g} /> : <BoxTables g={g} />}
+      {tab === "plays" ? (
+        <PlayFeed
+          g={g}
+          live={live}
+          filter={activeFilter}
+          tracking={tracking}
+          peek={peek}
+          setPeek={setPeek}
+          closePeek={closePeek}
+        />
+      ) : tab === "box" ? (
+        <BoxTables g={g} tracked={tracked} />
+      ) : (
+        <ScoringList
+          g={g}
+          tracking={tracking}
+          peek={peek}
+          setPeek={setPeek}
+          closePeek={closePeek}
+        />
+      )}
     </Shell>
   );
 }
@@ -120,9 +143,40 @@ function Back() {
   );
 }
 
+function FilterChip({
+  on,
+  onClick,
+  tone = "default",
+  children,
+}: {
+  on: boolean;
+  onClick: () => void;
+  tone?: "default" | "accent";
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      className={cn(
+        "inline-flex h-8 items-center gap-1.5 rounded-pill px-3 font-mono text-xs tracking-wide",
+        on && tone === "accent" && "bg-accent/15 text-accent-strong",
+        on && tone === "default" && "bg-raised text-fg",
+        !on && "text-muted hover:bg-raised",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* ------------------------------------------------------------------ head */
+
 function ScoreHead({ g, live }: { g: GameSummary; live: boolean }) {
   const awayDim = g.state === "post" && g.away.winner === false;
   const homeDim = g.state === "post" && g.home.winner === false;
+  const poss = live ? canonTeam(g.possession) : null;
   return (
     <section className="mt-4 rounded-xl bg-surface px-4 py-5 ring-card sm:px-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -138,11 +192,23 @@ function ScoreHead({ g, live }: { g: GameSummary; live: boolean }) {
           {live ? g.detail || "Live" : g.detail || "Scheduled"}
         </Badge>
       </div>
-      <TeamScore team={g.away} dim={awayDim} />
+      <TeamScore
+        team={g.away}
+        dim={awayDim}
+        ball={poss != null && poss === canonTeam(g.away.abbr)}
+      />
       <div className="my-2" />
-      <TeamScore team={g.home} dim={homeDim} />
-      {live && g.situation ? (
-        <p className="mt-4 font-mono text-xs text-live">{g.situation}</p>
+      <TeamScore
+        team={g.home}
+        dim={homeDim}
+        ball={poss != null && poss === canonTeam(g.home.abbr)}
+      />
+      {live && (g.situation || g.possession) ? (
+        <p className="mt-4 font-mono text-xs text-live">
+          {g.possession ? `${g.possession} ball` : null}
+          {g.possession && g.situation ? " · " : null}
+          {g.situation}
+        </p>
       ) : null}
       {g.lastPlay ? (
         <p className="mt-2 text-sm text-muted">
@@ -155,7 +221,29 @@ function ScoreHead({ g, live }: { g: GameSummary; live: boolean }) {
   );
 }
 
-function TeamScore({ team, dim }: { team: GameSummary["home"]; dim: boolean }) {
+function Football({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
+      <ellipse cx="12" cy="12" rx="10" ry="6" transform="rotate(-35 12 12)" />
+      <path
+        d="M8.2 14.6l7.6-5.2"
+        stroke="var(--paper-raised)"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function TeamScore({
+  team,
+  dim,
+  ball,
+}: {
+  team: GameSummary["home"];
+  dim: boolean;
+  ball: boolean;
+}) {
   const logo = team.logo || teamLogo(team.abbr);
   return (
     <div className={cn("flex items-center gap-3", dim && "opacity-45")}>
@@ -165,7 +253,18 @@ function TeamScore({ team, dim }: { team: GameSummary["home"]; dim: boolean }) {
         <span className="size-9 rounded-sm bg-raised" />
       )}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-lg">{team.name}</p>
+        <p className="flex items-center gap-2 text-lg">
+          <span className="truncate">{team.name}</span>
+          {ball ? (
+            <span
+              title="Has the ball"
+              className="inline-flex shrink-0 items-center gap-1 text-live"
+            >
+              <Football className="size-3.5" />
+              <span className="sr-only">has the ball</span>
+            </span>
+          ) : null}
+        </p>
         {team.record ? <p className="font-mono text-[11px] text-faint">{team.record}</p> : null}
       </div>
       <p className="font-display text-4xl tabular-nums tracking-tight">{team.score || "—"}</p>
@@ -173,7 +272,36 @@ function TeamScore({ team, dim }: { team: GameSummary["home"]; dim: boolean }) {
   );
 }
 
-function PlayFeed({ g }: { g: GameSummary }) {
+/* ------------------------------------------------------------------ plays */
+
+type PeekProps = {
+  tracking: GameTracking;
+  peek: Peek | null;
+  setPeek: (p: Peek | null) => void;
+  closePeek: () => void;
+};
+
+function PlayFeed({
+  g,
+  live,
+  filter,
+  tracking,
+  peek,
+  setPeek,
+  closePeek,
+}: { g: GameSummary; live: boolean; filter: Filter } & PeekProps) {
+  const drives = useMemo(() => {
+    const ordered = drivesForLiveFeed(g.drives, live);
+    const pinned = live ? withLiveSnap(ordered, g.lastPlay, g.detail) : ordered;
+    if (filter === "all") return pinned;
+    return pinned
+      .map((d) => ({
+        ...d,
+        plays: d.plays.filter((p) => p.scoring),
+      }))
+      .filter((d) => d.plays.length);
+  }, [g.drives, g.lastPlay, g.detail, live, filter]);
+
   if (!g.drives.length) {
     return (
       <p className="mt-4 text-sm text-muted">
@@ -183,49 +311,297 @@ function PlayFeed({ g }: { g: GameSummary }) {
       </p>
     );
   }
-  const drives: GameDrive[] = withLiveSnap(
-    drivesForLiveFeed(g.drives, g.state === "in"),
-    g.state === "in" ? g.lastPlay : null,
-    g.detail,
-  );
+  if (!drives.length) {
+    return <p className="mt-4 text-sm text-muted">No scoring plays yet.</p>;
+  }
+  const poss = live ? canonTeam(g.possession) : null;
   return (
-    <div className="mt-4 space-y-3">
-      {drives.map((d) => (
-        <article key={d.id} className="rounded-xl bg-surface ring-card">
-          <header className="flex items-center gap-2 border-b border-line px-3 py-2 sm:px-4">
-            {d.logo ? <img src={d.logo} alt="" className="size-4 object-contain" /> : null}
-            <p className="min-w-0 flex-1 truncate microlabel">
-              {d.team || "Drive"}
-              {d.result ? ` · ${d.result}` : ""}
-              {d.description ? ` · ${d.description}` : ""}
-            </p>
-          </header>
-          <ol>
-            {d.plays.map((p) => (
-              <li
-                key={p.id}
-                className={cn("flex items-start gap-3 px-3 py-2 sm:px-4", p.scoring && "bg-win/10")}
-              >
-                <span className="w-14 shrink-0 font-mono text-[11px] tabular-nums text-faint">
-                  {p.period ? `Q${p.period}` : ""}
-                  {p.clock ? ` ${p.clock}` : ""}
-                </span>
-                <p className="min-w-0 flex-1 text-sm">{p.text}</p>
-                {p.scoring ? (
-                  <span className="shrink-0 font-mono text-xs tabular-nums text-win">
-                    {p.awayScore}–{p.homeScore}
-                  </span>
-                ) : null}
-              </li>
-            ))}
-          </ol>
-        </article>
-      ))}
+    <div className="mt-3 space-y-3">
+      {drives.map((d, i) => {
+        const isLive = live && i === 0 && filter === "all";
+        return (
+          <DriveCard
+            key={d.id}
+            d={d}
+            g={g}
+            isLive={isLive}
+            poss={poss}
+            tracking={tracking}
+            peek={peek}
+            setPeek={setPeek}
+            closePeek={closePeek}
+          />
+        );
+      })}
     </div>
   );
 }
 
-function BoxTables({ g }: { g: GameSummary }) {
+function DriveCard({
+  d,
+  g,
+  isLive,
+  poss,
+  tracking,
+  peek,
+  setPeek,
+  closePeek,
+}: { d: GameDrive; g: GameSummary; isLive: boolean; poss: string | null } & PeekProps) {
+  const meta = [d.result, d.description].filter(Boolean).join(" · ");
+  const driveTeam = canonTeam(d.team);
+  // ESPN keeps a finished drive "current" until the next one opens (the
+  // kickoff lands on it). Down-and-distance belongs to whoever has the ball.
+  const onBall = isLive && driveTeam != null && (poss == null || poss === driveTeam);
+  const start = onBall && driveTeam ? fieldPct(driveTeam, d.start) : null;
+  const ball = onBall && driveTeam ? fieldPct(driveTeam, spotFromSituation(g.situation)) : null;
+  return (
+    <article className="rounded-xl bg-surface ring-card">
+      <header className="flex items-center gap-2 border-b border-line px-3 py-2 sm:px-4">
+        {d.logo ? (
+          <img src={d.logo} alt={d.team} className="size-4 object-contain" />
+        ) : (
+          <span className="font-mono text-[10px] text-faint">{d.team}</span>
+        )}
+        <p className="min-w-0 flex-1 truncate microlabel">{meta || d.team || "Drive"}</p>
+        {onBall && g.situation ? (
+          <Badge tone="live" className="shrink-0 max-sm:max-w-[60%] max-sm:truncate">
+            Live · {g.situation}
+          </Badge>
+        ) : isLive ? (
+          <Badge tone="live" className="shrink-0">
+            Live
+          </Badge>
+        ) : null}
+      </header>
+      {onBall && ball != null ? (
+        <div className="px-3 pt-2.5 sm:px-4">
+          <div className="relative h-1.5 overflow-hidden rounded-pill bg-raised">
+            {start != null && ball > start ? (
+              <span
+                className="absolute inset-y-0 rounded-pill bg-accent-deep"
+                style={{ left: `${start}%`, width: `${ball - start}%` }}
+              />
+            ) : null}
+            <span className="absolute inset-y-0 w-0.5 bg-fg" style={{ left: `${ball}%` }} />
+          </div>
+          <div className="mt-1 flex justify-between microlabel-data">
+            <span>{d.start ? `${d.start} · start` : "own goal"}</span>
+            <span>{spotFromSituation(g.situation) ?? ""}</span>
+            <span>goal</span>
+          </div>
+        </div>
+      ) : null}
+      <ol className="py-1">
+        {d.plays.map((p) => (
+          <PlayRow
+            key={p.id}
+            p={p}
+            poss={poss}
+            tracking={tracking}
+            peek={peek}
+            setPeek={setPeek}
+            closePeek={closePeek}
+          />
+        ))}
+      </ol>
+    </article>
+  );
+}
+
+function PlayRow({
+  p,
+  poss,
+  tracking,
+  peek,
+  setPeek,
+  closePeek,
+}: { p: GamePlay; poss: string | null } & PeekProps) {
+  const segs = useMemo(() => tagPlayText(p.text, tracking.tracked), [p.text, tracking.tracked]);
+  const credits = useMemo(
+    () => playCredits(p, segs, tracking.book).filter((c) => Math.abs(c.points) >= 0.005),
+    [p, segs, tracking.book],
+  );
+  return (
+    <li className={cn("flex items-start gap-3 px-3 py-1.5 sm:px-4", p.scoring && "bg-accent/8")}>
+      <span className="w-10 shrink-0 whitespace-nowrap pt-0.5 font-mono text-[11px] leading-5 tabular-nums text-faint sm:w-16">
+        <span className="max-sm:hidden">{p.period ? `Q${p.period} ` : ""}</span>
+        {p.clock}
+      </span>
+      <p className="min-w-0 flex-1 text-sm leading-6">
+        <TaggedText
+          segs={segs}
+          playKey={p.id}
+          poss={poss}
+          tracking={tracking}
+          peek={peek}
+          setPeek={setPeek}
+          closePeek={closePeek}
+        />
+      </p>
+      {credits.length ? (
+        <span className="flex shrink-0 flex-col items-end gap-0.5 pt-0.5">
+          {credits.map((c) => (
+            <span
+              key={c.tracked.player.player_id}
+              title={`${c.tracked.player.full_name} · league points on this play`}
+              className={cn(
+                "font-mono text-xs leading-5 font-semibold tabular-nums",
+                c.tracked.side === "mine" ? "text-accent-strong" : "text-loss",
+              )}
+            >
+              {formatPlayPts(c.points)}
+            </span>
+          ))}
+        </span>
+      ) : p.scoring ? (
+        <span className="shrink-0 font-mono text-xs leading-5 tabular-nums text-muted">
+          {p.awayScore}–{p.homeScore}
+        </span>
+      ) : null}
+    </li>
+  );
+}
+
+/** Play text with tracked names turned into tappable tags. */
+function TaggedText({
+  segs,
+  playKey,
+  poss,
+  tracking,
+  peek,
+  setPeek,
+  closePeek,
+}: { segs: PlaySegment[]; playKey: string; poss: string | null } & PeekProps) {
+  return (
+    <>
+      {segs.map((s) => {
+        if (s.kind === "text") return <span key={`${playKey}@${s.start}`}>{s.text}</span>;
+        const key = `${playKey}:${s.tracked.player.player_id}@${s.start}`;
+        const open = peek?.key === key;
+        const team = playerTeam(s.tracked.player);
+        const onField =
+          poss != null &&
+          team != null &&
+          (isDefense(s.tracked.player.position) ? poss !== team : poss === team);
+        return (
+          <span key={key} className="relative inline-block align-baseline">
+            <PlayerTag
+              tracked={s.tracked}
+              open={open}
+              onClick={() => setPeek(open ? null : { key, tracked: s.tracked })}
+            />
+            {open ? (
+              <PlayerPeek
+                tracked={s.tracked}
+                onField={onField}
+                leagueId={tracking.leagueId}
+                week={tracking.week}
+                matchupId={tracking.matchupId}
+                onClose={closePeek}
+              />
+            ) : null}
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
+function PlayerTag({
+  tracked,
+  open,
+  onClick,
+}: {
+  tracked: TrackedPlayer;
+  open: boolean;
+  onClick: () => void;
+}) {
+  const p = tracked.player;
+  const mine = tracked.side === "mine";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={open}
+      className={cn(
+        "mx-0.5 inline-flex h-6 items-center gap-1 rounded-pill py-0 pr-2 pl-0.5 align-middle text-xs font-semibold whitespace-nowrap",
+        mine ? "bg-accent/15 text-accent-strong" : "bg-loss/12 text-loss",
+        open && (mine ? "ring-2 ring-accent-deep" : "ring-2 ring-loss/60"),
+      )}
+    >
+      <Avatar
+        src={playerHeadshot(p.player_id, p.espn_id)}
+        name={p.full_name}
+        className="size-5 rounded-full bg-raised"
+        textClassName="text-[7px]"
+      />
+      {p.full_name}
+    </button>
+  );
+}
+
+/* ---------------------------------------------------------------- scoring */
+
+function ScoringList({ g, tracking, peek, setPeek, closePeek }: { g: GameSummary } & PeekProps) {
+  if (!g.scoring.length) {
+    return (
+      <p className="mt-4 text-sm text-muted">
+        {g.state === "pre" ? "Nothing on the board yet." : "No scoring plays posted."}
+      </p>
+    );
+  }
+  return (
+    <ol className="mt-3 divide-y divide-line rounded-xl bg-surface ring-card">
+      {g.scoring.map((s) => (
+        <li key={s.id} className="flex items-start gap-3 px-3 py-2.5 sm:px-4">
+          {s.logo ? (
+            <img src={s.logo} alt="" className="mt-0.5 size-5 object-contain" />
+          ) : (
+            <span className="mt-0.5 w-5 font-mono text-[10px] text-faint">{s.team}</span>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="text-sm leading-6">
+              <TaggedText
+                segs={tagPlayText(s.text, tracking.tracked)}
+                playKey={`s-${s.id}`}
+                poss={null}
+                tracking={tracking}
+                peek={peek}
+                setPeek={setPeek}
+                closePeek={closePeek}
+              />
+            </p>
+            <p className="font-mono text-[11px] text-faint">
+              Q{s.period} {s.clock}
+              {s.type ? ` · ${s.type}` : ""}
+            </p>
+          </div>
+          <span className="shrink-0 font-mono text-sm tabular-nums text-muted">
+            {s.awayScore}–{s.homeScore}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/* -------------------------------------------------------------------- box */
+
+function rowTracked(row: BoxRow, tracked: TrackedPlayer[]): TrackedPlayer | null {
+  for (const t of tracked) {
+    const espn = t.player.espn_id != null ? String(t.player.espn_id) : null;
+    if (espn && row.id === espn) return t;
+  }
+  const name = row.name.toLowerCase();
+  for (const t of tracked) {
+    const last = (t.player.last_name ?? "").toLowerCase();
+    const fi = (t.player.first_name ?? t.player.full_name)[0]?.toLowerCase();
+    if (last.length > 2 && fi && name.startsWith(fi) && name.endsWith(last)) return t;
+  }
+  return null;
+}
+
+function BoxTables({ g, tracked }: { g: GameSummary; tracked: TrackedPlayer[] }) {
   if (!g.box.length) {
     return (
       <p className="mt-4 text-sm text-muted">
@@ -234,15 +610,15 @@ function BoxTables({ g }: { g: GameSummary }) {
     );
   }
   return (
-    <div className="mt-4 space-y-8">
+    <div className="mt-3 space-y-8">
       {g.box.map((team) => (
-        <TeamBoxBlock key={team.abbr} team={team} />
+        <TeamBoxBlock key={team.abbr} team={team} tracked={tracked} />
       ))}
     </div>
   );
 }
 
-function TeamBoxBlock({ team }: { team: TeamBox }) {
+function TeamBoxBlock({ team, tracked }: { team: TeamBox; tracked: TrackedPlayer[] }) {
   return (
     <section>
       <div className="mb-3 flex items-center gap-2">
@@ -274,40 +650,54 @@ function TeamBoxBlock({ team }: { team: TeamBox }) {
                 </tr>
               </thead>
               <tbody>
-                {group.rows.map((row) => (
-                  <tr key={row.id} className="border-b border-line last:border-0">
-                    <td className="px-3 py-1.5">
-                      <span className="flex items-center gap-2">
-                        {row.headshot ? (
-                          <img
-                            src={row.headshot}
-                            alt=""
-                            className="size-6 rounded-sm object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        ) : null}
-                        <span className="truncate">
-                          {row.jersey ? (
-                            <span className="mr-1.5 font-mono text-[11px] text-faint">
-                              {row.jersey}
-                            </span>
+                {group.rows.map((row) => {
+                  const t = rowTracked(row, tracked);
+                  return (
+                    <tr
+                      key={row.id}
+                      className={cn("border-b border-line last:border-0", t && "bg-accent/6")}
+                    >
+                      <td className="px-3 py-1.5">
+                        <span className="flex items-center gap-2">
+                          {row.headshot ? (
+                            <img
+                              src={row.headshot}
+                              alt=""
+                              className="size-6 rounded-sm object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
                           ) : null}
-                          {row.name}
+                          <span className="flex min-w-0 items-center gap-1.5 truncate">
+                            {t ? (
+                              <Star
+                                className={cn(
+                                  "size-3 shrink-0 fill-current",
+                                  t.side === "mine" ? "text-accent-strong" : "text-loss",
+                                )}
+                                strokeWidth={0}
+                                aria-label={t.side === "mine" ? "Your player" : "Opponent's player"}
+                              />
+                            ) : null}
+                            {row.jersey ? (
+                              <span className="font-mono text-[11px] text-faint">{row.jersey}</span>
+                            ) : null}
+                            <span className="truncate">{row.name}</span>
+                          </span>
                         </span>
-                      </span>
-                    </td>
-                    {row.stats.map((v, i) => (
-                      <td
-                        key={`${row.id}-${i}`}
-                        className="px-2 py-1.5 text-right font-mono tabular-nums"
-                      >
-                        {v}
                       </td>
-                    ))}
-                  </tr>
-                ))}
+                      {row.stats.map((v, i) => (
+                        <td
+                          key={`${row.id}-${group.headers[i] ?? v}`}
+                          className="px-2 py-1.5 text-right font-mono tabular-nums"
+                        >
+                          {v}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
