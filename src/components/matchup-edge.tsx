@@ -4,6 +4,7 @@ import { getOutlooks, getTicks } from "@/lib/data/fns";
 import { pairHasStarted } from "@/lib/data/matchup-view";
 import { baseSlotLabel } from "@/lib/data/teams";
 import { isHostedLeague, type MatchupPair } from "@/lib/data/types";
+import { useSimPhase } from "@/lib/demo/store";
 import { type PlayerOutlook, winProbability } from "@/lib/league/win-probability";
 import { type EdgeView, useLiveProjPref } from "@/lib/live/prefs";
 import { swing } from "@/lib/live/series";
@@ -94,6 +95,10 @@ export function MatchupEdge({
   const setEdgeView = useLiveProjPref((st) => st.setEdgeView);
   const edgeWindow = useLiveProjPref((st) => st.edgeWindow);
   const setEdgeWindow = useLiveProjPref((st) => st.setEdgeWindow);
+  // A simulated Sunday plays out in ~96 real seconds (REPLAY_TICK_MS), so the
+  // real-time 1H/3H/DAY windows would compress the whole game into a sliver
+  // at the right edge — use a fixed short window and hide the chips instead.
+  const simOn = useSimPhase() != null;
 
   if (!away) return null;
 
@@ -171,8 +176,8 @@ export function MatchupEdge({
                 { id: "them", label: b.teamName, points: s.them, tone: "muted" },
               ]}
               height={196}
-              windowSecs={edgeWindow}
-              windows={WINDOWS}
+              windowSecs={simOn ? 150 : edgeWindow}
+              windows={simOn ? undefined : WINDOWS}
               onWindowChange={setEdgeWindow}
               frozen={s.final}
               padding={{ top: 8, right: 8, bottom: 26, left: 0 }}
@@ -183,8 +188,8 @@ export function MatchupEdge({
               series={s.pct}
               value={s.last?.youPct}
               height={196}
-              windowSecs={edgeWindow}
-              windows={WINDOWS}
+              windowSecs={simOn ? 150 : edgeWindow}
+              windows={simOn ? undefined : WINDOWS}
               onWindowChange={setEdgeWindow}
               referenceLine={{ value: 50, label: "COIN FLIP" }}
               momentum={swing(s.pct, 300, 3).dir}
@@ -198,8 +203,8 @@ export function MatchupEdge({
               series={s.margin}
               value={s.last?.margin}
               height={196}
-              windowSecs={edgeWindow}
-              windows={WINDOWS}
+              windowSecs={simOn ? 150 : edgeWindow}
+              windows={simOn ? undefined : WINDOWS}
               onWindowChange={setEdgeWindow}
               referenceLine={{ value: 0, label: "EVEN" }}
               momentum={marginMomentum}
@@ -210,7 +215,7 @@ export function MatchupEdge({
             />
           )}
 
-          <div className="mt-3 flex justify-between microlabel-data">
+          <div className="mt-5 flex justify-between microlabel-data">
             <span>
               {a.teamName} {pct}%{live ? <span className="text-live"> · live</span> : null}
               {s.sinceOpened && !s.final ? " · since you opened" : null}

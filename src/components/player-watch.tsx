@@ -195,7 +195,13 @@ function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => vo
       </header>
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
-        {series ? <ProjectionBlock s={series} kickoffLabel={shortKickoff(g?.detail)} /> : null}
+        {series ? (
+          <ProjectionBlock
+            s={series}
+            kickoffLabel={shortKickoff(g?.detail)}
+            windowSecs={simPhase != null ? 150 : undefined}
+          />
+        ) : null}
 
         {!liveHasPlays && !(target.gameId && q.isLoading) ? (
           <p className="microlabel">

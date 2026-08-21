@@ -83,10 +83,14 @@ export function ProjectionBlock({
   s,
   kickoffLabel,
   className,
+  windowSecs,
 }: {
   s: ProjectionSeries;
   kickoffLabel?: string | null;
   className?: string;
+  /** Overrides the computed real-time window — for demo/replay games, where
+   * wall-clock elapsed time bears no relation to the simulated game clock. */
+  windowSecs?: number;
 }) {
   const mountNowRef = useRef(Date.now() / 1000);
   const tone = projectionTone(s.expected, s.baseline);
@@ -139,7 +143,7 @@ export function ProjectionBlock({
             value={s.expected}
             tone={tone}
             height={124}
-            windowSecs={Math.max(600, now - s.kickoffWall + 120)}
+            windowSecs={windowSecs ?? Math.max(600, now - s.kickoffWall + 120)}
             referenceLine={{ value: s.baseline, label: `PROJ ${formatPts(s.baseline, 1)}` }}
             momentum={s.swing.dir}
             padding={{ left: 8, right: 36, top: 10, bottom: 18 }}
