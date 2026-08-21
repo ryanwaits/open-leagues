@@ -179,6 +179,7 @@ export function TradeComposer({
     setThirdFaabErr(null);
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: clearThreeTeam is a plain function recreated every render — listing it would re-run this on every render instead of only when `initial` changes
   useEffect(() => {
     if (!initial) return;
     setSendPlayers(initial.sendPlayerIds);
@@ -194,6 +195,7 @@ export function TradeComposer({
   }, [initial]);
 
   // Partner switch drops a half-built deal so chips don't point at the wrong roster.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: clearTwoTeam/clearThreeTeam are plain functions recreated every render (would fire every render if listed); theirRosterId is the deliberate trigger even though it's not read in the body
   useEffect(() => {
     if (initial) return;
     clearTwoTeam();
@@ -202,6 +204,7 @@ export function TradeComposer({
 
   // Entering / leaving / switching third: migrate selections and scrub stale dests.
   const prevThirdRef = useRef<number | null | undefined>(undefined);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: migrate on third join/leave/switch only — deliberately reads current send/get/faab state via the ref-tracked transition, not on their changes
   useEffect(() => {
     const prev = prevThirdRef.current;
     prevThirdRef.current = thirdRosterId;
@@ -304,7 +307,6 @@ export function TradeComposer({
       setThemFaab((f) => (f && f.to === prev ? { ...f, to: myRosterId } : f));
       setRosterTab("third");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- migrate on third join/leave/switch only
   }, [thirdRosterId]);
 
   // --- Balance: always your roster only ---
@@ -1014,8 +1016,8 @@ export function TradeComposer({
                 </Chip>
               </li>
             ))}
-            {alsoFaab.map((f, i) => (
-              <li key={`also-faab-${i}`}>
+            {alsoFaab.map((f) => (
+              <li key={themFaab === f ? "also-faab-them" : "also-faab-third"}>
                 <Chip
                   onRemove={() => {
                     if (themFaab === f) {

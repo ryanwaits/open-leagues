@@ -404,7 +404,7 @@ export function ProfileSplits({ p }: { p: Profile }) {
   return (
     <Section title={`${p.season} splits`} meta="Season totals">
       {groups.map((rows, i) => (
-        <div key={i} className={i > 0 ? "mt-1 border-t border-line pt-1" : undefined}>
+        <div key={rows[0][0]} className={i > 0 ? "mt-1 border-t border-line pt-1" : undefined}>
           {rows.map(([key, label]) => (
             <Row key={key} k={label} v={fmt(p.splits[key]!)} />
           ))}
@@ -495,6 +495,7 @@ export function ProfileGameLog({
         <div className="mt-1 flex gap-[2px] border-t border-line pt-1">
           {weekly.map((_, i) => (
             <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length week-number ruler, position is the identity
               key={i}
               className="flex-1 text-center font-mono text-[8px] leading-none text-faint"
             >

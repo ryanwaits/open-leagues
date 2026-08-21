@@ -56,7 +56,7 @@ export type CurrentUserState = {
  */
 export function useCurrentUserState(): CurrentUserState {
   if (!authEnabled) return { user: DEV_USER, isPending: false };
-  // eslint-disable-next-line react-hooks/rules-of-hooks -- authEnabled is constant for the app's lifetime
+  // biome-ignore lint/correctness/useHookAtTopLevel: authEnabled is a module-level constant fixed at load, so this branch is the same on every render for the app's lifetime — hook order never actually changes. Calling useSession() unconditionally would fire a real /api/auth/get-session request even with auth disabled, which is a behavior change we don't want.
   const { data, isPending } = authClient.useSession();
   const user = data?.user;
   return {

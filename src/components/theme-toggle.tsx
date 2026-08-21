@@ -20,14 +20,12 @@ export function ThemeToggle({ className }: { className?: string }) {
     <div
       role="radiogroup"
       aria-label="Colour theme"
-      className={cn(
-        "flex shrink-0 items-center gap-0.5 rounded-pill bg-raised p-0.5",
-        className,
-      )}
+      className={cn("flex shrink-0 items-center gap-0.5 rounded-pill bg-raised p-0.5", className)}
     >
       {OPTIONS.map(({ value, label, Icon }) => {
         const on = mounted && pref === value;
         return (
+          // biome-ignore lint/a11y/useSemanticElements: a native <input type="radio"> can't render the icon child or carry this custom styling; button+role is the standard ARIA pattern for a styled segmented control
           <button
             key={value}
             type="button"

@@ -67,7 +67,9 @@ export async function refreshRotowireFeed(opts: { force?: boolean } = {}): Promi
 
 async function poll(): Promise<number> {
   await ensureSchema();
-  const res = await fetch(FEED, { headers: { accept: "application/rss+xml, application/xml, text/xml" } });
+  const res = await fetch(FEED, {
+    headers: { accept: "application/rss+xml, application/xml, text/xml" },
+  });
   if (!res.ok) throw new Error(`RotoWire feed ${res.status}`);
   const xml = await res.text();
   const items = parseFeed(xml);
@@ -127,7 +129,8 @@ export async function notesForPlayers(playerIds: string[]): Promise<Record<strin
     const out: Record<string, PlayerNote[]> = {};
     for (const r of rows) {
       if (!r.player_id) continue;
-      (out[r.player_id] ??= []).push({
+      out[r.player_id] ??= [];
+      out[r.player_id].push({
         id: r.id,
         headline: r.headline,
         text: r.body,

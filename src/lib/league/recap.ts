@@ -1,5 +1,5 @@
 import { parseRebuildPaste, type RebuildTeamIn } from "./rebuild";
-import { wifflTeams, WIFFL_2026 } from "./recaps/wiffl-2026";
+import { WIFFL_2026, wifflTeams } from "./recaps/wiffl-2026";
 
 export type RecapFormat = "espn-recap" | "rebuild" | "csv" | "known" | "edited";
 
@@ -21,10 +21,43 @@ export type ImportSource = {
 };
 
 const NFL = new Set([
-  "ARI", "ATL", "BAL", "BUF", "CAR", "CHI", "CIN", "CLE", "DAL", "DEN", "DET",
-  "GB", "HOU", "IND", "JAC", "JAX", "KC", "LA", "LAC", "LAR", "LV", "LVR",
-  "MIA", "MIN", "NE", "NO", "NYG", "NYJ", "PHI", "PIT", "SEA", "SF", "TB",
-  "TEN", "WAS", "WSH", "FA",
+  "ARI",
+  "ATL",
+  "BAL",
+  "BUF",
+  "CAR",
+  "CHI",
+  "CIN",
+  "CLE",
+  "DAL",
+  "DEN",
+  "DET",
+  "GB",
+  "HOU",
+  "IND",
+  "JAC",
+  "JAX",
+  "KC",
+  "LA",
+  "LAC",
+  "LAR",
+  "LV",
+  "LVR",
+  "MIA",
+  "MIN",
+  "NE",
+  "NO",
+  "NYG",
+  "NYJ",
+  "PHI",
+  "PIT",
+  "SEA",
+  "SF",
+  "TB",
+  "TEN",
+  "WAS",
+  "WSH",
+  "FA",
 ]);
 
 const POS = new Set(["QB", "RB", "WR", "TE", "K", "PK", "DEF", "DST", "D/ST", "DL", "LB", "DB"]);
@@ -57,7 +90,10 @@ function keyOf(name: string): string {
 }
 
 export function canonTeamName(raw: string): string {
-  const trimmed = raw.replace(/\s+/g, " ").replace(/\s*-\s*/g, "-").trim();
+  const trimmed = raw
+    .replace(/\s+/g, " ")
+    .replace(/\s*-\s*/g, "-")
+    .trim();
   if (!trimmed) return trimmed;
   return TEAM_ALIASES[keyOf(trimmed)] ?? trimmed.slice(0, 40);
 }
@@ -81,8 +117,8 @@ export function extractPdfHints(bytes: Uint8Array): string {
   const raw = Buffer.from(bytes).toString("latin1");
   const chunks: string[] = [];
   const lit = /\((?:\\.|[^\\)]){3,160}\)/g;
-  let m: RegExpExecArray | null;
-  while ((m = lit.exec(raw))) {
+  let m = lit.exec(raw);
+  while (m) {
     const s = m[0]
       .slice(1, -1)
       .replace(/\\n/g, "\n")
@@ -91,6 +127,7 @@ export function extractPdfHints(bytes: Uint8Array): string {
       .replace(/\\\)/g, ")")
       .replace(/\\\\/g, "\\");
     if (/[A-Za-z]{3}/.test(s)) chunks.push(s);
+    m = lit.exec(raw);
   }
   const urls = raw.match(/https?:\/\/[^\s)>\]]+/g) ?? [];
   chunks.push(...urls);
@@ -104,8 +141,7 @@ function decodePdfBase64(b64: string): Uint8Array {
 
 type RawPick = { round: number; slot: number; player: string; team: string | null };
 
-const PICK_RE =
-  /^(?:(\d{1,2})\s+)?(.+?)\s+([A-Z]{2,3})\s*,\s*([A-Z]{1,3}(?:\/ST)?)\s+(.+)$/;
+const PICK_RE = /^(?:(\d{1,2})\s+)?(.+?)\s+([A-Z]{2,3})\s*,\s*([A-Z]{1,3}(?:\/ST)?)\s+(.+)$/;
 
 function isPos(raw: string): boolean {
   return POS.has(raw.toUpperCase());
@@ -241,7 +277,11 @@ function emptyTeam(teamName: string): RebuildTeamIn {
 }
 
 function parseCsvTeams(raw: string): RebuildTeamIn[] {
-  const lines = raw.replace(/\r/g, "").split("\n").map((l) => l.trim()).filter(Boolean);
+  const lines = raw
+    .replace(/\r/g, "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
   if (lines.length < 3) return [];
   const commaish = lines.filter((l) => l.includes(",")).length;
   if (commaish < lines.length * 0.6) return [];

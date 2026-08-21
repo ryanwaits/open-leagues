@@ -50,6 +50,7 @@ export function PlayerStatRow({
   const showSpark = !dense;
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: role/tabIndex/onKeyDown are added whenever onClick is (see `interactive` above); can't be a real <button> because it can nest its own "Peek" button (avatarPeek) as a descendant
     <div
       role={interactive ? "button" : undefined}
       tabIndex={interactive ? 0 : undefined}
@@ -138,6 +139,7 @@ function Sparkline({ weekly }: { weekly: (number | null)[] }) {
     <span className="inline-flex h-[18px] w-11 shrink-0 items-end gap-px" aria-hidden>
       {window.map((v, i) => (
         <span
+          // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length sparkline bars, no identity beyond position
           key={i}
           className={cn(
             "min-w-[3px] flex-1 rounded-xs",

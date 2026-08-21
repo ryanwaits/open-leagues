@@ -308,8 +308,10 @@ function AssetColumn({
         {assets.length === 0 ? (
           <li className="px-2 py-1.5 text-xs text-faint">{empty}</li>
         ) : (
-          assets.map((a, i) => (
-            <li key={`${a.kind}-${a.playerId ?? a.pickNo ?? a.amount}-${i}`}>
+          assets.map((a) => (
+            <li
+              key={`${a.kind}-${a.fromRoster}-${a.toRoster}-${a.playerId ?? a.pickNo ?? a.amount}`}
+            >
               <AssetRow asset={a} projections={projections} playerById={playerById} />
             </li>
           ))

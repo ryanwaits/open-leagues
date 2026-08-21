@@ -104,6 +104,7 @@ export function ScheduleDesk({ leagueId, canEdit }: { leagueId: string; canEdit:
       </p>
       <ul className="mt-3 divide-y divide-line rounded-xl bg-surface ring-card">
         {pairs.map((p, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: fixed matchup slots edited by position (setHome/setAway key off the same index), never reordered
           <li key={i} className="grid items-center gap-2 px-3 py-2.5 sm:grid-cols-[1fr_auto_1fr]">
             <TeamPick
               value={p.home}
