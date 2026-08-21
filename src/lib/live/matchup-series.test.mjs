@@ -68,6 +68,25 @@ test("sampleMatchup: null with no away side", () => {
   assert.equal(sampleMatchup(solo, {}, 1), null);
 });
 
+test("sampleMatchup: null with an empty outlook map (outlooks not loaded yet)", () => {
+  const p = pair();
+  assert.equal(sampleMatchup(p, {}, 1, 1000), null);
+});
+
+test("sampleMatchup: null when the map is missing even one starter's outlook", () => {
+  const p = pair();
+  const map = outlookMap(["p1", "p2", "p3"]); // p4 missing
+  assert.equal(sampleMatchup(p, map, 1, 1000), null);
+});
+
+test("sampleMatchup: a full map produces a real sample", () => {
+  const p = pair();
+  const map = outlookMap(["p1", "p2", "p3", "p4"]);
+  const sample = sampleMatchup(p, map, 1, 1000);
+  assert.ok(sample);
+  assert.ok(sample.youProj + sample.themProj > 0);
+});
+
 test("samplesFromTicks: signs correctly when mine is the away roster", () => {
   const p = pair(1, 2);
   const rows = [{ at: 1000, homePts: 40, awayPts: 30, homeProj: 100, awayProj: 90, homePct: 65 }];

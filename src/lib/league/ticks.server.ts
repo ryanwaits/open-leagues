@@ -102,6 +102,9 @@ export async function recordTicks(
       // Home-signed regardless of who reads it back.
       const sample = sampleMatchup(pair, outlooks, pair.home.rosterId);
       if (!sample) continue;
+      // Belt and suspenders alongside sampleMatchup's own null-return:
+      // never let a 0-0 (outlooks not loaded) row reach storage.
+      if (sample.youProj === 0 && sample.themProj === 0) continue;
       const spread = spreadFrom(sample.youProj, sample.themProj);
       await sql`
         insert into ff_ticks

@@ -45,10 +45,24 @@ export function outlookSide(side: MatchupSide, map: OutlookMap): PlayerOutlook[]
   });
 }
 
+/** True once every starter with a `playerId`, on both sides, has an outlook entry. */
+function outlooksReady(you: MatchupSide, them: MatchupSide, map: OutlookMap): boolean {
+  for (const side of [you, them]) {
+    for (const line of side.starters) {
+      if (line.playerId && !map[line.playerId]) return false;
+    }
+  }
+  return true;
+}
+
 /**
  * One sample from the current pair, signed from `mine`'s side. Falls back
  * to `home` as "you" when `mine` is null or matches neither side (the
- * spectator case). `null` when there is no away side to compare against.
+ * spectator case). `null` when there is no away side to compare against,
+ * when the outlook map is still missing an entry for any starter (every
+ * mean/sd would read 0 and the sample would be a fake 0-0 tick that jerks
+ * the chart when the real numbers land a poll later), or when both
+ * projected finals come out to exactly 0 regardless.
  */
 export function sampleMatchup(
   pair: MatchupPair,
@@ -63,19 +77,25 @@ export function sampleMatchup(
   const you = flip ? away : pair.home;
   const them = flip ? pair.home : away;
 
+  if (!outlooksReady(you, them, map)) return null;
+
   const wp = winProbability({
     scores: [you.points, them.points],
     starters: [outlookSide(you, map), outlookSide(them, map)],
   });
 
+  const youProj = wp.projected[0];
+  const themProj = wp.projected[1];
+  if (youProj === 0 && themProj === 0) return null;
+
   return {
     at: at ?? Date.now() / 1000,
-    youProj: wp.projected[0],
-    themProj: wp.projected[1],
+    youProj,
+    themProj,
     youPts: you.points,
     themPts: them.points,
     youPct: wp.probability * 100,
-    margin: wp.projected[0] - wp.projected[1],
+    margin: youProj - themProj,
     live: wp.live,
   };
 }

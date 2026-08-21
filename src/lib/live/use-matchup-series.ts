@@ -24,17 +24,19 @@ import { bufferKey, type LinePoint, type Swing, swing } from "./series";
 
 const sessionBuffers = new Map<string, MatchupSample[]>();
 
+/** The three numbers the chart actually draws — `youPts`/`themPts` moving without these doesn't move a line. */
 function sameSample(a: MatchupSample, b: MatchupSample): boolean {
-  return (
-    a.youProj === b.youProj &&
-    a.themProj === b.themProj &&
-    a.youPts === b.youPts &&
-    a.themPts === b.themPts &&
-    a.youPct === b.youPct
-  );
+  return a.youProj === b.youProj && a.themProj === b.themProj && a.youPct === b.youPct;
 }
 
-/** Appends `sample`, de-bouncing an identical consecutive sample within 1s. Returns whether it actually pushed. */
+/** A flat pre-kick line polls every few seconds but should read as one dot extending, not a pile of points. */
+const SESSION_DEBOUNCE_SECS = 60;
+
+/**
+ * Appends `sample` unless it's an identical repeat of the last buffered one
+ * within `SESSION_DEBOUNCE_SECS` — a real change always gets through
+ * immediately, regardless of timing. Returns whether it actually pushed.
+ */
 function pushSession(key: string, sample: MatchupSample, cap: number): boolean {
   let arr = sessionBuffers.get(key);
   if (!arr) {
@@ -42,7 +44,7 @@ function pushSession(key: string, sample: MatchupSample, cap: number): boolean {
     sessionBuffers.set(key, arr);
   }
   const prev = arr[arr.length - 1];
-  if (prev && sample.at - prev.at < 1 && sameSample(prev, sample)) return false;
+  if (prev && sameSample(prev, sample) && sample.at - prev.at < SESSION_DEBOUNCE_SECS) return false;
   arr.push(sample);
   if (arr.length > cap) arr.splice(0, arr.length - cap);
   return true;
