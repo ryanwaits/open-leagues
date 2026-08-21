@@ -5,12 +5,24 @@ import { ScoreStrip } from "@/components/scoreboard";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { calendarOf } from "@/lib/data/calendar";
 import { getLiveWire, getPulse, getScores } from "@/lib/data/fns";
+import {
+  asScoreboardKind,
+  resolveScoreboard,
+  scoreboardIsNow,
+  seasonTypeNum,
+} from "@/lib/data/scoreboard-week";
 import { warmQuery } from "@/lib/query-client";
 import { cn, formatPts } from "@/lib/utils";
 
 type Search = { week?: number; season?: number; kind?: "pre" | "regular" | "post" };
+
+function pollScores(games: { state: string }[] | undefined) {
+  const list = games ?? [];
+  if (list.some((g) => g.state === "in")) return 12_000;
+  if (list.some((g) => g.state === "pre")) return 30_000;
+  return false;
+}
 
 export const Route = createFileRoute("/scores")({
   validateSearch: (s: Record<string, unknown>): Search => ({
@@ -21,69 +33,86 @@ export const Route = createFileRoute("/scores")({
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) => {
     const { week, season, kind } = deps;
-    const seasonType = kind === "pre" ? 1 : kind === "post" ? 3 : 2;
     return Promise.all([
       warmQuery(context.queryClient, {
         queryKey: ["pulse"],
         queryFn: () => getPulse(),
       }),
       warmQuery(context.queryClient, {
-        queryKey: ["scores", season, week, seasonType],
-        queryFn: () => getScores({ data: { week, season, seasonType } }),
+        queryKey: ["scores", "now"],
+        queryFn: () => getScores({ data: {} }),
       }),
+      week != null && kind
+        ? warmQuery(context.queryClient, {
+            queryKey: ["scores", season, week, kind],
+            queryFn: () =>
+              getScores({
+                data: { week, season, seasonType: seasonTypeNum(kind) },
+              }),
+          })
+        : Promise.resolve(null),
     ]);
   },
   component: ScoresPage,
 });
 
 const KINDS = [
-  { id: "pre" as const, label: "Pre", type: 1 },
-  { id: "regular" as const, label: "Regular", type: 2 },
-  { id: "post" as const, label: "Post", type: 3 },
+  { id: "pre" as const, label: "Pre" },
+  { id: "regular" as const, label: "Regular" },
+  { id: "post" as const, label: "Post" },
 ];
 
 function ScoresPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const pulse = useQuery({
-    queryKey: ["pulse"],
-    queryFn: () => getPulse(),
+
+  const now = useQuery({
+    queryKey: ["scores", "now"],
+    queryFn: () => getScores({ data: {} }),
+    refetchInterval: (query) => pollScores(query.state.data?.games),
   });
-  const cal = pulse.data ? calendarOf(pulse.data.state) : null;
-  const kind = search.kind ?? cal?.kind ?? "regular";
-  const seasonType = KINDS.find((k) => k.id === kind)?.type ?? 2;
-  const week = search.week ?? cal?.week;
-  const season = search.season ?? cal?.seasonNum;
+  const nowCursor = now.data
+    ? {
+        week: now.data.week,
+        season: now.data.season,
+        seasonType: asScoreboardKind(now.data.seasonType) ?? "regular",
+      }
+    : null;
+  const cursor = resolveScoreboard(search, nowCursor);
+  const onNow = scoreboardIsNow(cursor, nowCursor);
 
   const q = useQuery({
-    queryKey: ["scores", season, week, seasonType],
-    queryFn: () =>
-      getScores({
+    queryKey: ["scores", cursor?.season, cursor?.week, cursor?.seasonType],
+    queryFn: () => {
+      if (!cursor) throw new Error("scoreboard cursor missing");
+      return getScores({
         data: {
-          week,
-          season,
-          seasonType,
+          week: cursor.week,
+          season: cursor.season,
+          seasonType: seasonTypeNum(cursor.seasonType),
         },
-      }),
-    refetchInterval: (query) => {
-      const games = query.state.data?.games ?? [];
-      if (games.some((g) => g.state === "in")) return 12_000;
-      if (games.some((g) => g.state === "pre")) return 30_000;
-      return false;
+      });
     },
+    enabled: Boolean(cursor) && !onNow,
+    refetchInterval: (query) => pollScores(query.state.data?.games),
   });
 
+  const board = onNow ? now.data : q.data;
+  const kind = cursor?.seasonType ?? nowCursor?.seasonType ?? "regular";
+  const season = cursor?.season ?? now.data?.season;
+  const resolvedWeek = cursor?.week ?? board?.week ?? 1;
+
   const wire = useQuery({
-    queryKey: ["live-wire", season, week, kind],
+    queryKey: ["live-wire", season, resolvedWeek, kind],
     queryFn: () =>
       getLiveWire({
-        data: { season, week, kind },
+        data: { season, week: resolvedWeek, kind },
       }),
+    enabled: Boolean(season) && Boolean(resolvedWeek),
     refetchInterval: (query) => (query.state.data?.live ? 12_000 : 30_000),
   });
 
-  const resolvedWeek = week ?? wire.data?.week ?? q.data?.week ?? 1;
-  const liveGames = q.data?.games.filter((g) => g.state === "in").length ?? 0;
+  const liveGames = board?.games.filter((g) => g.state === "in").length ?? 0;
 
   return (
     <Shell>
@@ -101,7 +130,14 @@ function ScoresPage() {
               type="button"
               size="sm"
               variant={kind === k.id ? "primary" : "outline"}
-              onClick={() => navigate({ search: { ...search, kind: k.id } })}
+              onClick={() =>
+                navigate({
+                  search: {
+                    kind: k.id,
+                    season,
+                  },
+                })
+              }
             >
               {k.label}
             </Button>
@@ -134,7 +170,7 @@ function ScoresPage() {
           <button
             key={w}
             type="button"
-            onClick={() => navigate({ search: { ...search, week: w, season } })}
+            onClick={() => navigate({ search: { kind, week: w, season } })}
             className={cn(
               "flex size-10 shrink-0 items-center justify-center rounded-sm font-mono text-sm",
               w === resolvedWeek ? "bg-accent text-accent-fg" : "bg-raised text-muted",
@@ -147,26 +183,26 @@ function ScoresPage() {
 
       <div className="mt-6">
         {(() => {
-          const scoresReady = q.isFetched && week != null && season != null;
-          if (!scoresReady && !q.data) {
+          const scoresReady = Boolean(board) && cursor != null;
+          if (!scoresReady && !board) {
             return (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <Skeleton key={i} className="h-28" />
+                {["a", "b", "c", "d", "e", "f", "g", "h"].map((k) => (
+                  <Skeleton key={k} className="h-28" />
                 ))}
               </div>
             );
           }
-          if (q.data?.games.length) {
-            return <ScoreStrip games={q.data.games} />;
+          if (board?.games.length) {
+            return <ScoreStrip games={board.games} />;
           }
           if (scoresReady) {
             return <p className="text-sm text-muted">No games for that week.</p>;
           }
           return (
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-28" />
+              {["a", "b", "c", "d", "e", "f", "g", "h"].map((k) => (
+                <Skeleton key={k} className="h-28" />
               ))}
             </div>
           );
