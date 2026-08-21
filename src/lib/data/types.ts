@@ -113,6 +113,8 @@ export type GameChip = {
   /** Down/distance, e.g. "2nd & 7". Live games only. */
   situation?: string | null;
   redZone?: boolean;
+  /** This team's score minus the opponent's. Live/post when known. */
+  margin?: number | null;
 };
 
 export type LeagueBundle = {
@@ -159,6 +161,8 @@ export type StarterLine = {
   stats?: Record<string, number> | null;
   /** Set when `points` is a forecast rather than unofficial/live. */
   forecast?: "proj" | "bye" | "out";
+  /** Expected final, live-adjusted. Unstarted = weekly proj. */
+  expected?: number | null;
 };
 
 export type MatchupSide = {
@@ -339,6 +343,8 @@ export type GameSummary = {
   home: ScoreTeam;
   away: ScoreTeam;
   situation: string | null;
+  /** Abbreviation of the team with the ball. Live games only. */
+  possession: string | null;
   lastPlay: string | null;
   scoring: ScoringPlay[];
   drives: GameDrive[];

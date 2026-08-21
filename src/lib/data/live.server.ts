@@ -1,52 +1,11 @@
-import { canonTeam, teamKeys } from "./teams";
-import type { GameChip, ScoreGame } from "./types";
+import { gameForTeam, indexGames } from "./game-index";
+
+export { gameForTeam, indexGames };
 
 export function seasonTypeNum(seasonType?: string | null): number {
   if (seasonType === "pre") return 1;
   if (seasonType === "post") return 3;
   return 2;
-}
-
-export function indexGames(games: ScoreGame[]): Map<string, GameChip> {
-  const out = new Map<string, GameChip>();
-  for (const g of games) {
-    const homeAbbr = canonTeam(g.home.abbr) ?? g.home.abbr.toUpperCase();
-    const awayAbbr = canonTeam(g.away.abbr) ?? g.away.abbr.toUpperCase();
-    const live =
-      g.state === "in"
-        ? {
-            possession: g.possession ?? null,
-            situation: g.situation ?? null,
-            redZone: Boolean(g.redZone),
-          }
-        : { possession: null, situation: null, redZone: false };
-    const homeChip: GameChip = {
-      state: g.state,
-      detail: g.detail,
-      opp: `vs ${awayAbbr}`,
-      gameId: g.id,
-      ...live,
-    };
-    const awayChip: GameChip = {
-      state: g.state,
-      detail: g.detail,
-      opp: `@ ${homeAbbr}`,
-      gameId: g.id,
-      ...live,
-    };
-    for (const key of teamKeys(g.home.abbr)) out.set(key, homeChip);
-    for (const key of teamKeys(g.away.abbr)) out.set(key, awayChip);
-  }
-  return out;
-}
-
-export function gameForTeam(
-  index: Map<string, GameChip>,
-  team: string | null | undefined,
-): GameChip | null {
-  if (!team) return null;
-  const u = team.toUpperCase();
-  return index.get(u) ?? index.get(canonTeam(u) ?? u) ?? null;
 }
 
 const pointsCache = new Map<string, { at: number; data: Record<string, number> }>();
