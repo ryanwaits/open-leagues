@@ -328,6 +328,13 @@ export const AGENT_TOOLS: AgentTool[] = [
     "read",
   ),
   tool("getMatchups", "Get matchups", "Matchup cards for a week.", "spectator", "read"),
+  tool(
+    "getTicks",
+    "Get matchup ticks",
+    "Per-minute projected finals / win % / spread samples for one matchup on a game day.",
+    "spectator",
+    "read",
+  ),
   tool("getTeam", "Get team", "One roster's lineup and bench for a week.", "spectator", "read"),
   tool("getWire", "Get wire", "Free-agent and available player wire.", "spectator", "read"),
   tool("getActivity", "Get activity", "Transaction activity for a week.", "spectator", "read"),

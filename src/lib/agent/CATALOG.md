@@ -68,6 +68,7 @@ If it's not in this table, it is not a tool. Stop. Do not invent a table.
 | findSleeperUser | spectator | read | Lookup a Sleeper user by query. |
 | getLeagueBundle | spectator | read | League header, rosters, and users. |
 | getMatchups | spectator | read | Matchup cards for a week. |
+| getTicks | spectator | read | Per-minute projected finals / win % / spread samples for one matchup on a game day. |
 | getTeam | spectator | read | One roster's lineup and bench for a week. |
 | getWire | spectator | read | Free-agent and available player wire. |
 | getActivity | spectator | read | Transaction activity for a week. |

@@ -1274,6 +1274,16 @@ async function tickAllLeaguesBody(): Promise<TickAllResult> {
     /* a stale projection is better than a stopped clock */
   }
 
+  // The matchup finals chart's backstop, alongside the write-on-read in
+  // getMatchups — the hourly tick is the only sample a league gets if
+  // nobody has the page open. Never worth stopping the clock over.
+  try {
+    const t = await import("./ticks.server");
+    await t.recordTicksForAll();
+  } catch {
+    /* the line can miss a minute */
+  }
+
   let advanced = 0;
   let waivers = 0;
   for (const row of rows) {
@@ -1370,12 +1380,9 @@ const clockRef = globalThis as typeof globalThis & {
 export function startLeagueClock(): void {
   if (process.env.OPENFF_SELF_TICK !== "1") return;
   if (clockRef.__ledgerClock__) return;
-  clockRef.__ledgerClock__ = setInterval(
-    () => {
-      void tickAllLeagues().catch(() => undefined);
-    },
-    120_000,
-  );
+  clockRef.__ledgerClock__ = setInterval(() => {
+    void tickAllLeagues().catch(() => undefined);
+  }, 120_000);
   setTimeout(() => {
     void tickAllLeagues().catch(() => undefined);
   }, 20_000);

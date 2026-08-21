@@ -130,10 +130,29 @@ export const getMatchups = createServerFn({ method: "GET" })
     if (isHostedLeague(data.leagueId)) {
       const eng = await import("@/lib/league/engine.server");
       await eng.assertLeagueViewer(data.leagueId, context.userId);
-      return eng.loadMatchups(data.leagueId, data.week);
+      const pairs = await eng.loadMatchups(data.leagueId, data.week);
+      // Fire-and-forget, throttled inside: any client polling matchups
+      // while scoring is live keeps ff_ticks warm without this request
+      // waiting on the write.
+      void import("@/lib/league/ticks.server")
+        .then((t) => t.recordTicks(data.leagueId, data.week))
+        .catch(() => {});
+      return pairs;
     }
     const sleeper = await import("./sleeper.server");
     return sleeper.loadMatchups(data.leagueId, data.week);
+  });
+
+/** Read-only history for the matchup finals chart — the past `useMatchupSeries` needs on a reload. */
+export const getTicks = createServerFn({ method: "GET" })
+  .middleware([optionalAuthMiddleware])
+  .validator(z.object({ leagueId: z.string(), week: z.number(), matchupId: z.number() }))
+  .handler(async ({ data, context }) => {
+    if (!isHostedLeague(data.leagueId)) return [];
+    const eng = await import("@/lib/league/engine.server");
+    await eng.assertLeagueViewer(data.leagueId, context.userId);
+    const ticks = await import("@/lib/league/ticks.server");
+    return ticks.readTicks(data.leagueId, data.week, data.matchupId);
   });
 
 export const getTeam = createServerFn({ method: "GET" })
