@@ -1,3 +1,4 @@
+import { liveProjection } from "@/lib/league/live-proj";
 import { formatStatLine } from "./statline";
 import type { GameChip, MatchupPair, MatchupSide, Projection, StarterLine } from "./types";
 
@@ -47,16 +48,25 @@ function paintLine(
   const bag = started
     ? (line.stats ?? (line.playerId ? liveStats[line.playerId] : undefined))
     : undefined;
-  const disp = slotDisplay(
-    line.game,
-    line.points,
-    line.playerId ? projections[line.playerId] : undefined,
-  );
+  const proj = line.playerId ? projections[line.playerId] : undefined;
+  const disp = slotDisplay(line.game, line.points, proj);
+  const unofficial = started ? (disp.points ?? 0) : 0;
+  const baseline =
+    proj && proj.reason !== "bye" && proj.reason !== "out" && proj.reason !== "no-data"
+      ? proj.points
+      : 0;
+  const expected = liveProjection({
+    baseline,
+    current: unofficial,
+    game: line.game,
+    position: line.player?.position,
+  });
   return {
     ...line,
     points: disp.points,
     forecast: disp.forecast,
     stats: bag ?? null,
+    expected,
   };
 }
 
@@ -106,4 +116,53 @@ export function sideIsProjected(side: MatchupSide): boolean {
 export function pairIsProjected(pair: MatchupPair): boolean {
   if (!sideIsProjected(pair.home)) return false;
   return !pair.away || sideIsProjected(pair.away);
+}
+
+/** Unofficial scored so far — skips slots still on a weekly forecast. */
+export function sideUnofficial(side: MatchupSide): number {
+  return side.starters.reduce((sum, line) => sum + (line.forecast ? 0 : (line.points ?? 0)), 0);
+}
+
+/** Expected final: live-adjusted in-game, weekly proj until kickoff. */
+export function sideExpected(side: MatchupSide): number {
+  return side.starters.reduce((sum, line) => sum + (line.expected ?? line.points ?? 0), 0);
+}
+
+/** True while any starter still has football to play. */
+export function sideStillOpen(side: MatchupSide): boolean {
+  return side.starters.some((s) => {
+    if (!s.player) return false;
+    if (s.forecast === "bye" || s.forecast === "out") return false;
+    return s.game?.state !== "post";
+  });
+}
+
+export function sideHasStarted(side: MatchupSide): boolean {
+  return side.starters.some((s) => Boolean(s.player && gameHasStarted(s.game)));
+}
+
+/** Either roster has a starter whose NFL game has kicked off. */
+export function pairHasStarted(pair: MatchupPair): boolean {
+  return sideHasStarted(pair.home) || Boolean(pair.away && sideHasStarted(pair.away));
+}
+
+/** Strip / card totals: unofficial once anyone has started, else expected. */
+export function pairPreviewScores(pair: MatchupPair): {
+  home: number;
+  away: number;
+  live: boolean;
+} {
+  const live = pairHasStarted(pair);
+  if (live) {
+    return {
+      home: sideUnofficial(pair.home),
+      away: pair.away ? sideUnofficial(pair.away) : 0,
+      live: true,
+    };
+  }
+  return {
+    home: sideExpected(pair.home),
+    away: pair.away ? sideExpected(pair.away) : 0,
+    live: false,
+  };
 }

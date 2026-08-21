@@ -77,7 +77,15 @@ export function fractionRemaining(game: GameChip | null | undefined): number {
     const q = Number(d.match(/(\d)/)?.[1] ?? 0);
     return q > 0 ? Math.max(0, (4 - q) / 4) : 0.5;
   }
-  if (d.startsWith("ot") || d.includes("overtime")) return 0.08;
+  if (d.startsWith("ot") || d.includes("overtime") || d.includes(" - ot")) return 0.08;
+
+  const espn = d.match(/(\d+):(\d+)\s*[-–]\s*(\d+)(?:st|nd|rd|th)?/);
+  if (espn) {
+    const left = Number(espn[1]) + Number(espn[2]) / 60;
+    const quarter = Number(espn[3]);
+    const quartersAfter = Math.max(0, 4 - quarter);
+    return Math.min(1, Math.max(0, (left + quartersAfter * 15) / 60));
+  }
 
   const m = d.match(/q(\d)\s+(\d+):(\d+)/);
   if (m) {
