@@ -1737,6 +1737,30 @@ export async function autoFillDraft(userId: string, leagueId: string): Promise<v
 function invertSlot(label) {
   return invertSlotKey(label);
 }
+async function idsLockedIn(league, ids) {
+  const want = [...new Set(ids.filter(Boolean))];
+  if (!want.length) return new Set();
+  try {
+    const { weekBoard, gameForTeam } = await import("@/lib/data/live.server");
+    const board = await weekBoard(league.season, league.current_week, "regular");
+    const out = new Set();
+    for (const id of want) {
+      const chip = gameForTeam(board.index, playerTeam(getPlayer(id)));
+      if (chip && (chip.state === "in" || chip.state === "post")) out.add(id);
+    }
+    return out;
+  } catch {
+    return new Set();
+  }
+}
+
+async function assertLineupUnlocked(league, ids) {
+  const locked = await idsLockedIn(league, ids);
+  if (!locked.size) return;
+  const id = [...locked][0];
+  throw new Error(`${playerName(id)} is locked — that game has started.`);
+}
+
 export async function startPlayer(
   userId: string,
   leagueId: string,
@@ -1754,6 +1778,12 @@ export async function startPlayer(
   `;
   if (!spots.find((s) => s.player_id === playerId))
     throw new Error("Player is not on your roster.");
+  const occupant = replaceId
+    ? spots.find((s) => s.player_id === replaceId && s.slot === "starter")
+    : slot
+      ? spots.find((s) => s.slot === "starter" && s.starter_slot === slot)
+      : null;
+  await assertLineupUnlocked(league, [playerId, replaceId, occupant?.player_id]);
   const pos = getPlayer(playerId)?.position ?? null;
   if (replaceId) {
     const swap = spots.find((s) => s.player_id === replaceId && s.slot === "starter");
@@ -1832,6 +1862,7 @@ export async function sitPlayer(userId: string, leagueId: string, playerId: stri
   if (league.locked) throw new Error("This desk is locked.");
   const mine = (await getRosters(leagueId)).find((r) => r.owner_id === userId);
   if (!mine) throw new Error("You don't have a seat.");
+  await assertLineupUnlocked(league, [playerId]);
   const sql = await getSql();
   const before = (
     await sql<{ starter_slot: string | null }>`

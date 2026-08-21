@@ -1,8 +1,11 @@
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Lock } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { PlayerCell } from "@/components/player-cell";
+import { SlotPts } from "@/components/slot-pts";
 import { Badge } from "@/components/ui/badge";
+import { gameHasStarted, liveStatLine, slotDisplay } from "@/lib/data/matchup-view";
 import type { Projection, RosterPlayer, TeamBundle } from "@/lib/data/types";
+import { liveProjection } from "@/lib/league/live-proj";
 import { onBye } from "@/lib/league/phase";
 import { labeledStartSlots, slotAccepts } from "@/lib/league/roster";
 import { cn, formatPts } from "@/lib/utils";
@@ -25,6 +28,7 @@ export function LineupBoard({
   byes,
   week,
   projections,
+  stats,
   busy,
   onOpenPlayer,
   onIntentPlayer,
@@ -38,6 +42,7 @@ export function LineupBoard({
   byes?: Record<string, number>;
   week?: number;
   projections?: Record<string, Projection>;
+  stats?: Record<string, Record<string, number>>;
   busy: boolean;
   onOpenPlayer?: (p: RosterPlayer) => void;
   onIntentPlayer?: (p: RosterPlayer) => void;
@@ -63,6 +68,8 @@ export function LineupBoard({
   const starters = team.players.filter((p) => p.slot === "starter");
   const bench = team.players.filter((p) => p.slot === "bench");
   const bySlot = new Map(starters.map((p) => [p.starterSlot ?? "", p]));
+  const bags = stats ?? {};
+  const locked = (p: RosterPlayer | null | undefined) => Boolean(p && gameHasStarted(p.game));
 
   /**
    * The row whose move button was pressed. Stored as a reference, not a
@@ -74,7 +81,7 @@ export function LineupBoard({
     { kind: "slot"; label: string } | { kind: "bench"; playerId: string } | null
   >(null);
 
-  const src = !editable
+  const srcRaw = !editable
     ? null
     : picked?.kind === "bench"
       ? (() => {
@@ -84,6 +91,7 @@ export function LineupBoard({
       : picked?.kind === "slot" && slots.some((s) => s.label === picked.label)
         ? ({ kind: "slot", label: picked.label, player: bySlot.get(picked.label) ?? null } as const)
         : null;
+  const src = srcRaw && locked(srcRaw.player) ? null : srcRaw;
 
   const cancel = () => setPicked(null);
 
@@ -118,6 +126,8 @@ export function LineupBoard({
   /** Can the row at `label` trade with the armed source? */
   const slotEligible = (label: string, occupant: RosterPlayer | undefined): boolean => {
     if (!src) return false;
+    if (locked(src.player)) return false;
+    if (locked(occupant)) return false;
     if (src.kind === "bench") return slotAccepts(src.player.position, label);
     if (src.label === label) return false;
     if (src.player && occupant)
@@ -127,8 +137,10 @@ export function LineupBoard({
     return false;
   };
 
-  const benchEligible = (b: RosterPlayer): boolean =>
-    src?.kind === "slot" ? slotAccepts(b.position, src.label) : false;
+  const benchEligible = (b: RosterPlayer): boolean => {
+    if (locked(b)) return false;
+    return src?.kind === "slot" ? slotAccepts(b.position, src.label) : false;
+  };
 
   const chooseSlot = (label: string, occupant: RosterPlayer | undefined) => {
     if (!src) return;
@@ -205,24 +217,28 @@ export function LineupBoard({
             >
               <span className="w-9 shrink-0 microlabel-data slot-rail">{label}</span>
               {editable ? (
-                <MoveButton
-                  state={isSrc ? "source" : src ? (takes ? "target" : "off") : "idle"}
-                  busy={busy}
-                  label={
-                    isSrc
-                      ? "Cancel move"
-                      : src
-                        ? `Move here — ${p ? `swap with ${p.full_name}` : `fill ${label}`}`
-                        : `Move ${p ? p.full_name : `the empty ${label} slot`}`
-                  }
-                  onPress={() =>
-                    isSrc
-                      ? cancel()
-                      : src
-                        ? chooseSlot(label, p)
-                        : setPicked({ kind: "slot", label })
-                  }
-                />
+                p && locked(p) ? (
+                  <LockedMark name={p.full_name} />
+                ) : (
+                  <MoveButton
+                    state={isSrc ? "source" : src ? (takes ? "target" : "off") : "idle"}
+                    busy={busy}
+                    label={
+                      isSrc
+                        ? "Cancel move"
+                        : src
+                          ? `Move here — ${p ? `swap with ${p.full_name}` : `fill ${label}`}`
+                          : `Move ${p ? p.full_name : `the empty ${label} slot`}`
+                    }
+                    onPress={() =>
+                      isSrc
+                        ? cancel()
+                        : src
+                          ? chooseSlot(label, p)
+                          : setPicked({ kind: "slot", label })
+                    }
+                  />
+                )
               ) : null}
               {p ? (
                 <button
@@ -235,7 +251,12 @@ export function LineupBoard({
                   // else the press keeps meaning "look at this player".
                   onClick={() => (takes && !busy ? chooseSlot(label, p) : onOpenPlayer?.(p))}
                 >
-                  <PlayerCell player={p} compact game={p.game} />
+                  <PlayerCell
+                    player={p}
+                    compact
+                    game={p.game}
+                    line={liveStatLine(p.position, p.game, bags[p.player_id])}
+                  />
                 </button>
               ) : takes ? (
                 <button
@@ -279,7 +300,9 @@ export function LineupBoard({
             >
               <span className="w-9 shrink-0 microlabel-data">{p.position ?? ""}</span>
               {editable ? (
-                canStart || takes ? (
+                locked(p) ? (
+                  <LockedMark name={p.full_name} />
+                ) : canStart || takes ? (
                   <MoveButton
                     state={isSrc ? "source" : src ? (takes ? "target" : "off") : "idle"}
                     busy={busy}
@@ -306,7 +329,12 @@ export function LineupBoard({
                 onFocus={() => onIntentPlayer?.(p)}
                 onClick={() => (takes && !busy ? chooseBench(p) : onOpenPlayer?.(p))}
               >
-                <PlayerCell player={p} compact game={p.game} />
+                <PlayerCell
+                  player={p}
+                  compact
+                  game={p.game}
+                  line={liveStatLine(p.position, p.game, bags[p.player_id])}
+                />
               </button>
               {onBye(p, byes, week) ? <Badge tone="loss">Bye</Badge> : null}
               <Points player={p} projection={projections?.[p.player_id]} />
@@ -409,12 +437,28 @@ function Points({
   if (!player) {
     return <span className="w-14 shrink-0 text-right font-mono text-sm text-faint">—</span>;
   }
-  const started = player.game?.state === "in" || player.game?.state === "post";
-  if (started && player.weekPts != null) {
+  const disp = slotDisplay(player.game, player.weekPts, projection);
+  const live = gameHasStarted(player.game) && !disp.forecast;
+  if (live) {
+    const baseline =
+      projection &&
+      projection.reason !== "bye" &&
+      projection.reason !== "out" &&
+      projection.reason !== "no-data"
+        ? projection.points
+        : 0;
     return (
-      <span className="w-14 shrink-0 text-right font-mono text-sm font-semibold tabular-nums">
-        {formatPts(player.weekPts, 1)}
-      </span>
+      <SlotPts
+        points={disp.points}
+        live
+        expected={liveProjection({
+          baseline,
+          current: disp.points ?? 0,
+          game: player.game,
+          position: player.position,
+        })}
+        className="w-14 text-sm"
+      />
     );
   }
   if (!projection || projection.reason === "no-data") {
@@ -428,6 +472,18 @@ function Points({
       <span className="block microlabel-data">
         {projection.reason === "bye" ? "bye" : projection.reason === "out" ? "out" : "proj"}
       </span>
+    </span>
+  );
+}
+
+function LockedMark({ name }: { name: string }) {
+  return (
+    <span
+      className="grid size-8 shrink-0 place-items-center text-faint"
+      title={`${name} is locked — game started`}
+    >
+      <Lock className="size-3.5" strokeWidth={2.2} aria-hidden />
+      <span className="sr-only">{name} is locked — game started</span>
     </span>
   );
 }

@@ -1,3 +1,4 @@
+import { gameHasStarted } from "@/lib/data/matchup-view";
 import type { Projection, RosterPlayer } from "@/lib/data/types";
 import { onBye } from "./phase";
 import { labeledStartSlots, slotAccepts } from "./roster";
@@ -32,7 +33,9 @@ export function planAutoFill(input: {
   const bySlot = new Map(starters.map((p) => [p.starterSlot ?? "", p]));
 
   const proj = (p: RosterPlayer) => projections[p.player_id]?.points ?? 0;
+  const locked = (p: RosterPlayer) => gameHasStarted(p.game);
   const canPlay = (p: RosterPlayer) => {
+    if (locked(p)) return false;
     const r = projections[p.player_id]?.reason;
     if (r === "bye" || r === "out") return false;
     return !onBye(p, byes, week) && !isOut(p);
@@ -47,6 +50,8 @@ export function planAutoFill(input: {
 
   for (const { label } of slots) {
     const current = bySlot.get(label);
+    // A started game is locked in that slot, even if the player is now out.
+    if (current && locked(current)) continue;
     const broken = !current || !canPlay(current);
     if (!broken) continue;
 
