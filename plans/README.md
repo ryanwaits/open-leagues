@@ -33,6 +33,13 @@ Slices live here. Read the one you are executing from.
   2026-08-19, commit `dd9bc53`). Goal: one context dump, pull-ticket
   parity, and no minted FAAB on trade accept — so a loop over named
   verbs is honest. **038–040 + 031 + 033 are DONE.**
+- **053–056 — Liveline: the line on the desk** (improve skill, 2026-08-21,
+  commit `69cd95b`). Goal: real‑time line charts where a number has a past —
+  one `<LiveLine>` wrapper owning every liveline decision (053), the player
+  projection line in the watch drawer / sheet + lineup chips (054), the
+  multiseries matchup chart + home card meter with an `ff_ticks` writer (055),
+  the book's line‑movement strip with in‑play wagering scoped separately (056).
+  Design artifact: https://claude.ai/code/artifact/841ce7c9-05e1-4edd-a217-c48ffed610be
 - **041–044 — Headless engine: token, MCP, skills** (improve skill,
   2026-08-19, commit `735b0ba`). Goal: Codex / Claude / Grok can
   install open-ff as a tool server (stdio on the commish box, HTTP
@@ -330,6 +337,10 @@ reconcile). Source tree clean.
 | 049  | Voice codemod — semantic label/card classes per skin | P2 | M | 047 | DONE `cfbacc8`+`06091c8` (not pushed; reviewed/APPROVED 2026-08-20; 57 files, Ledger pixel-identical, Box Score voice live; one revision: state-driven `ring-card-lit` for the import dropzone) |
 | 050  | Box Score flourishes — ghost numerals, rails, stamp | P2 | M | 047, 049 | DONE `8e660ba` (not pushed; reviewed/APPROVED 2026-08-20; all CSS-gated, Ledger zero-change verified; **Box Score release complete: 047+049+050**) |
 | 052  | BYOK AI foundation + import analyst (AI SDK multi-provider) | P2 | L | — | DONE `38186f9` (not pushed→pushed; reviewed/APPROVED 2026-08-20; one mid-flight STOP correctly raised: agent-catalog parity — resolved by registering the 5 fns; follow-up: scoring-record extraction thinner than slots in live smoke test — prompt/schema tuning candidate 053) |
+| 053  | Liveline foundation — `<LiveLine>` wrapper, series utils, dev gallery | P1 | M | — | DONE `89ced48` (not pushed; reviewed/APPROVED 2026-08-21; 17+3 tests; `/dev/liveline` gallery; executor fixed fractional-seconds label bug + import-rule test self-match) |
+| 054  | Player projection line — drawer, sheet, player page, lineup pace toggle | P1 | L | 053 | TODO |
+| 055  | Matchup finals chart + home win-prob meter + `ff_ticks` writer (on read + tick) | P1 | L | 053, 054 | TODO |
+| 056  | The book's line-movement strip (LinePanel + ticket) + in-play wagering spec | P2 | M | 055 | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
