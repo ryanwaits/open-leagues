@@ -26,6 +26,9 @@
  *   the final number in a caption.
  * - SSR: the app renders on the server, and liveline needs canvas +
  *   ResizeObserver, so this renders an empty box until mounted.
+ * - Mounts the canvas only once there is a point to draw — liveline seeds
+ *   its live value from the first `value` it sees, so an empty-then-filled
+ *   series would sweep up from 0.
  */
 import {
   Liveline,
@@ -175,6 +178,12 @@ export function LiveLine({
     data = shiftAndDraw(series);
     color = toneColor[tone];
     resolvedValue = value ?? data[data.length - 1]?.value ?? 0;
+  }
+
+  const empty = seriesProp ? seriesProp.every((s) => s.data.length === 0) : data.length === 0;
+
+  if (empty) {
+    return <div className={cn("w-full", className)} style={{ height }} aria-hidden />;
   }
 
   return (

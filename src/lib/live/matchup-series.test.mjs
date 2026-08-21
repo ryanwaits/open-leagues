@@ -1,6 +1,12 @@
 import { test } from "bun:test";
 import assert from "node:assert/strict";
-import { mergeSamples, pairIsFinal, sampleMatchup, samplesFromTicks } from "./matchup-series.ts";
+import {
+  lastPointOnly,
+  mergeSamples,
+  pairIsFinal,
+  sampleMatchup,
+  samplesFromTicks,
+} from "./matchup-series.ts";
 
 function starter(playerId, state = "in", detail = "9:41 - 3rd", points = 10) {
   return {
@@ -143,6 +149,22 @@ test("mergeSamples: caps to the most-recent `cap` entries", () => {
     merged.map((s) => s.at),
     [7, 8, 9],
   );
+});
+
+test("lastPointOnly: empty in, empty out", () => {
+  assert.deepEqual(lastPointOnly([]), []);
+});
+
+test("lastPointOnly: duplicates the final point a moment earlier (liveline needs >= 2 points)", () => {
+  const points = [
+    { time: 1, value: 10 },
+    { time: 2, value: 20 },
+    { time: 3, value: 30 },
+  ];
+  assert.deepEqual(lastPointOnly(points), [
+    { time: 2, value: 30 },
+    { time: 3, value: 30 },
+  ]);
 });
 
 test("pairIsFinal: true only when all starters are post", () => {

@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { pairHasStarted } from "@/lib/data/matchup-view";
 import type { MatchupPair } from "@/lib/data/types";
 import {
+  lastPointOnly,
   type MatchupSample,
   mergeSamples,
   type OutlookMap,
@@ -61,7 +62,12 @@ export type MatchupSeries = {
   swingThem: Swing;
   /** Every starter on both sides is post (or has no game). */
   final: boolean;
-  /** Enough to draw a line: the pair has started, or the session already has ≥2 points. */
+  /**
+   * Enough to draw the liveline: the pair has started, or there's at least
+   * one sample (pre-kick this draws as a single pulsing dot per series at
+   * the projection). False only when there's no sample at all yet
+   * (outlooks not loaded) — the panel falls back to the plain meter then.
+   */
   started: boolean;
   /** No server ticks came back — this line only knows what happened since the page opened. */
   sinceOpened: boolean;
@@ -94,10 +100,20 @@ export function useMatchupSeries(args: {
   const stored = samplesFromTicks(ticks ?? [], pair, mine);
   const samples = mergeSamples(stored, session);
 
-  const you = toPoints(samples, pick.you);
-  const them = toPoints(samples, pick.them);
-  const pct = toPoints(samples, pick.pct);
-  const margin = toPoints(samples, pick.margin);
+  const youFull = toPoints(samples, pick.you);
+  const themFull = toPoints(samples, pick.them);
+  const pctFull = toPoints(samples, pick.pct);
+  const marginFull = toPoints(samples, pick.margin);
+
+  // Pre-kick (and no stored ticks yet), draw only the latest point per
+  // series — a single pulsing dot at the projection — instead of a flat
+  // line. Once the pair has started, or there's stored history, draw the
+  // full series as usual.
+  const preKickoff = !pairHasStarted(pair) && stored.length === 0;
+  const you = preKickoff ? lastPointOnly(youFull) : youFull;
+  const them = preKickoff ? lastPointOnly(themFull) : themFull;
+  const pct = preKickoff ? lastPointOnly(pctFull) : pctFull;
+  const margin = preKickoff ? lastPointOnly(marginFull) : marginFull;
 
   return {
     samples,
@@ -106,10 +122,10 @@ export function useMatchupSeries(args: {
     them,
     pct,
     margin,
-    swingYou: swing(you, 300, 1.2),
-    swingThem: swing(them, 300, 1.2),
+    swingYou: swing(youFull, 300, 1.2),
+    swingThem: swing(themFull, 300, 1.2),
     final: pairIsFinal(pair),
-    started: pairHasStarted(pair) || samples.length >= 2,
+    started: pairHasStarted(pair) || samples.length >= 1,
     sinceOpened: stored.length === 0,
   };
 }

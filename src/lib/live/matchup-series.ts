@@ -175,6 +175,19 @@ export function toPoints(
   return samples.map(f);
 }
 
+/**
+ * Pre-kick, the chart should draw a single pulsing dot at the latest point,
+ * not a flat line. liveline treats anything under two points as "no data"
+ * (`points.length >= 2` gates its own empty state), so a true one-point
+ * array renders nothing — this duplicates the last point a moment earlier
+ * instead. Same value both ends means no sweep, just a dot at the head.
+ */
+export function lastPointOnly(points: LinePoint[]): LinePoint[] {
+  if (points.length === 0) return [];
+  const last = points[points.length - 1]!;
+  return [{ time: last.time - 1, value: last.value }, last];
+}
+
 /** Everybody on both sides is `post` (or has no game at all). */
 export function pairIsFinal(pair: MatchupPair): boolean {
   const sides = [pair.home, pair.away].filter((s): s is MatchupSide => Boolean(s));
