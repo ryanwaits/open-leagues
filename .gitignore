@@ -18,6 +18,9 @@ data/pglite/
 # environment setup — useful locally, not part of the app.
 .notes/
 
+# Local research dumps. Not part of the app.
+research/
+
 # Agent QA screenshots. Not part of the app. A copy of the last dump
 # lives in /tmp/open-ff-screenshots if you need them.
 screenshots/
