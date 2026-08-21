@@ -87,6 +87,7 @@ function RootDocument() {
         <HeadContent />
         {/* Stamps data-theme before first paint. Must stay inline and before
             the body, or the page flashes light on a dark device. */}
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: pre-paint theme/skin stamp, literal string from src/lib/theme.ts, no user input */}
         <script dangerouslySetInnerHTML={{ __html: NO_FLASH_SCRIPT }} />
       </head>
       <body>

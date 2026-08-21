@@ -46,7 +46,8 @@ function DataPage() {
 
       <div className="mt-10 grid gap-4 md:grid-cols-3">
         {sources.data == null && sources.isPending
-          ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48" />)
+          ? // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list, no identity
+            Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-48" />)
           : sources.data?.map((s) => <SourceCard key={s.id} source={s} />)}
       </div>
 

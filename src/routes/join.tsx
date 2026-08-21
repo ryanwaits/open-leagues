@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ export const Route = createFileRoute("/join")({
 });
 
 function JoinLeague() {
+  const codeId = useId();
   const search = Route.useSearch();
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
@@ -93,9 +94,10 @@ function JoinLeague() {
           join.mutate();
         }}
       >
-        <label className="block">
+        <label htmlFor={codeId} className="block">
           <span className="microlabel">Invite code</span>
           <Input
+            id={codeId}
             className="mt-1.5 uppercase tracking-[0.2em]"
             value={code}
             onChange={(e) => {

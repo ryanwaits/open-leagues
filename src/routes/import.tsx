@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, Check, ChevronDown, FileUp, Plus, Trash2 } from "lucide-react";
-import { type DragEvent, useMemo, useRef, useState } from "react";
+import { type DragEvent, useId, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
@@ -106,10 +106,11 @@ async function readDroppedFile(
     // AI analyst gets a shot at real text even when parsing takes the fast path.
     const strings: string[] = [];
     const re = /\((?:\\.|[^\\)]){3,140}\)/g;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(latin1))) {
+    let m: RegExpExecArray | null = re.exec(latin1);
+    while (m) {
       const s = m[0].slice(1, -1).replace(/\\n/g, "\n").replace(/\\\(/g, "(").replace(/\\\)/g, ")");
       if (/[A-Za-z]{3}/.test(s)) strings.push(s);
+      m = re.exec(latin1);
     }
     const raw = strings.join("\n");
     if (
@@ -179,6 +180,7 @@ function AiDetectedLine({
 }
 
 function ImportPage() {
+  const fieldId = useId();
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
   const remember = useLeagueStore((s) => s.remember);
@@ -466,9 +468,14 @@ function ImportPage() {
           />
 
           <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
-            <label className="block">
+            <label htmlFor={`${fieldId}-review-name`} className="block">
               <span className="microlabel">League name</span>
-              <Input className="mt-1.5" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input
+                id={`${fieldId}-review-name`}
+                className="mt-1.5"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
             </label>
             <div>
               <p className="microlabel">Season</p>
@@ -582,9 +589,10 @@ function ImportPage() {
                   </div>
                   {open ? (
                     <div className="space-y-3 border-t border-line px-4 py-3">
-                      <label className="block">
+                      <label htmlFor={`${fieldId}-team-${t.rosterId}`} className="block">
                         <span className="microlabel">Team</span>
                         <Input
+                          id={`${fieldId}-team-${t.rosterId}`}
                           className="mt-1.5"
                           value={t.teamName}
                           onChange={(e) => updateTeam(t.rosterId, { teamName: e.target.value })}
@@ -669,9 +677,10 @@ function ImportPage() {
           {source === "rebuild" ? (
             <>
               <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-                <label className="block">
+                <label htmlFor={`${fieldId}-source-name`} className="block">
                   <span className="microlabel">League name</span>
                   <Input
+                    id={`${fieldId}-source-name`}
                     className="mt-1.5"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -722,6 +731,8 @@ function ImportPage() {
                 </div>
               </div>
 
+              {/* biome-ignore lint/a11y/noStaticElementInteractions: drag/drop file zone, not a click/key
+                  target — the actual file trigger is the "Browse" button rendered inside it */}
               <div
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -819,9 +830,10 @@ function ImportPage() {
           ) : null}
 
           {source === "sleeper" ? (
-            <label className="block max-w-lg">
+            <label htmlFor={`${fieldId}-sleeper-id`} className="block max-w-lg">
               <span className="microlabel">Sleeper league ID</span>
               <Input
+                id={`${fieldId}-sleeper-id`}
                 className="mt-1.5"
                 value={leagueId}
                 onChange={(e) => setLeagueId(e.target.value)}
@@ -833,9 +845,10 @@ function ImportPage() {
 
           {source === "espn" ? (
             <div className="max-w-lg space-y-4">
-              <label className="block">
+              <label htmlFor={`${fieldId}-espn-id`} className="block">
                 <span className="microlabel">ESPN league ID or URL</span>
                 <Input
+                  id={`${fieldId}-espn-id`}
                   className="mt-1.5"
                   value={leagueId}
                   onChange={(e) => setLeagueId(e.target.value)}
@@ -865,18 +878,20 @@ function ImportPage() {
                 Private leagues need SWID + espn_s2, or flip the league public for one minute. A
                 recap paste is simpler if you just want the names.
               </p>
-              <label className="block">
+              <label htmlFor={`${fieldId}-espn-swid`} className="block">
                 <span className="microlabel">SWID</span>
                 <Input
+                  id={`${fieldId}-espn-swid`}
                   className="mt-1.5"
                   value={swid}
                   onChange={(e) => setSwid(e.target.value)}
                   autoComplete="off"
                 />
               </label>
-              <label className="block">
+              <label htmlFor={`${fieldId}-espn-s2`} className="block">
                 <span className="microlabel">espn_s2</span>
                 <Input
+                  id={`${fieldId}-espn-s2`}
                   className="mt-1.5"
                   value={espnS2}
                   onChange={(e) => setEspnS2(e.target.value)}

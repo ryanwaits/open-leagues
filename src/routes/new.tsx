@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/new")({ component: NewLeague });
 
 function NewLeague() {
+  const fieldId = useId();
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
   const remember = useLeagueStore((s) => s.remember);
@@ -77,9 +78,10 @@ function NewLeague() {
             create.mutate();
           }}
         >
-          <label className="block">
+          <label htmlFor={`${fieldId}-name`} className="block">
             <span className="microlabel">League name</span>
             <Input
+              id={`${fieldId}-name`}
               className="mt-1.5"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -87,9 +89,10 @@ function NewLeague() {
               required
             />
           </label>
-          <label className="block">
+          <label htmlFor={`${fieldId}-team`} className="block">
             <span className="microlabel">Your team</span>
             <Input
+              id={`${fieldId}-team`}
               className="mt-1.5"
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}

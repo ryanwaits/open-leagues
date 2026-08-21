@@ -75,6 +75,7 @@ function AppearancePanel() {
         {SKIN_OPTIONS.map(({ value, label }) => {
           const on = mounted && skin === value;
           return (
+            // biome-ignore lint/a11y/useSemanticElements: segmented-control pill button; swapping to <input type="radio"> would need the control hidden and all pill/hover styling redone
             <button
               key={value}
               type="button"
@@ -186,6 +187,7 @@ function AiSettingsPanel() {
         {AI_PROVIDERS.map(({ id, label }) => {
           const on = provider === id;
           return (
+            // biome-ignore lint/a11y/useSemanticElements: segmented-control pill button; swapping to <input type="radio"> would need the control hidden and all pill/hover styling redone
             <button
               key={id}
               type="button"

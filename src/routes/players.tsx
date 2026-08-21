@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLeaders, getPlayerSearch } from "@/lib/data/fns";
 import type { LeaderRow } from "@/lib/data/types";
-import { formatInt, formatPts, cn } from "@/lib/utils";
+import { cn, formatInt, formatPts } from "@/lib/utils";
 
 const POS = ["ALL", "QB", "RB", "WR", "TE", "K", "DEF"] as const;
 
@@ -87,6 +87,7 @@ function PlayersPage() {
           <tbody>
             {loading
               ? Array.from({ length: 8 }).map((_, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list, no identity
                   <tr key={i} className="border-b border-line">
                     <td colSpan={7} className="px-4 py-3">
                       <Skeleton className="h-8" />

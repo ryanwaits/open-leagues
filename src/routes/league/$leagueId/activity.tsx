@@ -31,6 +31,7 @@ function ActivityPage() {
       (activity.isPending || activity.isLoading || !activity.isFetched) ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list, no identity
             <Skeleton key={i} className="h-16" />
           ))}
         </div>

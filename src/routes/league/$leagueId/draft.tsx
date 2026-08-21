@@ -330,7 +330,8 @@ function DraftPage() {
 
           <ol className="mt-6 space-y-2">
             {d == null
-              ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-12" />)
+              ? // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list, no identity
+                Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-12" />)
               : d.recent.map((p) => (
                   <li
                     key={p.pick}
@@ -413,6 +414,7 @@ function DraftPage() {
           <ul className="mt-4 divide-y divide-line rounded-xl bg-surface ring-card">
             {d == null
               ? Array.from({ length: 8 }).map((_, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list, no identity
                   <li key={i} className="p-3">
                     <Skeleton className="h-8" />
                   </li>

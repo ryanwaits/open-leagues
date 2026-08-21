@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { InviteCard, usePageOrigin } from "@/components/invite-card";
 import { disablePushForLeague, enablePushForLeague } from "@/components/push-register";
@@ -45,6 +45,7 @@ const GROUPS = [...new Set(SCORING_FIELDS.map((f) => f.group))];
 
 function SettingsPage() {
   const { leagueId } = Route.useParams();
+  const fieldId = useId();
   const origin = usePageOrigin();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -205,9 +206,10 @@ function SettingsPage() {
           {q.data.sourceLeagueId ? ` · ${q.data.sourceLeagueId}` : ""}
         </p>
         <h2 className="mt-1 font-display text-2xl">League</h2>
-        <label className="mt-4 block max-w-md">
+        <label htmlFor={`${fieldId}-name`} className="mt-4 block max-w-md">
           <span className="microlabel">Name</span>
           <Input
+            id={`${fieldId}-name`}
             className="mt-1.5"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -215,9 +217,10 @@ function SettingsPage() {
           />
         </label>
         <div className="mt-4 flex flex-wrap gap-6">
-          <label className="block">
+          <label htmlFor={`${fieldId}-week`} className="block">
             <span className="block microlabel">Current week</span>
             <Input
+              id={`${fieldId}-week`}
               className="mt-1.5 w-24"
               type="number"
               min={1}
@@ -351,9 +354,10 @@ function SettingsPage() {
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-6">
-          <label>
+          <label htmlFor={`${fieldId}-regular`}>
             <span className="microlabel">Regular weeks</span>
             <Input
+              id={`${fieldId}-regular`}
               className="mt-1.5 w-24"
               type="number"
               min={8}
@@ -363,9 +367,10 @@ function SettingsPage() {
               disabled={locked}
             />
           </label>
-          <label>
+          <label htmlFor={`${fieldId}-pstart`}>
             <span className="microlabel">Playoffs start</span>
             <Input
+              id={`${fieldId}-pstart`}
               className="mt-1.5 w-24"
               type="number"
               min={10}
@@ -424,9 +429,10 @@ function SettingsPage() {
           ))}
         </div>
         <div className="mt-4 flex flex-wrap gap-6">
-          <label>
+          <label htmlFor={`${fieldId}-faab`}>
             <span className="microlabel">FAAB $</span>
             <Input
+              id={`${fieldId}-faab`}
               className="mt-1.5 w-24"
               type="number"
               min={0}
@@ -436,9 +442,10 @@ function SettingsPage() {
               disabled={locked}
             />
           </label>
-          <label>
+          <label htmlFor={`${fieldId}-deadline`}>
             <span className="microlabel">Trade deadline week</span>
             <Input
+              id={`${fieldId}-deadline`}
               className="mt-1.5 w-24"
               type="number"
               min={1}
@@ -482,9 +489,10 @@ function SettingsPage() {
           ))}
         </div>
         <div className="mt-4 flex flex-wrap gap-6">
-          <label>
+          <label htmlFor={`${fieldId}-pool-seed`}>
             <span className="block microlabel">Pool seed $</span>
             <Input
+              id={`${fieldId}-pool-seed`}
               className="mt-1.5 w-24"
               type="number"
               min={0}
@@ -494,9 +502,10 @@ function SettingsPage() {
               disabled={locked}
             />
           </label>
-          <label>
+          <label htmlFor={`${fieldId}-wager-cap`}>
             <span className="block microlabel">Max per wager $</span>
             <Input
+              id={`${fieldId}-wager-cap`}
               className="mt-1.5 w-24"
               type="number"
               min={1}
@@ -506,9 +515,10 @@ function SettingsPage() {
               disabled={locked}
             />
           </label>
-          <label>
+          <label htmlFor={`${fieldId}-exposure-cap`}>
             <span className="block microlabel">Max at risk $</span>
             <Input
+              id={`${fieldId}-exposure-cap`}
               className="mt-1.5 w-24"
               type="number"
               min={1}
@@ -564,9 +574,14 @@ function SettingsPage() {
             <h3 className="microlabel">{g.group}</h3>
             <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {g.fields.map((f) => (
-                <label key={f.key} className="rounded-lg bg-surface p-3 ring-card">
+                <label
+                  key={f.key}
+                  htmlFor={`${fieldId}-scoring-${f.key}`}
+                  className="rounded-lg bg-surface p-3 ring-card"
+                >
                   <span className="block text-xs text-muted">{f.label}</span>
                   <Input
+                    id={`${fieldId}-scoring-${f.key}`}
                     className="mt-1.5 h-9"
                     type="number"
                     step={f.step}

@@ -446,6 +446,7 @@ function MockDraftPage() {
           <ul className="mt-4 divide-y divide-line rounded-xl bg-surface ring-card">
             {poolQ.isLoading
               ? Array.from({ length: 8 }).map((_, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list, no identity
                   <li key={i} className="p-3">
                     <Skeleton className="h-8" />
                   </li>
