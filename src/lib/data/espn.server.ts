@@ -1,4 +1,5 @@
-import { canonTeam, espnTeamSlug } from "./teams";
+import { lastPlayText } from "./game-feed";
+import { canonTeam, espnTeamSlug, teamLogo } from "./teams";
 import type {
   BoxGroup,
   GameDrive,
@@ -17,12 +18,20 @@ import type {
 // IP-blocked from datacenter hosts (Render probed 403 vs 200, 2026-08-20).
 const ESPN = "https://site.web.api.espn.com/apis/site/v2/sports/football/nfl";
 
+type EspnLogo = { href?: string; rel?: string[] };
+
 type EspnCompetitor = {
   id?: string;
   homeAway: "home" | "away";
   score: string;
   winner?: boolean;
-  team: { id?: string; abbreviation: string; displayName: string; logo?: string };
+  team: {
+    id?: string;
+    abbreviation: string;
+    displayName: string;
+    logo?: string;
+    logos?: EspnLogo[];
+  };
   records?: Array<{ summary: string }>;
 };
 
@@ -81,17 +90,36 @@ function possessionOf(
 ): string | null {
   if (sit?.possession == null) return null;
   const id = String(sit.possession);
-  const hit = competitors.find(
-    (c) => String(c.id ?? "") === id || String(c.team.id ?? "") === id,
-  );
+  const hit = competitors.find((c) => String(c.id ?? "") === id || String(c.team.id ?? "") === id);
   return hit?.team.abbreviation ?? null;
+}
+
+/** Header competitors ship `logos[]` and no `logo` string. Scoring plays do the reverse. */
+export function pickEspnLogo(
+  team:
+    | {
+        abbreviation?: string;
+        logo?: string;
+        logos?: EspnLogo[];
+      }
+    | null
+    | undefined,
+): string {
+  if (team?.logo) return team.logo;
+  const logos = team?.logos ?? [];
+  const preferred =
+    logos.find((l) => l.rel?.includes("default")) ??
+    logos.find((l) => l.rel?.includes("scoreboard")) ??
+    logos[0];
+  if (preferred?.href) return preferred.href;
+  return teamLogo(team?.abbreviation) ?? "";
 }
 
 function mapTeam(c: EspnCompetitor): ScoreTeam {
   return {
     abbr: c.team.abbreviation,
     name: c.team.displayName,
-    logo: c.team.logo ?? "",
+    logo: pickEspnLogo(c.team),
     score: c.score ?? "0",
     winner: typeof c.winner === "boolean" ? c.winner : null,
     record: c.records?.[0]?.summary ?? null,
@@ -295,6 +323,7 @@ type RawBoxTeam = {
     abbreviation?: string;
     displayName?: string;
     logo?: string;
+    logos?: EspnLogo[];
   };
   statistics?: RawStatGroup[];
 };
@@ -322,7 +351,7 @@ type RawDrive = {
   description?: string;
   result?: string;
   displayResult?: string;
-  team?: { abbreviation?: string; logo?: string };
+  team?: { abbreviation?: string; logo?: string; logos?: EspnLogo[] };
   start?: { text?: string };
   plays?: RawPlay[];
 };
@@ -335,7 +364,7 @@ type RawScoring = {
   clock?: { displayValue?: string };
   awayScore?: number;
   homeScore?: number;
-  team?: { abbreviation?: string; logo?: string };
+  team?: { abbreviation?: string; logo?: string; logos?: EspnLogo[] };
 };
 
 type RawSummary = {
@@ -357,7 +386,7 @@ type RawSummary = {
         homeAway: "home" | "away";
         score?: string;
         winner?: boolean;
-        team?: { abbreviation?: string; displayName?: string; logo?: string };
+        team?: { abbreviation?: string; displayName?: string; logo?: string; logos?: EspnLogo[] };
         records?: Array<{ summary?: string }>;
       }>;
     }>;
@@ -430,7 +459,7 @@ function mapDrive(d: RawDrive): GameDrive | null {
   return {
     id: String(d.id ?? d.description ?? Math.random()),
     team: d.team?.abbreviation ?? "",
-    logo: d.team?.logo ?? null,
+    logo: pickEspnLogo(d.team) || null,
     result: d.displayResult ?? d.result ?? "",
     description: d.description ?? "",
     start: d.start?.text ?? "",
@@ -440,7 +469,7 @@ function mapDrive(d: RawDrive): GameDrive | null {
 
 export async function fetchGameSummary(eventId: string): Promise<GameSummary> {
   const url = `${ESPN}/summary?event=${encodeURIComponent(eventId)}`;
-  const raw = await eget<RawSummary>(url, 8_000);
+  const raw = await eget<RawSummary>(url, 2_000);
   const header = raw.header;
   const comp = header?.competitions?.[0];
   const homeC = comp?.competitors?.find((c) => c.homeAway === "home");
@@ -450,13 +479,11 @@ export async function fetchGameSummary(eventId: string): Promise<GameSummary> {
     stateRaw === "in" ? "in" : stateRaw === "post" ? "post" : "pre";
   const typeNum = header?.season?.type ?? 2;
 
-  function teamOf(
-    c: NonNullable<typeof homeC> | undefined,
-  ): ScoreTeam {
+  function teamOf(c: NonNullable<typeof homeC> | undefined): ScoreTeam {
     return {
       abbr: c?.team?.abbreviation ?? "—",
       name: c?.team?.displayName ?? "TBD",
-      logo: c?.team?.logo ?? "",
+      logo: pickEspnLogo(c?.team),
       score: c?.score ?? "0",
       winner: typeof c?.winner === "boolean" ? c.winner : null,
       record: c?.records?.[0]?.summary ?? null,
@@ -472,7 +499,7 @@ export async function fetchGameSummary(eventId: string): Promise<GameSummary> {
   const scoring: ScoringPlay[] = (raw.scoringPlays ?? []).map((s) => ({
     id: String(s.id ?? s.text ?? ""),
     team: s.team?.abbreviation ?? "",
-    logo: s.team?.logo ?? null,
+    logo: pickEspnLogo(s.team) || null,
     text: s.text ?? "",
     type: s.type?.text ?? "",
     period: s.period?.number ?? 0,
@@ -483,9 +510,14 @@ export async function fetchGameSummary(eventId: string): Promise<GameSummary> {
 
   const prev = raw.drives?.previous ?? [];
   const cur = raw.drives?.current;
-  const drives = [...prev, ...(cur ? [cur] : [])]
-    .map(mapDrive)
-    .filter((d): d is GameDrive => Boolean(d));
+  const merged: typeof prev = [...prev];
+  if (cur) {
+    const id = String(cur.id ?? "");
+    const idx = id ? merged.findIndex((d) => String(d.id ?? "") === id) : -1;
+    if (idx >= 0) merged[idx] = cur;
+    else merged.push(cur);
+  }
+  const drives = merged.map(mapDrive).filter((d): d is GameDrive => Boolean(d));
 
   const teamStatsByAbbr = new Map<string, { label: string; value: string }[]>();
   for (const t of raw.boxscore?.teams ?? []) {
@@ -523,7 +555,7 @@ export async function fetchGameSummary(eventId: string): Promise<GameSummary> {
     return {
       abbr,
       name: t.team?.displayName ?? abbr,
-      logo: t.team?.logo ?? "",
+      logo: pickEspnLogo(t.team),
       groups,
       teamStats: teamStatsByAbbr.get(abbr) ?? [],
     };
@@ -531,21 +563,19 @@ export async function fetchGameSummary(eventId: string): Promise<GameSummary> {
 
   return {
     id: String(header?.id ?? eventId),
-    name: header?.name ?? `${awayC?.team?.abbreviation ?? ""} at ${homeC?.team?.abbreviation ?? ""}`,
+    name:
+      header?.name ?? `${awayC?.team?.abbreviation ?? ""} at ${homeC?.team?.abbreviation ?? ""}`,
     shortName: `${awayC?.team?.abbreviation ?? "AWAY"} @ ${homeC?.team?.abbreviation ?? "HOME"}`,
     date: comp?.date ?? "",
     state,
     detail: comp?.status?.type?.shortDetail ?? comp?.status?.type?.detail ?? "",
-    week:
-      typeof header?.week === "number"
-        ? header.week
-        : header?.week?.number ?? 0,
+    week: typeof header?.week === "number" ? header.week : (header?.week?.number ?? 0),
     season: header?.season?.year ?? 0,
     seasonType: typeNum === 1 ? "pre" : typeNum === 3 ? "post" : "regular",
     home: teamOf(homeC),
     away: teamOf(awayC),
     situation: situationBits.length ? situationBits.join(" · ") : null,
-    lastPlay,
+    lastPlay: lastPlay ?? lastPlayText(drives),
     scoring,
     drives,
     box,

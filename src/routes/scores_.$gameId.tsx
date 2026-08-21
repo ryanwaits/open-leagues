@@ -2,11 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import { useState } from "react";
+import { Shell } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getGameSummary } from "@/lib/data/fns";
+import { drivesForLiveFeed, withLiveSnap } from "@/lib/data/game-feed";
+import { teamLogo } from "@/lib/data/teams";
 import type { GameDrive, GameSummary, TeamBox } from "@/lib/data/types";
-import { Shell } from "@/components/shell";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/scores_/$gameId")({
@@ -21,7 +23,7 @@ function GamePage() {
     queryFn: () => getGameSummary({ data: { gameId } }),
     refetchInterval: (query) => {
       const state = query.state.data?.state;
-      if (state === "in") return 8_000;
+      if (state === "in") return 4_000;
       if (state === "pre") return 20_000;
       return false;
     },
@@ -133,7 +135,7 @@ function ScoreHead({ g, live }: { g: GameSummary; live: boolean }) {
           · Week {g.week} · {g.season}
         </p>
         <Badge tone={live ? "live" : g.state === "post" ? "win" : "default"}>
-          {live ? "Live" : g.detail || "Scheduled"}
+          {live ? g.detail || "Live" : g.detail || "Scheduled"}
         </Badge>
       </div>
       <TeamScore team={g.away} dim={awayDim} />
@@ -148,16 +150,17 @@ function ScoreHead({ g, live }: { g: GameSummary; live: boolean }) {
           {g.lastPlay}
         </p>
       ) : null}
-      {live ? <p className="mt-3 microlabel">Public ESPN box · ticks every 8s</p> : null}
+      {live ? <p className="mt-3 microlabel">Public ESPN box · ticks every 4s</p> : null}
     </section>
   );
 }
 
 function TeamScore({ team, dim }: { team: GameSummary["home"]; dim: boolean }) {
+  const logo = team.logo || teamLogo(team.abbr);
   return (
     <div className={cn("flex items-center gap-3", dim && "opacity-45")}>
-      {team.logo ? (
-        <img src={team.logo} alt="" className="size-9 object-contain" />
+      {logo ? (
+        <img src={logo} alt="" className="size-9 object-contain" />
       ) : (
         <span className="size-9 rounded-sm bg-raised" />
       )}
@@ -180,7 +183,11 @@ function PlayFeed({ g }: { g: GameSummary }) {
       </p>
     );
   }
-  const drives: GameDrive[] = g.state === "in" ? [...g.drives].reverse() : g.drives;
+  const drives: GameDrive[] = withLiveSnap(
+    drivesForLiveFeed(g.drives, g.state === "in"),
+    g.state === "in" ? g.lastPlay : null,
+    g.detail,
+  );
   return (
     <div className="mt-4 space-y-3">
       {drives.map((d) => (
