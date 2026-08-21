@@ -1,27 +1,67 @@
 import { useQuery } from "@tanstack/react-query";
-import { getOutlooks } from "@/lib/data/fns";
+import { LiveLine } from "@/components/live-line";
+import { getOutlooks, getTicks } from "@/lib/data/fns";
+import { pairHasStarted } from "@/lib/data/matchup-view";
 import { baseSlotLabel } from "@/lib/data/teams";
-import type { MatchupPair } from "@/lib/data/types";
+import { isHostedLeague, type MatchupPair } from "@/lib/data/types";
 import { type PlayerOutlook, winProbability } from "@/lib/league/win-probability";
+import { type EdgeView, useLiveProjPref } from "@/lib/live/prefs";
+import { swing } from "@/lib/live/series";
+import { useMatchupSeries } from "@/lib/live/use-matchup-series";
 import { cn, formatPts } from "@/lib/utils";
 
 /**
- * Where the game actually is: one signed bar per slot, plus the probability
- * that falls out of the same numbers.
+ * Where the game actually is: the last hour / three hours / day of both
+ * teams' projected finals on one liveline, then the same signed bar per
+ * slot the panel always had.
  *
  * Green is your advantage and neutral grey is theirs. A true diverging scale
  * would want two hues, but coral means alarm in this system and losing a slot
  * is not an alarm.
  */
+
+const WINDOWS = [
+  { label: "1H", secs: 3600 },
+  { label: "3H", secs: 10800 },
+  { label: "DAY", secs: 43200 },
+];
+
+const EDGE_VIEWS: { id: EdgeView; label: string }[] = [
+  { id: "finals", label: "Finals" },
+  { id: "pct", label: "Win %" },
+  { id: "margin", label: "Margin" },
+];
+
+/** The 5-minute momentum chip under the chart: whoever's line actually moved, or quiet. */
+function momentumChip(
+  you: string,
+  them: string,
+  swingYou: ReturnType<typeof swing>,
+  swingThem: ReturnType<typeof swing>,
+): { text: string; cls: string } {
+  if (swingYou.dir === "up" && swingThem.dir !== "up") {
+    return {
+      text: `▲ ${you} +${swingYou.delta.toFixed(1)} · last 5 min`,
+      cls: "text-accent-strong",
+    };
+  }
+  if (swingThem.dir === "up") {
+    return { text: `▼ ${them} +${swingThem.delta.toFixed(1)} on you · 5 min`, cls: "text-loss" };
+  }
+  return { text: "quiet · 5 min", cls: "text-faint" };
+}
+
 export function MatchupEdge({
   pair,
   leagueId,
   season,
+  week,
   mine,
 }: {
   pair: MatchupPair;
   leagueId: string;
   season: string;
+  week: number;
   /** Which roster is "you"; the whole panel is signed from this side. */
   mine: number | null;
 }) {
@@ -37,14 +77,31 @@ export function MatchupEdge({
     enabled: Boolean(season) && ids.length > 0,
     staleTime: 10 * 60 * 1000,
   });
+  const map = outlooks.data ?? {};
+
+  const kicked = pairHasStarted(pair);
+  const ticks = useQuery({
+    queryKey: ["ticks", leagueId, week, pair.matchupId],
+    queryFn: () => getTicks({ data: { leagueId, week, matchupId: pair.matchupId } }),
+    enabled: isHostedLeague(leagueId),
+    refetchInterval: kicked ? 60_000 : false,
+    staleTime: 30_000,
+  });
+
+  const s = useMatchupSeries({ leagueId, week, pair, outlooks: map, mine, ticks: ticks.data });
+
+  const edgeView = useLiveProjPref((st) => st.edgeView);
+  const setEdgeView = useLiveProjPref((st) => st.setEdgeView);
+  const edgeWindow = useLiveProjPref((st) => st.edgeWindow);
+  const setEdgeWindow = useLiveProjPref((st) => st.setEdgeWindow);
 
   if (!away) return null;
 
   // Sign everything from the viewer's side so "+" always means good news.
+  // The chart series from useMatchupSeries are already signed the same way.
   const flip = mine != null && away.rosterId === mine;
   const a = flip ? away : pair.home;
   const b = flip ? pair.home : away;
-  const map = outlooks.data ?? {};
 
   const outlookFor = (line: (typeof a.starters)[number]): PlayerOutlook => {
     const o = line.playerId ? map[line.playerId] : undefined;
@@ -69,16 +126,100 @@ export function MatchupEdge({
     return { slot: line.slot, delta };
   });
   const span = Math.max(...rows.map((r) => Math.abs(r.delta)), 1);
-  const pct = Math.round(wp.probability * 100);
+  const pct = Math.round(s.last?.youPct ?? wp.probability * 100);
+  const live = kicked && !s.final;
+  const chip = momentumChip(a.teamName, b.teamName, s.swingYou, s.swingThem);
+  const marginMomentum =
+    s.swingYou.dir === "up" && s.swingThem.dir !== "up"
+      ? "up"
+      : s.swingThem.dir === "up"
+        ? "down"
+        : "flat";
 
   return (
     <section className="mt-6 rounded-xl bg-surface ring-card">
       <header className="flex flex-wrap items-baseline justify-between gap-3 px-5 pt-5 pb-3">
         <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Where the game is</h2>
-        <span className="microlabel-data">Margin by slot</span>
+        {s.started ? (
+          <span className="flex rounded-pill bg-raised p-0.5">
+            {EDGE_VIEWS.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                aria-pressed={edgeView === v.id}
+                onClick={() => setEdgeView(v.id)}
+                className={cn(
+                  "h-7 rounded-pill px-2.5 text-[12px] font-semibold transition-colors duration-150",
+                  edgeView === v.id ? "bg-fg text-bg" : "text-muted",
+                )}
+              >
+                {v.label}
+              </button>
+            ))}
+          </span>
+        ) : (
+          <span className="microlabel-data">Margin by slot</span>
+        )}
       </header>
 
-      {wp.live ? (
+      {s.started ? (
+        <div className="px-5 pb-4">
+          {edgeView === "finals" ? (
+            <LiveLine
+              series={[
+                { id: "you", label: a.teamName, points: s.you, tone: "brand" },
+                { id: "them", label: b.teamName, points: s.them, tone: "muted" },
+              ]}
+              height={196}
+              windowSecs={edgeWindow}
+              windows={WINDOWS}
+              onWindowChange={setEdgeWindow}
+              frozen={s.final}
+              ariaLabel="Projected finals"
+            />
+          ) : edgeView === "pct" ? (
+            <LiveLine
+              series={s.pct}
+              value={s.last?.youPct}
+              height={196}
+              windowSecs={edgeWindow}
+              windows={WINDOWS}
+              onWindowChange={setEdgeWindow}
+              referenceLine={{ value: 50, label: "COIN FLIP" }}
+              momentum={swing(s.pct, 300, 3).dir}
+              formatValue={(v) => `${Math.round(v)}%`}
+              frozen={s.final}
+              ariaLabel="Win probability"
+            />
+          ) : (
+            <LiveLine
+              series={s.margin}
+              value={s.last?.margin}
+              height={196}
+              windowSecs={edgeWindow}
+              windows={WINDOWS}
+              onWindowChange={setEdgeWindow}
+              referenceLine={{ value: 0, label: "EVEN" }}
+              momentum={marginMomentum}
+              formatValue={(v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}`}
+              frozen={s.final}
+              ariaLabel="Projected margin"
+            />
+          )}
+
+          <div className="mt-1.5 flex justify-between microlabel-data">
+            <span>
+              {a.teamName} {pct}%{live ? <span className="text-live"> · live</span> : null}
+              {s.sinceOpened && !s.final ? " · since you opened" : null}
+            </span>
+            <span className={chip.cls}>{chip.text}</span>
+            <span>
+              proj {formatPts(s.last?.youProj ?? wp.projected[0], 1)} &ndash;{" "}
+              {formatPts(s.last?.themProj ?? wp.projected[1], 1)}
+            </span>
+          </div>
+        </div>
+      ) : wp.live ? (
         <div className="px-5 pb-4">
           <div className="flex h-1.5 overflow-hidden rounded-pill bg-raised">
             <span className="bg-accent-deep" style={{ width: `${pct}%` }} />

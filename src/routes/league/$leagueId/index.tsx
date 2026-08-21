@@ -393,6 +393,7 @@ function MyTeamPage() {
                 standings={standings}
                 phase={phase.phase}
                 projections={projections.data}
+                season={season}
               />
             </div>
           ) : null}
@@ -460,6 +461,7 @@ function MyTeamPage() {
                 standings={standings}
                 phase={phase.phase}
                 projections={projections.data}
+                season={season}
               />
             </div>
           ) : null}

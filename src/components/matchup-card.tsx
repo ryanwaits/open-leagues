@@ -1,5 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Avatar } from "@/components/avatar";
+import { getOutlooks } from "@/lib/data/fns";
+import { pairHasStarted, sideUnofficial } from "@/lib/data/matchup-view";
 import type {
   MatchupPair,
   MatchupSide,
@@ -7,8 +10,9 @@ import type {
   StandingRow,
   StarterLine,
 } from "@/lib/data/types";
-import { pairHasStarted, sideUnofficial } from "@/lib/data/matchup-view";
 import type { Phase } from "@/lib/league/phase";
+import { winProbability } from "@/lib/league/win-probability";
+import { outlookSide } from "@/lib/live/matchup-series";
 import { cn, fmtRecord, formatPts } from "@/lib/utils";
 
 /**
@@ -29,6 +33,7 @@ export function MatchupCard({
   standings,
   phase,
   projections,
+  season,
 }: {
   leagueId: string;
   week: number;
@@ -37,15 +42,37 @@ export function MatchupCard({
   standings: StandingRow[];
   phase: Phase;
   projections?: Record<string, Projection>;
+  season?: string;
 }) {
   const mine = pair.home.rosterId === rosterId ? pair.home : pair.away;
   const theirs = pair.home.rosterId === rosterId ? pair.away : pair.home;
-  if (!mine || !theirs) return null;
 
   const settled = phase === "settled";
   const kicked = pairHasStarted(pair);
   const scoring = settled || kicked;
   const live = scoring && !settled;
+
+  // Hooks must run every render, before the `!mine || !theirs` early
+  // return below — so this is guarded on `mine && theirs` itself, not on
+  // having already checked them. No canvas on the home card — the
+  // win-probability meter is a number, not a line. Same outlook query
+  // shape as the matchup page's chart, so the percentage here and there
+  // can never disagree.
+  const ids =
+    live && mine && theirs
+      ? [...mine.starters, ...theirs.starters]
+          .map((l) => l.playerId)
+          .filter((x): x is string => Boolean(x))
+      : [];
+  const outlooks = useQuery({
+    queryKey: ["outlooks", leagueId, season, ids.join(",")],
+    queryFn: () => getOutlooks({ data: { leagueId, season: season ?? "", playerIds: ids } }),
+    enabled: live && Boolean(season) && ids.length > 0,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  if (!mine || !theirs) return null;
+
   const label = live ? "Live" : settled ? "Final" : "Projected";
 
   const lineValue = (l: StarterLine): number =>
@@ -75,6 +102,15 @@ export function MatchupCard({
         ? `${diff > 0 ? "won" : "lost"} by ${formatPts(Math.abs(diff), 1)}`
         : `+${formatPts(Math.abs(diff), 1)} ${diff > 0 ? "you" : "them"}`;
 
+  const outlookMap = outlooks.data ?? {};
+  const wp = live
+    ? winProbability({
+        scores: [myPts, theirPts],
+        starters: [outlookSide(mine, outlookMap), outlookSide(theirs, outlookMap)],
+      })
+    : null;
+  const winPct = wp ? Math.round(wp.probability * 100) : 0;
+
   return (
     <section className="rounded-xl bg-surface ring-card">
       <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
@@ -87,7 +123,23 @@ export function MatchupCard({
       <SideRow side={mine} standings={standings} pts={known ? myPts : null} me />
       <SideRow side={theirs} standings={standings} pts={known ? theirPts : null} />
 
-      {known ? (
+      {known && wp ? (
+        <div className="grid gap-1.5 px-5 pt-1 pb-3">
+          <div className="flex h-1.5 overflow-hidden rounded-pill bg-raised">
+            <span
+              className="bg-accent-deep motion-safe:transition-[width] motion-safe:duration-500"
+              style={{ width: `${winPct}%` }}
+            />
+          </div>
+          <div className="flex items-baseline justify-between microlabel-data">
+            <span className="text-fg">WIN PROB {winPct}%</span>
+            <span className="tabular-nums">
+              {delta ? `${delta} · ` : ""}
+              PROJ {formatPts(wp.projected[0], 1)} &ndash; {formatPts(wp.projected[1], 1)}
+            </span>
+          </div>
+        </div>
+      ) : known ? (
         <div className="grid gap-1.5 px-5 pt-1 pb-3">
           <div className="flex h-1.5 overflow-hidden rounded-pill bg-raised">
             <div

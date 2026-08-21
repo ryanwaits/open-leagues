@@ -339,6 +339,7 @@ function MatchupPage() {
         pair={livePair ?? pair}
         leagueId={leagueId}
         season={league.data?.league.season ?? ""}
+        week={week}
         mine={league.data?.myRosterId ?? null}
       />
 

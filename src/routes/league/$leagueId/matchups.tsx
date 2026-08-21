@@ -441,6 +441,7 @@ function MatchupsPage() {
                       pair={rawShown[selected] ?? pair}
                       leagueId={leagueId}
                       season={league.data?.league.season ?? ""}
+                      week={week}
                       mine={mineRosterId}
                     />
                   </>
