@@ -49,6 +49,14 @@ Slices live here. Read the one you are executing from.
   default, Geist. Advisor's: retire `.push`. **All three DONE** (2a9b93f,
   a33f297+3b905a2, 7d11914+ca770a1 — not pushed). Design artifact:
   https://claude.ai/code/artifact/4e0119fb-6b78-48ec-9a77-abaf4c55675e
+- **060–063 — Pocket Ledger: mobile-native gestures** (improve skill, 2026-08-23,
+  commit `37ed78d`). Goal: the six-move gesture vocabulary from the Pocket Ledger
+  study lands — thumb bar slides away + re-tap-to-top (060), the game page's
+  pinned rail with swipeable Plays·Box·Scoring panes (061), player sheet/watch on
+  vaul detents (062), the matchup score card swiping the week's slate with the
+  page re-anchoring on settle (063). Ryan's calls: hide fully; all three panes,
+  today's order; card-only swipe with full context shift; ship 060→063. Artifact:
+  https://claude.ai/code/artifact/437db70f-5d8e-4f35-97c8-d1a4b620f961
 - **041–044 — Headless engine: token, MCP, skills** (improve skill,
   2026-08-19, commit `735b0ba`). Goal: Codex / Claude / Grok can
   install open-ff as a tool server (stdio on the commish box, HTTP
@@ -354,6 +362,10 @@ reconcile). Source tree clean.
 | 057  | Ledger·Bot tokens + type — off-white ground, ringed white cards, Geist, sans eyebrows, `.push` zeroed | P1 | M | — | DONE `2a9b93f` (not pushed; reviewed/APPROVED 2026-08-23; 2 new skin tests; gate green; Box Score verified unchanged) |
 | 058  | Ledger·Bot primitives — ink primary pill, sans badges, one segmented recipe, 500-weight nav/headings, edged sheets | P1 | M | 057 | DONE `a33f297`+`3b905a2` (not pushed; reviewed/APPROVED 2026-08-23; 30 files, class strings only; 1 new skin test; 2 leftover `bg-bg/50` scrims in player-watch/player-peek were out of scope → folded into 059) |
 | 059  | Ledger·Bot mobile polish — header/thumb bar/masthead/week pill, matchup-edge caption wrap fix, dev toolbar | P2 | M | 058 | DONE `7d11914`+`ca770a1` (not pushed; reviewed/APPROVED 2026-08-23; caption ≤2 lines verified at 390px; 1 new skin test; week-picker kept `group`/focus classes — sanctioned) |
+| 060  | Shell gestures — thumb bar hides on scroll-down, re-tap = top | P1 | S | — | TODO |
+| 061  | Game page — pinned segment rail + swipeable Plays·Box·Scoring panes | P1 | M | 060 | TODO |
+| 062  | Player sheet + watch drawer on vaul — half/full detents, drag dismiss | P2 | M | 061 | TODO |
+| 063  | Matchup page — score card swipes the week's slate, page re-anchors on settle | P2 | M | 062 | TODO |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
 ## Dependency notes
