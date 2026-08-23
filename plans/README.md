@@ -362,7 +362,7 @@ reconcile). Source tree clean.
 | 057  | Ledger·Bot tokens + type — off-white ground, ringed white cards, Geist, sans eyebrows, `.push` zeroed | P1 | M | — | DONE `2a9b93f` (not pushed; reviewed/APPROVED 2026-08-23; 2 new skin tests; gate green; Box Score verified unchanged) |
 | 058  | Ledger·Bot primitives — ink primary pill, sans badges, one segmented recipe, 500-weight nav/headings, edged sheets | P1 | M | 057 | DONE `a33f297`+`3b905a2` (not pushed; reviewed/APPROVED 2026-08-23; 30 files, class strings only; 1 new skin test; 2 leftover `bg-bg/50` scrims in player-watch/player-peek were out of scope → folded into 059) |
 | 059  | Ledger·Bot mobile polish — header/thumb bar/masthead/week pill, matchup-edge caption wrap fix, dev toolbar | P2 | M | 058 | DONE `7d11914`+`ca770a1` (not pushed; reviewed/APPROVED 2026-08-23; caption ≤2 lines verified at 390px; 1 new skin test; week-picker kept `group`/focus classes — sanctioned) |
-| 060  | Shell gestures — thumb bar hides on scroll-down, re-tap = top | P1 | S | — | TODO |
+| 060  | Shell gestures — thumb bar hides on scroll-down, re-tap = top | P1 | S | — | DONE `e84ea66` (not pushed; reviewed/APPROVED 2026-08-23; executor's StrictMode fix sanctioned — closure state instead of impure functional updater; 5 reducer tests) |
 | 061  | Game page — pinned segment rail + swipeable Plays·Box·Scoring panes | P1 | M | 060 | TODO |
 | 062  | Player sheet + watch drawer on vaul — half/full detents, drag dismiss | P2 | M | 061 | TODO |
 | 063  | Matchup page — score card swipes the week's slate, page re-anchors on settle | P2 | M | 062 | TODO |
