@@ -1,7 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Star } from "lucide-react";
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+import {
+  type KeyboardEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Avatar } from "@/components/avatar";
 import { PlayerPeek } from "@/components/player-peek";
 import { Shell } from "@/components/shell";
@@ -14,6 +23,7 @@ import { type PlaySegment, type TrackedPlayer, tagPlayText } from "@/lib/data/pl
 import { canonTeam, isDefense, playerHeadshot, playerTeam, teamLogo } from "@/lib/data/teams";
 import type { BoxRow, GameDrive, GamePlay, GameSummary, TeamBox } from "@/lib/data/types";
 import { type GameTracking, useGameTracking } from "@/lib/data/use-game-tracking";
+import { motionOk } from "@/lib/scroll-hide";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/scores_/$gameId")({
@@ -32,6 +42,11 @@ function GamePage() {
   const [filter, setFilter] = useState<Filter>("all");
   const [peek, setPeek] = useState<Peek | null>(null);
   const closePeek = useCallback(() => setPeek(null), []);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [stuck, setStuck] = useState(false);
+  const panesRef = useRef<HTMLDivElement | null>(null);
+  const paneRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [paneH, setPaneH] = useState<number>();
   const q = useQuery({
     queryKey: ["game", gameId],
     queryFn: () => getGameSummary({ data: { gameId } }),
@@ -43,89 +58,200 @@ function GamePage() {
     },
   });
   const tracking = useGameTracking(q.data);
-
-  if (q.data == null && q.isPending) {
-    return (
-      <Shell>
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="mt-4 h-36" />
-        <Skeleton className="mt-4 h-80" />
-      </Shell>
-    );
-  }
-  if (q.error || !q.data) {
-    return (
-      <Shell>
-        <Back />
-        <p className="mt-4 text-sm text-muted">Could not load that box score.</p>
-      </Shell>
-    );
-  }
-
   const g = q.data;
-  const live = g.state === "in";
+  const live = g?.state === "in";
   const tracked = tracking.tracked;
   const activeFilter: Filter = filter;
 
+  const scoringCount = g?.scoring.length ?? 0;
+  const TABS = useMemo(
+    () =>
+      [
+        ["plays", "Plays"],
+        ["box", "Box"],
+        ["scoring", scoringCount ? `Scoring · ${scoringCount}` : "Scoring"],
+      ] as const,
+    [scoringCount],
+  );
+  const idx = TABS.findIndex(([id]) => id === tab);
+
+  const pickTab = useCallback(
+    (i: number) => {
+      const clamped = Math.max(0, Math.min(TABS.length - 1, i));
+      const already = clamped === idx;
+      setTab(TABS[clamped][0]);
+      const el = panesRef.current;
+      if (el) {
+        el.scrollTo({ left: clamped * el.clientWidth, behavior: motionOk() ? "smooth" : "auto" });
+      }
+      if (already) {
+        window.scrollTo({ top: 0, behavior: motionOk() ? "smooth" : "auto" });
+      }
+    },
+    [TABS, idx],
+  );
+
+  const onTablistKeys = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        pickTab(idx + 1);
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        pickTab(idx - 1);
+      }
+    },
+    [idx, pickTab],
+  );
+
+  const onPanesScroll = useCallback(() => {
+    const el = panesRef.current;
+    if (!el) return;
+    const i = Math.round(el.scrollLeft / el.clientWidth);
+    const found = TABS[i];
+    if (found && found[0] !== tab) setTab(found[0]);
+  }, [TABS, tab]);
+
+  // Rail gets a hairline once its 1px sentinel scrolls out of view (i.e. it's
+  // stuck). The sentinel only mounts once the loading skeleton gives way to
+  // the real page, so re-run when data first lands to pick up the ref.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reattaches once the sentinel node exists (data load), not read directly in the effect body
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry) setStuck(!entry.isIntersecting);
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [g != null]);
+
+  // Height-sync the snap row to the active pane so short panes don't trail
+  // empty space and the row doesn't clamp to the tallest pane. Re-measures
+  // on tab change (via idx) and whenever fresh game data lands.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: g drives a remeasure on live refetches even though it isn't read in the effect body
+  useLayoutEffect(() => {
+    const el = paneRefs.current[idx];
+    if (!el) return;
+    setPaneH(el.scrollHeight);
+  }, [idx, g]);
+
+  useEffect(() => {
+    const el = paneRefs.current[idx];
+    if (!el) return;
+    const ro = new ResizeObserver(() => setPaneH(el.scrollHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [idx]);
+
   return (
     <Shell>
-      <Back />
-      <ScoreHead g={g} live={live} />
-
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex gap-1">
-          {(
-            [
-              ["plays", "Plays"],
-              ["box", "Box"],
-              ["scoring", g.scoring.length ? `Scoring · ${g.scoring.length}` : "Scoring"],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setTab(id)}
-              className={cn(
-                "h-10 rounded-sm px-4 text-sm",
-                tab === id ? "bg-accent text-accent-fg" : "bg-raised text-muted",
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        {tab === "plays" && g.drives.length ? (
-          <div className="flex gap-1">
-            <FilterChip on={activeFilter === "all"} onClick={() => setFilter("all")}>
-              All
-            </FilterChip>
-            <FilterChip on={activeFilter === "scoring"} onClick={() => setFilter("scoring")}>
-              Scoring
-            </FilterChip>
-          </div>
-        ) : null}
-      </div>
-
-      {tab === "plays" ? (
-        <PlayFeed
-          g={g}
-          live={live}
-          filter={activeFilter}
-          tracking={tracking}
-          peek={peek}
-          setPeek={setPeek}
-          closePeek={closePeek}
-        />
-      ) : tab === "box" ? (
-        <BoxTables g={g} tracked={tracked} />
+      {q.data == null && q.isPending ? (
+        <>
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="mt-4 h-36" />
+          <Skeleton className="mt-4 h-80" />
+        </>
+      ) : q.error || !g ? (
+        <>
+          <Back />
+          <p className="mt-4 text-sm text-muted">Could not load that box score.</p>
+        </>
       ) : (
-        <ScoringList
-          g={g}
-          tracking={tracking}
-          peek={peek}
-          setPeek={setPeek}
-          closePeek={closePeek}
-        />
+        <>
+          <Back />
+          <ScoreHead g={g} live={live} />
+
+          <div ref={sentinelRef} aria-hidden="true" className="h-px" />
+          <div
+            className={cn(
+              "sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-20 -mx-4 mt-4 bg-bg/90 px-4 py-2 backdrop-blur-md",
+              stuck && "border-b border-line",
+            )}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div
+                role="tablist"
+                aria-label="Game views"
+                onKeyDown={onTablistKeys}
+                className="flex shrink-0 items-center gap-0.5 rounded-pill bg-raised p-0.5"
+              >
+                {TABS.map(([id, label], i) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === id}
+                    tabIndex={tab === id ? 0 : -1}
+                    onClick={() => pickTab(i)}
+                    className={cn(
+                      "h-8 rounded-pill px-3.5 text-sm font-medium transition-colors duration-150",
+                      tab === id ? "bg-fg text-bg" : "text-faint hover:text-muted",
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {tab === "plays" && g.drives.length ? (
+                <div className="flex gap-1">
+                  <FilterChip on={activeFilter === "all"} onClick={() => setFilter("all")}>
+                    All
+                  </FilterChip>
+                  <FilterChip on={activeFilter === "scoring"} onClick={() => setFilter("scoring")}>
+                    Scoring
+                  </FilterChip>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <div
+            ref={panesRef}
+            onScroll={onPanesScroll}
+            className="-mx-4 flex snap-x snap-mandatory items-start overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            style={paneH ? { height: paneH } : undefined}
+          >
+            <div
+              ref={(el) => {
+                paneRefs.current[0] = el;
+              }}
+              className="w-full shrink-0 snap-start snap-always overflow-hidden px-4"
+            >
+              <PlayFeed
+                g={g}
+                live={live}
+                filter={activeFilter}
+                tracking={tracking}
+                peek={peek}
+                setPeek={setPeek}
+                closePeek={closePeek}
+              />
+            </div>
+            <div
+              ref={(el) => {
+                paneRefs.current[1] = el;
+              }}
+              className="w-full shrink-0 snap-start snap-always overflow-hidden px-4"
+            >
+              <BoxTables g={g} tracked={tracked} />
+            </div>
+            <div
+              ref={(el) => {
+                paneRefs.current[2] = el;
+              }}
+              className="w-full shrink-0 snap-start snap-always overflow-hidden px-4"
+            >
+              <ScoringList
+                g={g}
+                tracking={tracking}
+                peek={peek}
+                setPeek={setPeek}
+                closePeek={closePeek}
+              />
+            </div>
+          </div>
+        </>
       )}
     </Shell>
   );

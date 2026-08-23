@@ -223,3 +223,11 @@ test("__root.tsx loads Geist and stamps the Ledger theme-color", () => {
   assert.match(rootTsx, /#0d0d0d/);
   assert.doesNotMatch(rootTsx, /Jakarta|JetBrains/);
 });
+
+test("the game page rail is a pinned tablist over snap panes", () => {
+  const gamePage = readFileSync(join(root, "src/routes/scores_.$gameId.tsx"), "utf8");
+  assert.match(gamePage, /role="tablist"/);
+  assert.match(gamePage, /snap-x snap-mandatory/);
+  assert.match(gamePage, /sticky top-\[calc\(3\.75rem/);
+  assert.doesNotMatch(gamePage, /bg-accent text-accent-fg/);
+});
