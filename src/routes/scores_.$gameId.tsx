@@ -43,6 +43,7 @@ function GamePage() {
   const [peek, setPeek] = useState<Peek | null>(null);
   const closePeek = useCallback(() => setPeek(null), []);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const railRef = useRef<HTMLDivElement | null>(null);
   const [stuck, setStuck] = useState(false);
   const panesRef = useRef<HTMLDivElement | null>(null);
   const paneRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -86,9 +87,22 @@ function GamePage() {
       }
       if (already) {
         window.scrollTo({ top: 0, behavior: motionOk() ? "smooth" : "auto" });
+      } else if (stuck && el) {
+        // Landing on a different (possibly shorter) pane while the rail is
+        // pinned deep in the page: pull the window up just enough so the new
+        // pane's top sits under the rail instead of leaving a blank gap.
+        const railBottom = railRef.current?.getBoundingClientRect().bottom ?? 0;
+        const paneTop = el.getBoundingClientRect().top;
+        const delta = paneTop - railBottom;
+        if (delta < 0) {
+          window.scrollTo({
+            top: Math.max(0, window.scrollY + delta),
+            behavior: motionOk() ? "smooth" : "auto",
+          });
+        }
       }
     },
-    [TABS, idx],
+    [TABS, idx, stuck],
   );
 
   const onTablistKeys = useCallback(
@@ -164,6 +178,7 @@ function GamePage() {
 
           <div ref={sentinelRef} aria-hidden="true" className="h-px" />
           <div
+            ref={railRef}
             className={cn(
               "sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-20 -mx-4 mt-4 bg-bg/90 px-4 py-2 backdrop-blur-md",
               stuck && "border-b border-line",
