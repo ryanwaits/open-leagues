@@ -364,7 +364,7 @@ reconcile). Source tree clean.
 | 059  | Ledger·Bot mobile polish — header/thumb bar/masthead/week pill, matchup-edge caption wrap fix, dev toolbar | P2 | M | 058 | DONE `7d11914`+`ca770a1` (not pushed; reviewed/APPROVED 2026-08-23; caption ≤2 lines verified at 390px; 1 new skin test; week-picker kept `group`/focus classes — sanctioned) |
 | 060  | Shell gestures — thumb bar hides on scroll-down, re-tap = top | P1 | S | — | DONE `e84ea66` (not pushed; reviewed/APPROVED 2026-08-23; executor's StrictMode fix sanctioned — closure state instead of impure functional updater; 5 reducer tests) |
 | 061  | Game page — pinned segment rail + swipeable Plays·Box·Scoring panes | P1 | M | 060 | DONE `3c0bd20`+`c3f4272` (not pushed; reviewed/APPROVED 2026-08-23 after 1 revision — short-pane landing kept in view; items-start height-sync fix sanctioned; 1 new skin test) |
-| 062  | Player sheet + watch drawer on vaul — half/full detents, drag dismiss | P2 | M | 061 | TODO |
+| 062  | Player sheet + watch drawer on vaul — half/full detents, drag dismiss | P2 | M | 061 | DONE `75475d2` (not pushed; reviewed/APPROVED 2026-08-23; reduced-motion → [1] only; deps-array deviation sanctioned; 1 new skin test) |
 | 063  | Matchup page — score card swipes the week's slate, page re-anchors on settle | P2 | M | 062 | TODO |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
