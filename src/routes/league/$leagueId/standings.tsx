@@ -133,7 +133,7 @@ function LeaguePage() {
       <div className="flex min-w-0 flex-col gap-5">
         <section className="rounded-xl bg-surface ring-card">
           <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-            <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Standings</h2>
+            <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Standings</h2>
             {playoff > 0 ? <span className="microlabel-data">Top {playoff} make it</span> : null}
           </header>
           <div className="overflow-x-auto">
@@ -205,7 +205,9 @@ function LeaguePage() {
 
         <section className="rounded-xl bg-surface ring-card">
           <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-            <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Week {week} slate</h2>
+            <h2 className="font-display text-lg font-medium tracking-[-0.02em]">
+              Week {week} slate
+            </h2>
             <Link
               to="/league/$leagueId/matchups"
               params={{ leagueId }}
@@ -269,7 +271,7 @@ function LeaguePage() {
 
         <section className="rounded-xl bg-surface ring-card">
           <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-            <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Moves</h2>
+            <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Moves</h2>
             <Link
               to="/league/$leagueId/activity"
               params={{ leagueId }}
@@ -331,7 +333,7 @@ function LeaguePage() {
         {league.data.hosted ? (
           <section className="rounded-xl bg-surface ring-card">
             <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-              <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Open trades</h2>
+              <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Open trades</h2>
               <Link
                 to="/league/$leagueId/trades"
                 params={{ leagueId }}
@@ -372,7 +374,7 @@ function LeaguePage() {
         {book.data?.enabled ? (
           <section className="rounded-xl bg-surface ring-card">
             <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-              <h2 className="font-display text-lg font-bold tracking-[-0.03em]">The book</h2>
+              <h2 className="font-display text-lg font-medium tracking-[-0.02em]">The book</h2>
               <span className="microlabel-data">
                 {book.data.locked ? "closed" : `week ${book.data.week}`}
               </span>
@@ -456,7 +458,7 @@ function LeaguePage() {
 
         <section className="rounded-xl bg-surface ring-card">
           <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-            <h2 className="font-display text-lg font-bold tracking-[-0.03em]">House rules</h2>
+            <h2 className="font-display text-lg font-medium tracking-[-0.02em]">House rules</h2>
             <span className="microlabel-data">Read only</span>
           </header>
           <dl>

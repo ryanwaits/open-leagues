@@ -109,13 +109,13 @@ function RootDocument() {
             classNames: {
               toast:
                 "flex w-full items-start gap-3 rounded-lg bg-surface px-4 py-3 shadow-[0_0_0_1px_var(--hairline),var(--lift)]",
-              title: "text-sm font-semibold text-fg",
+              title: "text-sm font-medium text-fg",
               description: "mt-0.5 font-mono text-[11px] leading-relaxed text-muted",
               icon: "shrink-0 [&>svg]:size-4",
               success: "[&_[data-icon]]:text-accent-strong",
               error: "[&_[data-icon]]:text-loss",
               actionButton:
-                "ml-auto shrink-0 rounded-pill bg-accent px-3 py-1.5 text-xs font-bold text-accent-fg",
+                "ml-auto shrink-0 rounded-pill bg-fg px-3 py-1.5 text-xs font-medium text-bg",
               closeButton: "rounded-pill border border-line bg-surface text-faint",
             },
           }}

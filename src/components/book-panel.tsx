@@ -53,7 +53,7 @@ export function LinePanel({
         className={cn("rounded-xl bg-surface ring-card", className)}
       >
         <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-          <h2 className="font-display text-lg font-bold tracking-[-0.03em]">The line</h2>
+          <h2 className="font-display text-lg font-medium tracking-[-0.02em]">The line</h2>
           <span className="microlabel-data">no price</span>
         </header>
         <p className="px-5 pb-5 text-sm text-muted">
@@ -80,7 +80,7 @@ export function LinePanel({
   return (
     <section className={cn("rounded-xl bg-surface ring-card", className)}>
       <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-        <h2 className="font-display text-lg font-bold tracking-[-0.03em]">The line</h2>
+        <h2 className="font-display text-lg font-medium tracking-[-0.02em]">The line</h2>
         <span className="microlabel-data">{line.locked ? "closed" : "suggested"}</span>
       </header>
 

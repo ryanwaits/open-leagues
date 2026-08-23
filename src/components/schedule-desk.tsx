@@ -169,7 +169,7 @@ function TeamPick({
 }) {
   return (
     <select
-      className="h-11 w-full rounded-md bg-raised px-3 text-sm text-fg ring-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60"
+      className="h-10 w-full rounded-md bg-surface px-3 text-base text-fg shadow-[0_0_0_1px_var(--color-line-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60 sm:text-sm"
       value={value ?? ""}
       disabled={disabled}
       onChange={(e) => {

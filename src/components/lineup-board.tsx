@@ -209,7 +209,7 @@ export function LineupBoard({
   return (
     <section className="rounded-xl bg-surface ring-card">
       <header className="flex items-center gap-3 px-5 pt-4 pb-3">
-        <h2 className="min-w-0 flex-1 truncate font-display text-lg font-bold tracking-[-0.03em]">
+        <h2 className="min-w-0 flex-1 truncate font-display text-lg font-medium tracking-[-0.02em]">
           {title ?? "Starting lineup"}
         </h2>
         <span className="microlabel-data whitespace-nowrap">
@@ -227,8 +227,8 @@ export function LineupBoard({
                 aria-pressed={!liveProj}
                 onClick={() => setLiveProj(false)}
                 className={cn(
-                  "h-7 rounded-pill px-2.5 text-[12px] font-semibold transition-colors duration-150",
-                  !liveProj ? "bg-fg text-bg" : "text-muted",
+                  "h-7 rounded-pill px-2.5 text-[12px] font-medium transition-colors duration-150",
+                  !liveProj ? "bg-fg text-bg" : "text-faint hover:text-muted",
                 )}
               >
                 Off
@@ -238,8 +238,8 @@ export function LineupBoard({
                 aria-pressed={liveProj}
                 onClick={() => setLiveProj(true)}
                 className={cn(
-                  "h-7 rounded-pill px-2.5 text-[12px] font-semibold transition-colors duration-150",
-                  liveProj ? "bg-fg text-bg" : "text-muted",
+                  "h-7 rounded-pill px-2.5 text-[12px] font-medium transition-colors duration-150",
+                  liveProj ? "bg-fg text-bg" : "text-faint hover:text-muted",
                 )}
               >
                 On

@@ -144,7 +144,7 @@ export function MatchupEdge({
   return (
     <section className="mt-6 rounded-xl bg-surface ring-card">
       <header className="flex flex-wrap items-baseline justify-between gap-3 px-5 pt-5 pb-3">
-        <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Where the game is</h2>
+        <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Where the game is</h2>
         {s.started ? (
           <span className="flex rounded-pill bg-raised p-0.5">
             {EDGE_VIEWS.map((v) => (
@@ -154,8 +154,8 @@ export function MatchupEdge({
                 aria-pressed={edgeView === v.id}
                 onClick={() => setEdgeView(v.id)}
                 className={cn(
-                  "h-7 rounded-pill px-2.5 text-[12px] font-semibold transition-colors duration-150",
-                  edgeView === v.id ? "bg-fg text-bg" : "text-muted",
+                  "h-7 rounded-pill px-2.5 text-[12px] font-medium transition-colors duration-150",
+                  edgeView === v.id ? "bg-fg text-bg" : "text-faint hover:text-muted",
                 )}
               >
                 {v.label}

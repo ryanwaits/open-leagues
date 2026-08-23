@@ -73,7 +73,7 @@ function DeskPage() {
               >
                 <Stamp>Official record · wk {week}</Stamp>
                 <p className="microlabel">{lead.kicker}</p>
-                <h3 className="mt-2 font-display text-4xl font-extrabold leading-[1.15] tracking-[-0.03em]">
+                <h3 className="mt-2 font-display text-4xl font-medium leading-[1.15] tracking-[-0.02em]">
                   <span className="hl">{lead.headline}</span>
                 </h3>
                 <p className="mt-3 text-base leading-relaxed text-muted">{lead.dek}</p>
@@ -128,7 +128,7 @@ function ArticleView({ article, onBack }: { article: DispatchArticle; onBack: ()
         The desk
       </button>
       <p className="mt-6 microlabel">{article.kicker}</p>
-      <h3 className="mt-2 font-display text-4xl font-extrabold leading-[1.15] tracking-[-0.03em]">
+      <h3 className="mt-2 font-display text-4xl font-medium leading-[1.15] tracking-[-0.02em]">
         {article.headline}
       </h3>
       <p className="mt-4 text-lg leading-relaxed text-muted">{article.dek}</p>

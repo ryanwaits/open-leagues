@@ -76,9 +76,9 @@ function InstallSheet({
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 z-40 bg-black/40" />
-        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[90vh] flex-col rounded-t-2xl bg-surface px-5 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-3 ring-card outline-none">
-          <Drawer.Handle className="mx-auto h-1.5 w-10 shrink-0 rounded-full bg-line" />
+        <Drawer.Overlay className="fixed inset-0 z-40 bg-fg/40" />
+        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[90vh] flex-col rounded-t-xl bg-surface px-5 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-3 ring-card outline-none">
+          <Drawer.Handle className="mx-auto h-1.5 w-10 shrink-0 rounded-full bg-line-strong" />
           <Drawer.Title className="sr-only">Add {brand.name} to your home screen</Drawer.Title>
           <Drawer.Description className="sr-only">
             Steps to install {brand.name} as an app on this device.

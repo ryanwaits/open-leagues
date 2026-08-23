@@ -343,9 +343,7 @@ function MyTeamPage() {
             tint
           />
           <div className="min-w-0 flex-1 basis-48">
-            <h1 className="font-display text-3xl font-extrabold tracking-[-0.035em]">
-              {t.teamName}
-            </h1>
+            <h1 className="font-display text-3xl font-medium tracking-[-0.02em]">{t.teamName}</h1>
             <p className="mt-1 microlabel-data">
               {t.manager} · seat {rosterId} · {seed}
               {seed === 1 ? "st" : seed === 2 ? "nd" : seed === 3 ? "rd" : "th"} of{" "}
@@ -405,7 +403,7 @@ function MyTeamPage() {
           {ir.length || taxi.length ? (
             <section className="rounded-xl bg-surface ring-card">
               <header className="px-5 pt-5 pb-2">
-                <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Shelves</h2>
+                <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Shelves</h2>
               </header>
               <ul>
                 {[...ir, ...taxi].map((p) => (
@@ -438,7 +436,7 @@ function MyTeamPage() {
           {league.data.hosted ? (
             <section className="rounded-xl bg-surface ring-card">
               <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-                <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Waivers</h2>
+                <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Waivers</h2>
                 <Link
                   to="/league/$leagueId/wire"
                   params={{ leagueId }}
@@ -476,7 +474,7 @@ function MyTeamPage() {
           {league.data.hosted ? (
             <section className="rounded-xl bg-surface ring-card">
               <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-                <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Trades</h2>
+                <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Trades</h2>
                 <Link
                   to="/league/$leagueId/trades"
                   params={{ leagueId }}
@@ -530,7 +528,7 @@ function MyTeamPage() {
 
           <section className="rounded-xl bg-surface ring-card">
             <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-              <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Your moves</h2>
+              <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Your moves</h2>
               <Link
                 to="/league/$leagueId/activity"
                 params={{ leagueId }}
@@ -563,7 +561,7 @@ function MyTeamPage() {
 
           <section className="rounded-xl bg-surface ring-card">
             <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-              <h2 className="font-display text-lg font-bold tracking-[-0.03em]">Bye trouble</h2>
+              <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Bye trouble</h2>
               <span className="microlabel-data">Derived</span>
             </header>
             {byeStack.length === 0 ? (

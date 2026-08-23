@@ -66,7 +66,7 @@ export function PlayerSheet({
       <button
         type="button"
         aria-label="Close player details"
-        className="absolute inset-0 bg-bg/50"
+        className="absolute inset-0 bg-fg/40"
         onClick={onClose}
       />
       <section
@@ -75,7 +75,7 @@ export function PlayerSheet({
         aria-label={target.player.full_name}
         className="relative z-10 flex h-[min(88vh,44rem)] w-full flex-col rounded-t-xl bg-surface ring-card sm:h-full sm:w-[34rem] sm:rounded-none sm:border-l sm:border-line"
       >
-        <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-pill bg-line sm:hidden" />
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-line-strong sm:hidden" />
         <Body target={target} leagueId={leagueId} onClose={onClose} />
       </section>
     </div>

@@ -173,6 +173,41 @@ test("ledger default tokens are the x.ai/bot cut", () => {
   assert.match(styles, /h1,\s*h2,\s*h3\s*\{[^}]*font-weight:\s*500/s);
 });
 
+test("no component carries the retired push / shadow-thumb / heavy-weight recipes", () => {
+  const tsxFiles = findTsxFiles(join(root, "src"));
+  assert.ok(tsxFiles.length > 0, "expected to find .tsx files under src");
+
+  const pushLeaks = [];
+  const shadowThumbLeaks = [];
+  const extraboldLeaks = [];
+  for (const file of tsxFiles) {
+    const content = readFileSync(file, "utf8");
+    if (/className="push|"push /.test(content)) {
+      pushLeaks.push(file);
+    }
+    if (/0_1px_2px_rgb\(0_0_0\/0\.12\)/.test(content)) {
+      shadowThumbLeaks.push(file);
+    }
+    if (/font-extrabold/.test(content)) {
+      extraboldLeaks.push(file);
+    }
+  }
+
+  assert.deepEqual(pushLeaks, [], "no .tsx file should carry the retired push recipe");
+  assert.deepEqual(
+    shadowThumbLeaks,
+    [],
+    "no .tsx file should carry the retired segmented-thumb drop shadow",
+  );
+  assert.deepEqual(extraboldLeaks, [], "no .tsx file should use font-extrabold");
+
+  const button = readFileSync(join(root, "src/components/ui/button.tsx"), "utf8");
+  assert.match(button, /primary:\s*"bg-fg text-bg/);
+
+  const badge = readFileSync(join(root, "src/components/ui/badge.tsx"), "utf8");
+  assert.doesNotMatch(badge, /font-mono/);
+});
+
 test("__root.tsx loads Geist and stamps the Ledger theme-color", () => {
   const rootTsx = readFileSync(join(root, "src/routes/__root.tsx"), "utf8");
   assert.match(rootTsx, /family=Geist/);

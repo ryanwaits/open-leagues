@@ -49,7 +49,7 @@ export function PhaseHero(props: {
         <Link
           to="/league/$leagueId/draft"
           params={{ leagueId }}
-          className="push inline-flex h-11 shrink-0 items-center rounded-pill bg-accent px-5 text-sm font-bold text-accent-fg"
+          className="inline-flex h-10 shrink-0 items-center rounded-pill bg-fg px-4 text-sm font-medium text-bg hover:opacity-90"
         >
           {draftStatus === "live" ? "Go to the board" : "Open the draft"}
         </Link>
@@ -79,7 +79,7 @@ export function PhaseHero(props: {
             type="button"
             onClick={onFix}
             disabled={fixing}
-            className="push inline-flex h-11 shrink-0 items-center rounded-pill bg-accent px-5 text-sm font-bold text-accent-fg disabled:opacity-60"
+            className="inline-flex h-10 shrink-0 items-center rounded-pill bg-fg px-4 text-sm font-medium text-bg hover:opacity-90 disabled:opacity-60"
           >
             {fixing ? "Setting…" : "Fix my lineup"}
           </button>
@@ -117,7 +117,7 @@ export function PhaseHero(props: {
           to="/league/$leagueId/recap"
           params={{ leagueId }}
           search={{ week, story: undefined }}
-          className="push inline-flex h-11 shrink-0 items-center rounded-pill bg-accent px-5 text-sm font-bold text-accent-fg"
+          className="inline-flex h-10 shrink-0 items-center rounded-pill bg-fg px-4 text-sm font-medium text-bg hover:opacity-90"
         >
           Read the desk
         </Link>
@@ -174,7 +174,7 @@ function Body({
       <p className={cn("microlabel-data", tone === "alarm" ? "text-loss" : "text-faint")}>
         {kicker}
       </p>
-      <h2 className="mt-1.5 font-display text-xl font-extrabold tracking-[-0.03em]">{title}</h2>
+      <h2 className="mt-1.5 font-display text-xl font-medium tracking-[-0.02em]">{title}</h2>
       <p className="mt-1.5 text-sm text-muted">{body}</p>
     </div>
   );

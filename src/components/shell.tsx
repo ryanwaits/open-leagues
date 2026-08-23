@@ -143,7 +143,7 @@ export function Shell({
             <span className="flex items-center gap-2">
               <LogoMark className="size-6" />
               {showWordmark ? (
-                <span className="font-display text-[24px] font-extrabold leading-none tracking-[-0.03em]">
+                <span className="font-display text-[22px] font-semibold leading-none tracking-[-0.02em]">
                   {brand.name}
                 </span>
               ) : null}
@@ -162,8 +162,8 @@ export function Shell({
                     search={(prev) => prev}
                     preload="intent"
                     className={cn(
-                      "shrink-0 rounded-pill px-3.5 py-2 text-sm font-semibold transition-colors duration-150",
-                      t.active ? "bg-fg text-bg" : "text-muted hover:bg-raised hover:text-fg",
+                      "shrink-0 rounded-pill px-3.5 py-2 text-sm font-medium transition-colors duration-150",
+                      t.active ? "bg-fg text-bg" : "text-fg/55 hover:bg-raised hover:text-fg",
                     )}
                   >
                     {t.label}
@@ -177,8 +177,8 @@ export function Shell({
               to="/scores"
               aria-label={live ? "NFL scores · games in progress" : "NFL scores"}
               className={cn(
-                "relative inline-flex h-9 items-center gap-1.5 rounded-pill px-2.5 text-sm font-semibold transition-colors duration-150 sm:px-3",
-                inScores ? "bg-raised text-fg" : "text-muted hover:bg-raised hover:text-fg",
+                "relative inline-flex h-9 items-center gap-1.5 rounded-pill px-2.5 text-sm font-medium transition-colors duration-150 sm:px-3",
+                inScores ? "bg-raised text-fg" : "text-fg/55 hover:bg-raised hover:text-fg",
               )}
             >
               <Radio className="size-[18px] sm:size-4" strokeWidth={1.9} />

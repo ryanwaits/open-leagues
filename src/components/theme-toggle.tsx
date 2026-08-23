@@ -36,7 +36,7 @@ export function ThemeToggle({ className }: { className?: string }) {
             onClick={() => setPref(value)}
             className={cn(
               "grid size-8 place-items-center rounded-pill transition-colors duration-150",
-              on ? "bg-surface text-fg shadow-[0_1px_2px_rgb(0_0_0/0.12)]" : "text-faint",
+              on ? "bg-fg text-bg" : "text-faint",
               !on && "hover:text-muted",
             )}
           >

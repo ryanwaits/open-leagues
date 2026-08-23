@@ -83,7 +83,7 @@ export function HeaderMenu({
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="fixed inset-0 z-40 bg-bg/50 sm:hidden"
+        className="fixed inset-0 z-40 bg-fg/40 sm:hidden"
       />
       <div
         ref={panelRef}
@@ -99,14 +99,14 @@ export function HeaderMenu({
             : undefined
         }
         className={cn(
-          "fixed z-50 bg-surface p-1.5 shadow-[0_0_0_1px_var(--color-line-strong),var(--shadow-lift)]",
+          "fixed z-50 bg-surface p-1.5 shadow-[0_0_0_1px_var(--color-line-strong)]",
           "max-sm:inset-x-0 max-sm:bottom-0 max-sm:rounded-t-xl max-sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]",
           "sm:top-[var(--menu-top)] sm:rounded-lg",
           align === "left" ? "sm:left-[var(--menu-left)]" : "sm:right-[var(--menu-right)]",
           className,
         )}
       >
-        <div className="mx-auto mt-1 mb-3 h-1 w-9 rounded-full bg-line-strong sm:hidden" />
+        <div className="mx-auto mt-1 mb-3 h-1.5 w-10 rounded-full bg-line-strong sm:hidden" />
         {children}
       </div>
     </>,

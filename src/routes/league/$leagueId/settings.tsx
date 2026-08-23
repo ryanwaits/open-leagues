@@ -168,7 +168,7 @@ function SettingsPage() {
   return (
     <div className="max-w-3xl space-y-10">
       <header>
-        <h1 className="font-display text-3xl font-extrabold tracking-[-0.03em]">League setup</h1>
+        <h1 className="font-display text-3xl font-medium tracking-[-0.02em]">League setup</h1>
         <p className="mt-1.5 text-sm text-muted">
           {q.data.isCommish
             ? "You run this league. Everything here is yours to change."
@@ -184,7 +184,7 @@ function SettingsPage() {
         className="flex items-center justify-between gap-4 rounded-xl bg-surface px-5 py-4 ring-card transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 ring-card-h"
       >
         <span>
-          <span className="block font-display text-lg font-bold tracking-[-0.03em]">
+          <span className="block font-display text-lg font-medium tracking-[-0.02em]">
             Draft room
           </span>
           <span className="mt-0.5 block text-sm text-muted">

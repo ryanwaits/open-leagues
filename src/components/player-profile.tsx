@@ -49,7 +49,7 @@ export function ProfileIdentity({
       <div className="min-w-0 flex-1">
         <h1
           className={cn(
-            "font-display font-extrabold leading-tight tracking-[-0.035em]",
+            "font-display font-medium leading-tight tracking-[-0.02em]",
             size === "lg" ? "text-3xl sm:text-4xl" : "text-2xl",
           )}
         >

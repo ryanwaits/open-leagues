@@ -48,7 +48,7 @@ function GuestHome() {
   return (
     <section className="w-full max-w-md text-center">
       <p className="microlabel">Hosted here · no other app</p>
-      <h1 className="mt-3 font-display text-5xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance sm:text-6xl">
+      <h1 className="mt-3 font-display text-5xl font-medium leading-[1.02] tracking-[-0.03em] text-balance sm:text-6xl">
         Your league, <span className="hl">your desk</span>.
       </h1>
       <p className="mx-auto mt-5 max-w-sm text-base leading-relaxed text-muted">
@@ -70,7 +70,7 @@ function FirstHome() {
   return (
     <section className="w-full max-w-md text-center">
       <p className="microlabel">No leagues yet</p>
-      <h1 className="mt-3 font-display text-4xl font-extrabold tracking-[-0.03em] text-balance">
+      <h1 className="mt-3 font-display text-4xl font-medium tracking-[-0.02em] text-balance">
         How are you getting in?
       </h1>
       <p className="mx-auto mt-4 max-w-sm text-base leading-relaxed text-muted">
@@ -104,7 +104,7 @@ function DeskHome({
   return (
     <section className="w-full max-w-lg text-center">
       <p className="microlabel">Your leagues</p>
-      <h1 className="mt-2 font-display text-4xl font-extrabold tracking-[-0.03em]">The desk</h1>
+      <h1 className="mt-2 font-display text-4xl font-medium tracking-[-0.02em]">The desk</h1>
       <ul className="mt-6 space-y-2 text-left">
         {seats.map((l) => (
           <li key={l.leagueId}>

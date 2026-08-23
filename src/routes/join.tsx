@@ -118,7 +118,7 @@ function JoinLeague() {
               <label className="mt-3 block">
                 <span className="microlabel">Open seats</span>
                 <select
-                  className="mt-1.5 h-11 w-full rounded-md bg-raised px-3 text-sm text-fg ring-card"
+                  className="mt-1.5 h-10 w-full rounded-md bg-surface px-3 text-base text-fg shadow-[0_0_0_1px_var(--color-line-strong)] sm:text-sm"
                   value={rosterId}
                   onChange={(e) => setRosterId(e.target.value ? Number(e.target.value) : "")}
                 >

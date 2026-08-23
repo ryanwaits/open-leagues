@@ -208,7 +208,7 @@ function LeagueLayout() {
       ) : q.data ? (
         <header className="mb-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <h1 className="font-display text-4xl font-extrabold tracking-[-0.03em]">
+            <h1 className="font-display text-4xl font-medium tracking-[-0.02em]">
               {q.data.league.name}
             </h1>
             {usesWeek ? (
@@ -279,7 +279,7 @@ function ClaimBanner({ leagueId, inviteCode }: { leagueId: string; inviteCode: s
           id="claim-seat"
           name="rosterId"
           aria-label="Seat to claim"
-          className="mt-2 h-11 w-full max-w-xs rounded-pill border border-line bg-raised px-4 text-sm text-fg"
+          className="mt-2 h-10 w-full max-w-xs rounded-md bg-surface px-4 text-base text-fg shadow-[0_0_0_1px_var(--color-line-strong)] sm:text-sm"
           value={rosterId}
           onChange={(e) => setRosterId(e.target.value ? Number(e.target.value) : "")}
         >

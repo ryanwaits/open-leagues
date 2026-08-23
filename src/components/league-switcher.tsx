@@ -42,7 +42,7 @@ export function LeagueSwitcher({ current }: { current: SavedLeague | null }) {
         aria-expanded={open}
         aria-label={`League: ${current.name}. Switch league`}
         onClick={() => setOpen((v) => !v)}
-        className="flex h-9 max-w-[11rem] items-center gap-2 rounded-pill bg-surface pr-2.5 pl-1.5 text-sm font-bold ring-card sm:max-w-[14rem]"
+        className="flex h-9 max-w-[11rem] items-center gap-2 rounded-pill bg-surface pr-2.5 pl-1.5 text-sm font-medium shadow-[0_0_0_1px_var(--color-line-strong)] sm:max-w-[14rem]"
       >
         <Avatar
           name={current.name}
