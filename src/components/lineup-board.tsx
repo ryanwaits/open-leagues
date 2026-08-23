@@ -561,10 +561,11 @@ function Points({
         points={disp.points}
         live
         expected={liveProj ? expected : undefined}
+        baseline={liveProj ? baseline : undefined}
         expectedTone={
           liveProj ? (projectionTone(expected, baseline) === "brand" ? "good" : "alarm") : null
         }
-        className="w-14 text-sm"
+        className="min-w-14 text-sm"
       />
     );
   }

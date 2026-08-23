@@ -40,6 +40,11 @@ export function useScoreFlash(
   return flash;
 }
 
+function signedDelta(n: number): string {
+  const sign = n > 0.04 ? "+" : n < -0.04 ? "−" : "";
+  return `${sign}${formatPts(Math.abs(n), 1)}`;
+}
+
 /** Points on a matchup row — unofficial, or a dimmed weekly forecast. */
 export function SlotPts({
   points,
@@ -49,6 +54,8 @@ export function SlotPts({
   reserve: _reserve = false,
   expected,
   expectedTone,
+  baseline,
+  chipSide = "after",
   live = false,
   className,
 }: {
@@ -58,13 +65,21 @@ export function SlotPts({
   align?: "left" | "right";
   /** Kept so callers that reserved a note line do not have to change. */
   reserve?: boolean;
-  /** Live-adjusted expected final. Shown faintly while the game is still on. */
+  /** Live-adjusted expected final. */
   expected?: number | null;
   /**
-   * Colours the expected line and prefixes it "pace" instead of the default
-   * faint, unlabelled figure — the lineup toggle's on-state.
+   * Colours the inline ± vs the pre-game projection — the lineup toggle's
+   * on-state. Without a tone, `expected` is a faint remaining-pace figure.
    */
   expectedTone?: "good" | "alarm" | null;
+  /** Pre-game projection. With `expectedTone`, the inline chip is expected − this. */
+  baseline?: number | null;
+  /**
+   * Where the ± sits relative to the score. Matchup left column uses
+   * `"before"` so the chip hangs away from the spine; lineup and the
+   * right column keep `"after"`.
+   */
+  chipSide?: "before" | "after";
   /** Unofficial live scoring — never projections. */
   live?: boolean;
   className?: string;
@@ -73,52 +88,61 @@ export function SlotPts({
   const flash = useScoreFlash(points, Boolean(live) && !note);
   const gain =
     !note && Math.abs(flash) > 0.04 ? `${flash > 0 ? "+" : ""}${formatPts(flash, 1)}` : null;
-  const rest = !note && !gain && expected != null && points != null && expected - points > 0.25;
+
+  let chip: { text: string; className: string } | null = null;
+  if (gain) {
+    chip = {
+      text: gain,
+      className: cn(
+        "motion-safe:animate-[score-flash_4.5s_ease-out_forwards]",
+        flash < 0 ? "text-loss" : "text-accent-strong",
+      ),
+    };
+  } else if (!note && expected != null && expectedTone && baseline != null) {
+    const d = expected - baseline;
+    if (Math.abs(d) > 0.04) {
+      chip = {
+        text: signedDelta(d),
+        className: expectedTone === "good" ? "text-accent-strong" : "text-loss",
+      };
+    }
+  } else if (!note && expected != null && points != null && expected - points > 0.25) {
+    chip = { text: formatPts(expected, 1), className: "text-faint" };
+  }
+
   return (
     <span
       className={cn(
         // min-h-8 matches the compact avatar so a lone score sits on the same
-        // midline as name + meta, including when a bye/out/gain line is absent.
-        "flex min-h-8 w-16 shrink-0 flex-col justify-center font-mono text-xs leading-none tabular-nums",
-        align === "left" ? "items-start text-left" : "items-end text-right",
+        // midline as name + meta. The ± chip sits on that same line so a live
+        // row is the same height as a pre-kick projection.
+        "inline-flex min-h-8 shrink-0 items-center font-mono text-xs leading-none tabular-nums",
+        align === "left" ? "justify-start text-left" : "justify-end text-right",
         forecast && "text-muted",
         className,
       )}
     >
-      <span className="leading-none">{formatPts(points, 1)}</span>
-      {/* The sub-line slot is always reserved (same trick as TeamTotal's
-          `reserve`): a delta flashing in must never move the value above it
-          or change the row height. */}
       {note ? (
-        <span className="mt-0.5 h-[13px] text-[10px] leading-[13px] uppercase tracking-wide text-faint">
-          {note}
-        </span>
-      ) : gain ? (
         <span
           className={cn(
-            "mt-0.5 h-[13px] text-[10px] leading-[13px] motion-safe:animate-[score-flash_4.5s_ease-out_forwards]",
-            flash < 0 ? "text-loss" : "text-accent-strong",
+            "flex flex-col justify-center",
+            align === "left" ? "items-start" : "items-end",
           )}
         >
-          {gain}
-        </span>
-      ) : rest ? (
-        <span
-          className={cn(
-            "mt-0.5 h-[13px] text-[10px] leading-[13px]",
-            expectedTone === "good"
-              ? "text-accent-strong"
-              : expectedTone === "alarm"
-                ? "text-loss"
-                : "text-faint",
-          )}
-        >
-          {expectedTone ? "pace " : ""}
-          {formatPts(expected, 1)}
+          <span className="leading-none">{formatPts(points, 1)}</span>
+          <span className="mt-0.5 text-[10px] leading-[13px] uppercase tracking-wide text-faint">
+            {note}
+          </span>
         </span>
       ) : (
-        <span className="invisible mt-0.5 h-[13px] text-[10px] leading-[13px]" aria-hidden="true">
-          &nbsp;
+        <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
+          {chip && chipSide === "before" ? (
+            <span className={cn("text-[11px] leading-none", chip.className)}>{chip.text}</span>
+          ) : null}
+          <span className="leading-none">{formatPts(points, 1)}</span>
+          {chip && chipSide === "after" ? (
+            <span className={cn("text-[11px] leading-none", chip.className)}>{chip.text}</span>
+          ) : null}
         </span>
       )}
     </span>

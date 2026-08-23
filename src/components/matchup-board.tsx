@@ -297,7 +297,8 @@ function Half({
         live={live}
         reserve
         align={flip ? "left" : "right"}
-        className="w-10 text-sm sm:w-14"
+        chipSide={flip ? "after" : "before"}
+        className="min-w-10 text-sm sm:min-w-14"
       />
     </button>
   );

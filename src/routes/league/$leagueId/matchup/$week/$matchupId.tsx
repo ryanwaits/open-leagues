@@ -796,7 +796,11 @@ function Line({
         expected={side.expected}
         live={live}
         align={align}
-        className={cn("w-10 text-sm sm:w-12", !side.forecast && (hot ? "text-fg" : "text-muted"))}
+        chipSide={align === "left" ? "before" : "after"}
+        className={cn(
+          "min-w-10 text-sm sm:min-w-12",
+          !side.forecast && (hot ? "text-fg" : "text-muted"),
+        )}
       />
     </button>
   );
