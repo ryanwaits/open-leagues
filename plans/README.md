@@ -40,6 +40,14 @@ Slices live here. Read the one you are executing from.
   multiseries matchup chart + home card meter with an `ff_ticks` writer (055),
   the book's line‑movement strip with in‑play wagering scoped separately (056).
   Design artifact: https://claude.ai/code/artifact/841ce7c9-05e1-4edd-a217-c48ffed610be
+- **057–059 — Ledger·Bot: the default theme cut like x.ai/bot** (improve skill,
+  2026-08-22, commit `d370e29`). Goal: the default Ledger mode reads like
+  https://x.ai/bot — white ground, flat warm-grey cards, ink primary, sober
+  green, Geist — via the skin contract (057 tokens/type), then the primitive
+  recipes (058), then phone polish incl. the matchup-edge caption bug (059).
+  Ryan's calls: variant B (ringed white cards), sans eyebrows, ship as
+  default, Geist. Advisor's: retire `.push`. Design artifact:
+  https://claude.ai/code/artifact/4e0119fb-6b78-48ec-9a77-abaf4c55675e
 - **041–044 — Headless engine: token, MCP, skills** (improve skill,
   2026-08-19, commit `735b0ba`). Goal: Codex / Claude / Grok can
   install open-ff as a tool server (stdio on the commish box, HTTP
@@ -342,6 +350,9 @@ reconcile). Source tree clean.
 | 055  | Matchup finals chart + home win-prob meter + `ff_ticks` writer (on read + tick) | P1 | L | 053, 054 | DONE `9b8f62e`+`fdfd48c`+`8c31e11`+`efabd40` (not pushed; reviewed/APPROVED 2026-08-21 after 2 revision rounds: no sample until outlooks load, caption clears the time axis; getTicks registered in the agent catalog — sanctioned out-of-scope touch) |
 | 056  | The book's line-movement strip (LinePanel + ticket) + in-play wagering spec | P2 | M | 055 | DONE `7ce8cef` (not pushed; reviewed/APPROVED 2026-08-21; strip quiet + opened/now caption; in-play wagering left as spec in the plan file — not built) |
 
+| 057  | Ledger·Bot tokens + type — off-white ground, ringed white cards, Geist, sans eyebrows, `.push` zeroed | P1 | M | — | DONE `2a9b93f` (not pushed; reviewed/APPROVED 2026-08-23; 2 new skin tests; gate green; Box Score verified unchanged) |
+| 058  | Ledger·Bot primitives — ink primary pill, sans badges, one segmented recipe, 500-weight nav/headings, edged sheets | P1 | M | 057 | TODO |
+| 059  | Ledger·Bot mobile polish — header/thumb bar/masthead/week pill, matchup-edge caption wrap fix, dev toolbar | P2 | M | 058 | TODO |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
 ## Dependency notes
