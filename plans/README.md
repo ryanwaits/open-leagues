@@ -57,6 +57,12 @@ Slices live here. Read the one you are executing from.
   page re-anchoring on settle (063). Ryan's calls: hide fully; all three panes,
   today's order; card-only swipe with full context shift; ship 060→063. Artifact:
   https://claude.ai/code/artifact/437db70f-5d8e-4f35-97c8-d1a4b620f961
+- **064 — Matchup liveline: kickoff gate + tab-switch reveal** (improve skill,
+  2026-08-23, commit `01439f9`). Goal: the Where-the-game-is canvas obeys 055's
+  Tue–Sat rule (no chart until `pairHasStarted` or stored ticks — outlooks
+  loading is not kickoff) and Win % ↔ Margin share one `<LiveLine>` so
+  liveline's `chartReveal` wave does not replay on every tab. Sequence after
+  063 so the matchup-page swipe and this card cleanup do not review-collide.
 - **041–044 — Headless engine: token, MCP, skills** (improve skill,
   2026-08-19, commit `735b0ba`). Goal: Codex / Claude / Grok can
   install open-ff as a tool server (stdio on the commish box, HTTP
@@ -365,7 +371,8 @@ reconcile). Source tree clean.
 | 060  | Shell gestures — thumb bar hides on scroll-down, re-tap = top | P1 | S | — | DONE `e84ea66` (not pushed; reviewed/APPROVED 2026-08-23; executor's StrictMode fix sanctioned — closure state instead of impure functional updater; 5 reducer tests) |
 | 061  | Game page — pinned segment rail + swipeable Plays·Box·Scoring panes | P1 | M | 060 | DONE `3c0bd20`+`c3f4272` (not pushed; reviewed/APPROVED 2026-08-23 after 1 revision — short-pane landing kept in view; items-start height-sync fix sanctioned; 1 new skin test) |
 | 062  | Player sheet + watch drawer on vaul — half/full detents, drag dismiss | P2 | M | 061 | DONE `75475d2` (not pushed; reviewed/APPROVED 2026-08-23; reduced-motion → [1] only; deps-array deviation sanctioned; 1 new skin test) |
-| 063  | Matchup page — score card swipes the week's slate, page re-anchors on settle | P2 | M | 062 | TODO |
+| 063  | Matchup page — score card swipes the week's slate, page re-anchors on settle | P2 | M | 062 | DONE `d2b1242` (not pushed; reviewed/APPROVED 2026-08-23; settle→navigate replace:true, no ping-pong; snap-settle helper + 6 tests; deps [matchupId, slate.length] deviation sanctioned) |
+| 064  | Gate the matchup liveline until kickoff; stop the tab-switch reveal flicker | P1 | S | 063 | TODO (run after 063 DONE) |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
 ## Dependency notes
@@ -418,6 +425,13 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
   could share `PlayerStatRow` from 017 as a follow-up — worth doing so the two
   trade surfaces look alike, but neither blocks the other and 017 is told not to
   touch the drawer.
+
+### 064 (liveline gate)
+
+- **Wait for 063.** 064 does not edit `$matchupId.tsx` (MatchupEdge only), but
+  063 still owns that route. Do not start 064 while 063 is IN PROGRESS.
+- **Does not depend on 055's code landing again** — 055 is DONE; this is a
+  correction to its `started` gate (`samples.length >= 1` was too eager).
 
 ## Known repo hazards (read before executing 006–014)
 
