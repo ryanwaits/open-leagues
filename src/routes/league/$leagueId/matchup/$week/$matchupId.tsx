@@ -368,11 +368,7 @@ function MatchupPage() {
             {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: touch-swipe surface; the NavChips are the keyboard/AT path */}
             <div
               {...slateSwipe.handlers}
-              className={cn(
-                "flex touch-pan-y gap-3 px-4 pb-1",
-                !slateSwipe.dragging &&
-                  "motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out",
-              )}
+              className="flex touch-pan-y gap-3 px-4 pb-1"
               // Each step is one card (100% − 2.75rem peek) plus the 12px gap,
               // and 100% here is the track's own (= wrapper) width.
               style={{
@@ -401,7 +397,7 @@ function MatchupPage() {
               <span
                 key={p.matchupId}
                 className={cn(
-                  "h-1.5 rounded-pill transition-all duration-150",
+                  "h-1.5 rounded-pill",
                   p.matchupId === pair.matchupId ? "w-4 bg-fg" : "w-1.5 bg-line-strong",
                 )}
               />
