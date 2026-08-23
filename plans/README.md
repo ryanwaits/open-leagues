@@ -46,7 +46,8 @@ Slices live here. Read the one you are executing from.
   green, Geist — via the skin contract (057 tokens/type), then the primitive
   recipes (058), then phone polish incl. the matchup-edge caption bug (059).
   Ryan's calls: variant B (ringed white cards), sans eyebrows, ship as
-  default, Geist. Advisor's: retire `.push`. Design artifact:
+  default, Geist. Advisor's: retire `.push`. **All three DONE** (2a9b93f,
+  a33f297+3b905a2, 7d11914+ca770a1 — not pushed). Design artifact:
   https://claude.ai/code/artifact/4e0119fb-6b78-48ec-9a77-abaf4c55675e
 - **041–044 — Headless engine: token, MCP, skills** (improve skill,
   2026-08-19, commit `735b0ba`). Goal: Codex / Claude / Grok can
@@ -352,7 +353,7 @@ reconcile). Source tree clean.
 
 | 057  | Ledger·Bot tokens + type — off-white ground, ringed white cards, Geist, sans eyebrows, `.push` zeroed | P1 | M | — | DONE `2a9b93f` (not pushed; reviewed/APPROVED 2026-08-23; 2 new skin tests; gate green; Box Score verified unchanged) |
 | 058  | Ledger·Bot primitives — ink primary pill, sans badges, one segmented recipe, 500-weight nav/headings, edged sheets | P1 | M | 057 | DONE `a33f297`+`3b905a2` (not pushed; reviewed/APPROVED 2026-08-23; 30 files, class strings only; 1 new skin test; 2 leftover `bg-bg/50` scrims in player-watch/player-peek were out of scope → folded into 059) |
-| 059  | Ledger·Bot mobile polish — header/thumb bar/masthead/week pill, matchup-edge caption wrap fix, dev toolbar | P2 | M | 058 | TODO |
+| 059  | Ledger·Bot mobile polish — header/thumb bar/masthead/week pill, matchup-edge caption wrap fix, dev toolbar | P2 | M | 058 | DONE `7d11914`+`ca770a1` (not pushed; reviewed/APPROVED 2026-08-23; caption ≤2 lines verified at 390px; 1 new skin test; week-picker kept `group`/focus classes — sanctioned) |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
 ## Dependency notes
