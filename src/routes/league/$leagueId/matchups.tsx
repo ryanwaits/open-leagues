@@ -285,7 +285,7 @@ function MatchupsPage() {
                   type="button"
                   aria-label="Scroll matchups left"
                   onClick={() => scrollStrip(-1)}
-                  className="absolute top-1/2 left-0 z-10 grid size-8 -translate-x-1 -translate-y-1/2 place-items-center rounded-pill border border-line bg-surface text-faint shadow-[var(--shadow-lift)] hover:text-fg"
+                  className="absolute top-1/2 left-0 z-10 grid size-8 -translate-x-1 -translate-y-1/2 place-items-center rounded-pill bg-surface text-faint shadow-[0_0_0_1px_var(--color-line-strong)] hover:text-fg"
                 >
                   <ChevronLeft className="size-4" strokeWidth={2} />
                 </button>
@@ -295,7 +295,7 @@ function MatchupsPage() {
                   type="button"
                   aria-label="Scroll matchups right"
                   onClick={() => scrollStrip(1)}
-                  className="absolute top-1/2 right-0 z-10 grid size-8 translate-x-1 -translate-y-1/2 place-items-center rounded-pill border border-line bg-surface text-faint shadow-[var(--shadow-lift)] hover:text-fg"
+                  className="absolute top-1/2 right-0 z-10 grid size-8 translate-x-1 -translate-y-1/2 place-items-center rounded-pill bg-surface text-faint shadow-[0_0_0_1px_var(--color-line-strong)] hover:text-fg"
                 >
                   <ChevronRight className="size-4" strokeWidth={2} />
                 </button>

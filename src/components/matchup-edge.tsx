@@ -215,13 +215,13 @@ export function MatchupEdge({
             />
           )}
 
-          <div className="mt-5 flex justify-between microlabel-data">
-            <span>
+          <div className="mt-5 flex items-start justify-between gap-3 microlabel-data">
+            <span className="min-w-0">
               {a.teamName} {pct}%{live ? <span className="text-live"> · live</span> : null}
               {s.sinceOpened && !s.final ? " · since you opened" : null}
+              {chip.text ? <span className={cn("ml-2", chip.cls)}>{chip.text}</span> : null}
             </span>
-            <span className={chip.cls}>{chip.text}</span>
-            <span>
+            <span className="shrink-0 whitespace-nowrap">
               proj {formatPts(s.last?.youProj ?? wp.projected[0], 1)} &ndash;{" "}
               {formatPts(s.last?.themProj ?? wp.projected[1], 1)}
             </span>
@@ -233,11 +233,11 @@ export function MatchupEdge({
             <span className="bg-accent-deep" style={{ width: `${pct}%` }} />
             <span className="bg-faint" style={{ width: `${100 - pct}%` }} />
           </div>
-          <div className="mt-1.5 flex justify-between microlabel-data">
-            <span>
+          <div className="mt-1.5 flex items-start justify-between gap-3 microlabel-data">
+            <span className="min-w-0">
               {a.teamName} {pct}%
             </span>
-            <span>
+            <span className="shrink-0 whitespace-nowrap">
               proj {formatPts(wp.projected[0], 1)} &ndash; {formatPts(wp.projected[1], 1)}
             </span>
           </div>
