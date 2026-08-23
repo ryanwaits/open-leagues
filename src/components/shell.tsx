@@ -8,6 +8,7 @@ import { LogoMark } from "@/components/logo";
 import { SignedIn, SignedOut, UserButton } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getLeagueBundle, getScores } from "@/lib/data/fns";
+import { motionOk, useScrollHide } from "@/lib/scroll-hide";
 import { useLeagueStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { brand } from "@/skin/brand";
@@ -134,6 +135,8 @@ export function Shell({
       ? leagueTabs(leagueId, Boolean(bundle.data?.hosted))
       : [];
   const showWordmark = !current || !user;
+  const barHidden = useScrollHide();
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: motionOk() ? "smooth" : "auto" });
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg text-fg">
@@ -222,7 +225,12 @@ export function Shell({
 
       <InstallDrawer />
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/92 backdrop-blur-md md:hidden">
+      <nav
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/92 backdrop-blur-md transition-transform duration-200 ease-out motion-reduce:transition-none md:hidden",
+          barHidden && "translate-y-full",
+        )}
+      >
         {navTabs.length ? (
           <div
             className="mx-auto grid max-w-lg px-2 pb-[env(safe-area-inset-bottom)]"
@@ -235,6 +243,9 @@ export function Shell({
                 params={t.params}
                 search={(prev) => prev}
                 preload="intent"
+                onClick={() => {
+                  if (t.active) scrollToTop();
+                }}
                 className={cn(
                   "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150",
                   t.active ? "bg-fg/6 text-fg" : "text-faint",
@@ -249,6 +260,9 @@ export function Shell({
           <div className="mx-auto grid max-w-lg grid-cols-3 px-2 pb-[env(safe-area-inset-bottom)]">
             <Link
               to="/"
+              onClick={() => {
+                if (pathname === "/") scrollToTop();
+              }}
               className={cn(
                 "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150",
                 pathname === "/" ? "bg-fg/6 text-fg" : "text-faint",
@@ -259,6 +273,9 @@ export function Shell({
             </Link>
             <Link
               to="/scores"
+              onClick={() => {
+                if (inScores) scrollToTop();
+              }}
               className={cn(
                 "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150",
                 inScores ? "bg-fg/6 text-fg" : "text-faint",
@@ -274,6 +291,9 @@ export function Shell({
                 <SignedIn>
                   <Link
                     to="/join"
+                    onClick={() => {
+                      if (pathname === "/join") scrollToTop();
+                    }}
                     className={cn(
                       "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150",
                       pathname === "/join" ? "bg-fg/6 text-fg" : "text-faint",
