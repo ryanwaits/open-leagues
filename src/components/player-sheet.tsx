@@ -22,7 +22,6 @@ import {
 } from "@/lib/data/player-view";
 import type { GameChip, SlimPlayer } from "@/lib/data/types";
 import type { ScoringBook } from "@/lib/league/scoring";
-import { motionOk } from "@/lib/scroll-hide";
 
 export type SheetTarget = {
   player: SlimPlayer;
@@ -62,13 +61,6 @@ export function PlayerSheet({
   onClose: () => void;
 }) {
   const isPhone = useIsPhone();
-  const snapPoints = motionOk() ? [0.55, 1] : [1];
-  const [snap, setSnap] = useState<number | string | null>(snapPoints[0]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: target.player_id is the reset trigger, not a read inside the effect — a new player should snap back to the half detent.
-  useEffect(() => {
-    setSnap(snapPoints[0]);
-  }, [target?.player.player_id, snapPoints[0]]);
 
   useEffect(() => {
     if (isPhone || !target) return;
@@ -91,10 +83,6 @@ export function PlayerSheet({
         onOpenChange={(o) => {
           if (!o) onClose();
         }}
-        snapPoints={snapPoints}
-        activeSnapPoint={snap}
-        setActiveSnapPoint={setSnap}
-        fadeFromIndex={0}
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-50 bg-fg/40" />

@@ -17,7 +17,6 @@ import { useSimPhase, useSimProgress } from "@/lib/demo/store";
 import type { ScoringBook } from "@/lib/league/scoring";
 import { EMPTY_BOOK, useProjectionSeries } from "@/lib/live/use-projection-series";
 import { REPLAY_PHASES, replayPts, replayStats } from "@/lib/replay";
-import { motionOk } from "@/lib/scroll-hide";
 import { cn, formatPts } from "@/lib/utils";
 
 export type WatchTarget = {
@@ -81,13 +80,6 @@ export function PlayerWatch({
   onClose: () => void;
 }) {
   const isPhone = useIsPhone();
-  const snapPoints = motionOk() ? [0.55, 1] : [1];
-  const [snap, setSnap] = useState<number | string | null>(snapPoints[0]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: target.player_id is the reset trigger, not a read inside the effect — a new player should snap back to the half detent.
-  useEffect(() => {
-    setSnap(snapPoints[0]);
-  }, [target?.player.player_id, snapPoints[0]]);
 
   useEffect(() => {
     if (isPhone || !target) return;
@@ -110,10 +102,6 @@ export function PlayerWatch({
         onOpenChange={(o) => {
           if (!o) onClose();
         }}
-        snapPoints={snapPoints}
-        activeSnapPoint={snap}
-        setActiveSnapPoint={setSnap}
-        fadeFromIndex={0}
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-50 bg-fg/40" />
