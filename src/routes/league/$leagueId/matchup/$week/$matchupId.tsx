@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Avatar } from "@/components/avatar";
 import { MatchupEdge } from "@/components/matchup-edge";
 import { PlayerCell } from "@/components/player-cell";
@@ -52,7 +52,11 @@ import {
   replayStatMap,
   seedPairForReplay,
 } from "@/lib/replay";
+import { settledIndex } from "@/lib/snap-settle";
 import { cn, fmtRecord, formatPts } from "@/lib/utils";
+
+/** gap-3 in the swipe row, in px — included in each card's snap step. */
+const SLATE_GAP = 12;
 
 export const Route = createFileRoute("/league/$leagueId/matchup/$week/$matchupId")({
   component: MatchupPage,
@@ -60,6 +64,7 @@ export const Route = createFileRoute("/league/$leagueId/matchup/$week/$matchupId
 
 function MatchupPage() {
   const { leagueId, week: weekParam, matchupId: idParam } = Route.useParams();
+  const navigate = useNavigate();
   const week = Number(weekParam);
   const matchupId = Number(idParam);
   // The transport lives in the demo toolbar; this page only reads the clock.
@@ -72,6 +77,9 @@ function MatchupPage() {
   const stopSim = useDemoStore((s) => s.stop);
   const [watch, setWatch] = useState<WatchTarget | null>(null);
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
+  const slateRef = useRef<HTMLDivElement | null>(null);
+  const programmatic = useRef(false);
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   /**
    * A live game and a finished one ask different questions. In progress, you
@@ -231,6 +239,55 @@ function MatchupPage() {
     return paintMatchups(overlaid, projections.data ?? {}, stats);
   }, [matchups.data, pre.on, pre.games, pre.stats, book, projections.data, stats]);
 
+  // Snap the row to the current matchup's card without animating — this runs
+  // on every matchupId change (NavChip taps included), not just mount, so the
+  // row always opens centered on today's game. `onSlateScroll` below ignores
+  // the scroll events this write produces via the `programmatic` ref. Keyed
+  // on slate.length (not `slate` itself) so a live stats refetch — which
+  // produces a new `slate` array every poll — never re-snaps mid-swipe.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally excludes `slate` (see above) — only its length and matchupId should re-anchor the row
+  useLayoutEffect(() => {
+    const el = slateRef.current;
+    if (!el || slate.length < 2) return;
+    const i = slate.findIndex((p) => p.matchupId === matchupId);
+    if (i < 0) return;
+    const card = el.firstElementChild as HTMLElement | null;
+    if (!card) return;
+    const cardW = card.offsetWidth + SLATE_GAP;
+    programmatic.current = true;
+    el.scrollLeft = i * cardW;
+    requestAnimationFrame(() => {
+      programmatic.current = false;
+    });
+  }, [matchupId, slate.length]);
+
+  useEffect(() => {
+    return () => {
+      if (settleTimer.current) clearTimeout(settleTimer.current);
+    };
+  }, []);
+
+  function onSlateScroll() {
+    if (settleTimer.current) clearTimeout(settleTimer.current);
+    settleTimer.current = setTimeout(() => {
+      if (programmatic.current) return;
+      const el = slateRef.current;
+      if (!el) return;
+      const card = el.firstElementChild as HTMLElement | null;
+      if (!card) return;
+      const cardW = card.offsetWidth + SLATE_GAP;
+      const i = settledIndex(el.scrollLeft, cardW, slate.length);
+      const target = slate[i];
+      if (target && target.matchupId !== matchupId) {
+        navigate({
+          to: "/league/$leagueId/matchup/$week/$matchupId",
+          params: { leagueId, week: String(week), matchupId: String(target.matchupId) },
+          replace: true,
+        });
+      }
+    }, 160);
+  }
+
   const prevPair = useMemo(() => {
     if (!seeded || progress == null || progress <= 0) return null;
     const raw: MatchupPair = {
@@ -299,6 +356,7 @@ function MatchupPage() {
           label: REPLAY_PHASES[phase]?.label ?? "Replay",
           tone: (phase >= lastPhase ? "win" : "live") as "live" | "muted" | "win",
         };
+  const liveFlag = phase == null && Boolean(league.data?.scoringLive) && status.tone === "live";
 
   return (
     <div>
@@ -336,14 +394,52 @@ function MatchupPage() {
         </p>
       ) : null}
 
-      <Scoreboard
-        pair={pair}
-        week={week}
-        leagueId={leagueId}
-        standings={standings}
-        status={status}
-        live={phase == null && Boolean(league.data?.scoringLive) && status.tone === "live"}
-      />
+      {slate.length > 1 ? (
+        <div className="sm:hidden">
+          <div
+            ref={slateRef}
+            onScroll={onSlateScroll}
+            className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {slate.map((p) => {
+              const isCurrent = p.matchupId === pair.matchupId;
+              return (
+                <div key={p.matchupId} className="w-[calc(100%-2.75rem)] shrink-0 snap-center">
+                  <Scoreboard
+                    pair={isCurrent ? pair : p}
+                    week={week}
+                    leagueId={leagueId}
+                    standings={standings}
+                    status={isCurrent ? status : statusOf(p)}
+                    live={isCurrent ? liveFlag : false}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-2 flex justify-center gap-1.5" aria-hidden="true">
+            {slate.map((p) => (
+              <span
+                key={p.matchupId}
+                className={cn(
+                  "h-1.5 rounded-pill transition-all duration-150",
+                  p.matchupId === pair.matchupId ? "w-4 bg-fg" : "w-1.5 bg-line-strong",
+                )}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
+      <div className={cn(slate.length > 1 && "hidden sm:block")}>
+        <Scoreboard
+          pair={pair}
+          week={week}
+          leagueId={leagueId}
+          standings={standings}
+          status={status}
+          live={liveFlag}
+        />
+      </div>
 
       <MatchupEdge
         pair={livePair ?? pair}
