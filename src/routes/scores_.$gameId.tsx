@@ -24,6 +24,7 @@ import { canonTeam, isDefense, playerHeadshot, playerTeam, teamLogo } from "@/li
 import type { BoxRow, GameDrive, GamePlay, GameSummary, TeamBox } from "@/lib/data/types";
 import { type GameTracking, useGameTracking } from "@/lib/data/use-game-tracking";
 import { motionOk } from "@/lib/scroll-hide";
+import { useSwipe } from "@/lib/swipe";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/scores_/$gameId")({
@@ -82,9 +83,6 @@ function GamePage() {
       const already = clamped === idx;
       setTab(TABS[clamped][0]);
       const el = panesRef.current;
-      if (el) {
-        el.scrollTo({ left: clamped * el.clientWidth, behavior: motionOk() ? "smooth" : "auto" });
-      }
       if (already) {
         window.scrollTo({ top: 0, behavior: motionOk() ? "smooth" : "auto" });
       } else if (stuck && el) {
@@ -118,13 +116,11 @@ function GamePage() {
     [idx, pickTab],
   );
 
-  const onPanesScroll = useCallback(() => {
-    const el = panesRef.current;
-    if (!el) return;
-    const i = Math.round(el.scrollLeft / el.clientWidth);
-    const found = TABS[i];
-    if (found && found[0] !== tab) setTab(found[0]);
-  }, [TABS, tab]);
+  // A deliberate sideways touch drag switches panes; a vertical scroll never
+  // does. The panes are transform-driven — there is no free x-scroll to drift.
+  const swipe = useSwipe((dir) => pickTab(idx + dir));
+  const atEdge = (idx === 0 && swipe.drag > 0) || (idx === TABS.length - 1 && swipe.drag < 0);
+  const edgeDrag = atEdge ? swipe.drag / 3 : swipe.drag;
 
   // Rail gets a hairline once its 1px sentinel scrolls out of view (i.e. it's
   // stuck). The sentinel only mounts once the loading skeleton gives way to
@@ -223,47 +219,57 @@ function GamePage() {
 
           <div
             ref={panesRef}
-            onScroll={onPanesScroll}
-            className="-mx-4 flex snap-x snap-mandatory items-start overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="-mx-4 overflow-hidden"
             style={paneH ? { height: paneH } : undefined}
           >
+            {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: touch-swipe surface; the rail tablist above is the keyboard/AT path */}
             <div
-              ref={(el) => {
-                paneRefs.current[0] = el;
-              }}
-              className="w-full shrink-0 snap-start snap-always overflow-hidden px-4"
+              {...swipe.handlers}
+              className={cn(
+                "flex touch-pan-y items-start",
+                !swipe.dragging &&
+                  "motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out",
+              )}
+              style={{ transform: `translateX(calc(${idx * -100}% + ${edgeDrag}px))` }}
             >
-              <PlayFeed
-                g={g}
-                live={live}
-                filter={activeFilter}
-                tracking={tracking}
-                peek={peek}
-                setPeek={setPeek}
-                closePeek={closePeek}
-              />
-            </div>
-            <div
-              ref={(el) => {
-                paneRefs.current[1] = el;
-              }}
-              className="w-full shrink-0 snap-start snap-always overflow-hidden px-4"
-            >
-              <BoxTables g={g} tracked={tracked} />
-            </div>
-            <div
-              ref={(el) => {
-                paneRefs.current[2] = el;
-              }}
-              className="w-full shrink-0 snap-start snap-always overflow-hidden px-4"
-            >
-              <ScoringList
-                g={g}
-                tracking={tracking}
-                peek={peek}
-                setPeek={setPeek}
-                closePeek={closePeek}
-              />
+              <div
+                ref={(el) => {
+                  paneRefs.current[0] = el;
+                }}
+                className="w-full shrink-0 overflow-hidden px-4"
+              >
+                <PlayFeed
+                  g={g}
+                  live={live}
+                  filter={activeFilter}
+                  tracking={tracking}
+                  peek={peek}
+                  setPeek={setPeek}
+                  closePeek={closePeek}
+                />
+              </div>
+              <div
+                ref={(el) => {
+                  paneRefs.current[1] = el;
+                }}
+                className="w-full shrink-0 overflow-hidden px-4"
+              >
+                <BoxTables g={g} tracked={tracked} />
+              </div>
+              <div
+                ref={(el) => {
+                  paneRefs.current[2] = el;
+                }}
+                className="w-full shrink-0 overflow-hidden px-4"
+              >
+                <ScoringList
+                  g={g}
+                  tracking={tracking}
+                  peek={peek}
+                  setPeek={setPeek}
+                  closePeek={closePeek}
+                />
+              </div>
             </div>
           </div>
         </>

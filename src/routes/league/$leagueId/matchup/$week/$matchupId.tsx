@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "@/components/avatar";
 import { MatchupEdge } from "@/components/matchup-edge";
 import { PlayerCell } from "@/components/player-cell";
@@ -52,11 +52,8 @@ import {
   replayStatMap,
   seedPairForReplay,
 } from "@/lib/replay";
-import { settledIndex } from "@/lib/snap-settle";
+import { useSwipe } from "@/lib/swipe";
 import { cn, fmtRecord, formatPts } from "@/lib/utils";
-
-/** gap-3 in the swipe row, in px — included in each card's snap step. */
-const SLATE_GAP = 12;
 
 export const Route = createFileRoute("/league/$leagueId/matchup/$week/$matchupId")({
   component: MatchupPage,
@@ -77,9 +74,6 @@ function MatchupPage() {
   const stopSim = useDemoStore((s) => s.stop);
   const [watch, setWatch] = useState<WatchTarget | null>(null);
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
-  const slateRef = useRef<HTMLDivElement | null>(null);
-  const programmatic = useRef(false);
-  const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   /**
    * A live game and a finished one ask different questions. In progress, you
@@ -239,54 +233,28 @@ function MatchupPage() {
     return paintMatchups(overlaid, projections.data ?? {}, stats);
   }, [matchups.data, pre.on, pre.games, pre.stats, book, projections.data, stats]);
 
-  // Snap the row to the current matchup's card without animating — this runs
-  // on every matchupId change (NavChip taps included), not just mount, so the
-  // row always opens centered on today's game. `onSlateScroll` below ignores
-  // the scroll events this write produces via the `programmatic` ref. Keyed
-  // on slate.length (not `slate` itself) so a live stats refetch — which
-  // produces a new `slate` array every poll — never re-snaps mid-swipe.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally excludes `slate` (see above) — only its length and matchupId should re-anchor the row
-  useLayoutEffect(() => {
-    const el = slateRef.current;
-    if (!el || slate.length < 2) return;
-    const i = slate.findIndex((p) => p.matchupId === matchupId);
-    if (i < 0) return;
-    const card = el.firstElementChild as HTMLElement | null;
-    if (!card) return;
-    const cardW = card.offsetWidth + SLATE_GAP;
-    programmatic.current = true;
-    el.scrollLeft = i * cardW;
-    requestAnimationFrame(() => {
-      programmatic.current = false;
-    });
-  }, [matchupId, slate.length]);
-
-  useEffect(() => {
-    return () => {
-      if (settleTimer.current) clearTimeout(settleTimer.current);
-    };
-  }, []);
-
-  function onSlateScroll() {
-    if (settleTimer.current) clearTimeout(settleTimer.current);
-    settleTimer.current = setTimeout(() => {
-      if (programmatic.current) return;
-      const el = slateRef.current;
-      if (!el) return;
-      const card = el.firstElementChild as HTMLElement | null;
-      if (!card) return;
-      const cardW = card.offsetWidth + SLATE_GAP;
-      const i = settledIndex(el.scrollLeft, cardW, slate.length);
-      const target = slate[i];
-      if (target && target.matchupId !== matchupId) {
-        navigate({
-          to: "/league/$leagueId/matchup/$week/$matchupId",
-          params: { leagueId, week: String(week), matchupId: String(target.matchupId) },
-          replace: true,
-        });
-      }
-    }, 160);
-  }
+  // The score-card row moves by transform, never by free scrolling — so a
+  // vertical page scroll can't drift it sideways. A deliberate sideways touch
+  // drag commits to the neighbouring game and navigates (replace, so a
+  // swipe-spree doesn't bloat history; the NavChips keep push semantics).
+  const slateIdx = Math.max(
+    0,
+    slate.findIndex((p) => p.matchupId === matchupId),
+  );
+  const slateSwipe = useSwipe((dir) => {
+    const target = slate[slateIdx + dir];
+    if (target) {
+      navigate({
+        to: "/league/$leagueId/matchup/$week/$matchupId",
+        params: { leagueId, week: String(week), matchupId: String(target.matchupId) },
+        replace: true,
+      });
+    }
+  });
+  const slateAtEdge =
+    (slateIdx === 0 && slateSwipe.drag > 0) ||
+    (slateIdx === slate.length - 1 && slateSwipe.drag < 0);
+  const slateDrag = slateAtEdge ? slateSwipe.drag / 3 : slateSwipe.drag;
 
   const prevPair = useMemo(() => {
     if (!seeded || progress == null || progress <= 0) return null;
@@ -396,26 +364,37 @@ function MatchupPage() {
 
       {slate.length > 1 ? (
         <div className="sm:hidden">
-          <div
-            ref={slateRef}
-            onScroll={onSlateScroll}
-            className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {slate.map((p) => {
-              const isCurrent = p.matchupId === pair.matchupId;
-              return (
-                <div key={p.matchupId} className="w-[calc(100%-2.75rem)] shrink-0 snap-center">
-                  <Scoreboard
-                    pair={isCurrent ? pair : p}
-                    week={week}
-                    leagueId={leagueId}
-                    standings={standings}
-                    status={isCurrent ? status : statusOf(p)}
-                    live={isCurrent ? liveFlag : false}
-                  />
-                </div>
-              );
-            })}
+          <div className="-mx-4 overflow-hidden">
+            {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: touch-swipe surface; the NavChips are the keyboard/AT path */}
+            <div
+              {...slateSwipe.handlers}
+              className={cn(
+                "flex touch-pan-y gap-3 px-4 pb-1",
+                !slateSwipe.dragging &&
+                  "motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out",
+              )}
+              // Each step is one card (100% − 2.75rem peek) plus the 12px gap,
+              // and 100% here is the track's own (= wrapper) width.
+              style={{
+                transform: `translateX(calc(${-slateIdx} * (100% - 32px) + ${slateDrag}px))`,
+              }}
+            >
+              {slate.map((p) => {
+                const isCurrent = p.matchupId === pair.matchupId;
+                return (
+                  <div key={p.matchupId} className="w-[calc(100%-2.75rem)] shrink-0">
+                    <Scoreboard
+                      pair={isCurrent ? pair : p}
+                      week={week}
+                      leagueId={leagueId}
+                      standings={standings}
+                      status={isCurrent ? status : statusOf(p)}
+                      live={isCurrent ? liveFlag : false}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </div>
           <div className="mt-2 flex justify-center gap-1.5" aria-hidden="true">
             {slate.map((p) => (
