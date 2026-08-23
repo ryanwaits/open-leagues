@@ -78,6 +78,8 @@ export type LiveLineProps = {
   padding?: { top?: number; right?: number; bottom?: number; left?: number };
   className?: string;
   ariaLabel?: string;
+  /** liveline's empty illustration. Default "No data to display". */
+  emptyText?: string;
 };
 
 const TOKEN_FALLBACK: Record<string, string> = {
@@ -121,6 +123,7 @@ export function LiveLine({
   padding,
   className,
   ariaLabel,
+  emptyText,
 }: LiveLineProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -215,6 +218,7 @@ export function LiveLine({
         formatTime={formatTime ?? fmtClockOfDay}
         formatValue={formatValue ?? ((v: number) => v.toFixed(1))}
         padding={padding}
+        emptyText={emptyText}
       />
     </div>
   );

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { liveProjection } from "../league/live-proj.ts";
 import { bookFromPreset } from "../league/scoring.ts";
 import {
+  chartWindowSecs,
   clockSeries,
   clockToWall,
   kickoffWallSecs,
@@ -174,4 +175,191 @@ test("kickoffWallSecs parses an ISO date, falls back to now() when unparseable",
   assert.equal(t, Date.parse("2026-08-21T20:20:00.000Z") / 1000);
   const fallback = kickoffWallSecs({ date: "" });
   assert.ok(Math.abs(fallback - Date.now() / 1000) < 5);
+});
+
+test("chartWindowSecs keeps kickoff inside liveline's 5% right-side buffer", () => {
+  const span = 3600;
+  const w = chartWindowSecs(span);
+  assert.ok(w * 0.95 >= span + 2, `visible ${w * 0.95} < span ${span}`);
+});
+
+const PACKERS = {
+  player_id: "GB",
+  full_name: "Packers D/ST",
+  first_name: "",
+  last_name: "Packers",
+  position: "DEF",
+  team: "GB",
+};
+
+function dstGame(state, drives) {
+  return {
+    home: { abbr: "MIN" },
+    away: { abbr: "GB" },
+    state,
+    scoring: [],
+    drives,
+  };
+}
+
+test("D/ST kickoff sample is at the baseline, not 0", () => {
+  const samples = projectionByClock(
+    dstGame("in", [{ id: "d1", team: "MIN", plays: [] }]),
+    PACKERS,
+    BOOK,
+    4.8,
+  );
+  assert.equal(samples[0].elapsed, 0);
+  assert.equal(samples[0].expected, 4.8);
+});
+
+test("D/ST sack on the opponent's drive scores sack points", () => {
+  const samples = projectionByClock(
+    dstGame("in", [
+      {
+        id: "d1",
+        team: "MIN",
+        plays: [
+          {
+            id: "s1",
+            text: "J.McCarthy sacked at MIN 12 for -8 yards",
+            type: "Sack",
+            scoring: false,
+            period: 1,
+            clock: "10:00",
+            awayScore: 0,
+            homeScore: 0,
+            yardage: -8,
+          },
+        ],
+      },
+    ]),
+    PACKERS,
+    BOOK,
+    4.8,
+  );
+  const last = samples[samples.length - 1];
+  assert.equal(last.pts, BOOK.sack);
+  assert.notEqual(last.expected, 4.8);
+});
+
+test("D/ST sim-style sack (drive is the D/ST's own team, type Sack) still scores", () => {
+  const samples = projectionByClock(
+    dstGame("in", [
+      {
+        id: "d1",
+        team: "GB",
+        plays: [
+          {
+            id: "s1",
+            text: "GB sacked Darnold at MIN 12 for -6 yards.",
+            type: "Sack",
+            scoring: false,
+            period: 1,
+            clock: "10:00",
+            awayScore: 0,
+            homeScore: 0,
+            yardage: -6,
+          },
+        ],
+      },
+    ]),
+    PACKERS,
+    BOOK,
+    4.8,
+  );
+  assert.equal(samples[samples.length - 1].pts, BOOK.sack);
+});
+
+test("D/ST opponent TD raises pts_allow and the line leaves baseline", () => {
+  const samples = projectionByClock(
+    dstGame("in", [
+      {
+        id: "d1",
+        team: "MIN",
+        plays: [
+          {
+            id: "td1",
+            text: "J.Jefferson 14 yard pass from J.McCarthy for a TOUCHDOWN",
+            type: "Passing Touchdown",
+            scoring: true,
+            period: 2,
+            clock: "8:00",
+            awayScore: 0,
+            homeScore: 7,
+            yardage: 14,
+          },
+        ],
+      },
+    ]),
+    PACKERS,
+    BOOK,
+    4.8,
+  );
+  const last = samples[samples.length - 1];
+  // Shutout bucket (10) → 7 points allowed bucket (4).
+  assert.equal(last.pts, BOOK.pts_allow_7_13);
+  assert.notEqual(last.expected, 4.8);
+});
+
+test("D/ST own-team rush is not a sack", () => {
+  const samples = projectionByClock(
+    dstGame("in", [
+      {
+        id: "d1",
+        team: "GB",
+        plays: [
+          {
+            id: "r1",
+            text: "J.Jacobs up the middle to MIN 40 for 8 yards",
+            type: "Rush",
+            scoring: false,
+            period: 1,
+            clock: "12:00",
+            awayScore: 0,
+            homeScore: 0,
+            yardage: 8,
+          },
+        ],
+      },
+    ]),
+    PACKERS,
+    BOOK,
+    4.8,
+  );
+  // Kickoff + trailing sample at the last play (pts still 0). No sack.
+  const last = samples[samples.length - 1];
+  assert.equal(last.pts, 0);
+});
+
+test("D/ST post sample expected equals pts (not stuck at 0 when they scored)", () => {
+  const samples = projectionByClock(
+    dstGame("post", [
+      {
+        id: "d1",
+        team: "MIN",
+        plays: [
+          {
+            id: "s1",
+            text: "J.McCarthy sacked at MIN 12 for -8 yards",
+            type: "Sack",
+            scoring: false,
+            period: 4,
+            clock: "1:10",
+            awayScore: 0,
+            homeScore: 0,
+            yardage: -8,
+          },
+        ],
+      },
+    ]),
+    PACKERS,
+    BOOK,
+    4.8,
+  );
+  const last = samples[samples.length - 1];
+  assert.equal(last.expected, last.pts);
+  // Final whistle applies the points-allowed bucket (shutout = 10) on top of the sack.
+  assert.equal(last.pts, BOOK.sack + BOOK.pts_allow_0);
+  assert.ok(last.elapsed >= 3600);
 });

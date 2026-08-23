@@ -8,7 +8,7 @@
  */
 import { useRef } from "react";
 import { LiveLine } from "@/components/live-line";
-import { projectionTone } from "@/lib/live/game-series";
+import { chartWindowSecs, projectionTone } from "@/lib/live/game-series";
 import { fmtGameClock } from "@/lib/live/series";
 import type { ProjectionSeries } from "@/lib/live/use-projection-series";
 import { cn, formatPts } from "@/lib/utils";
@@ -26,56 +26,20 @@ const MOMENTUM_TONE = {
 } as const;
 
 function PreBody({ baseline }: { baseline: number }) {
-  const dividers = [0, 1, 2, 3];
+  // One sample so <LiveLine> mounts liveline; liveline itself treats <2
+  // points as empty and paints the same "No data to display" wave the
+  // matchup chart uses when it has nothing in the window yet.
   return (
-    <svg
-      viewBox="0 0 300 96"
-      className="h-[124px] w-full"
-      role="img"
-      aria-label="Waiting for kickoff"
-    >
-      <text x="8" y="18" className="microlabel-data" style={{ fill: "var(--ink-2)" }}>
-        {`PROJ ${formatPts(baseline, 1)}`}
-      </text>
-      <line
-        x1="8"
-        y1="48"
-        x2="292"
-        y2="48"
-        stroke="var(--ink-3)"
-        strokeWidth="1.5"
-        strokeDasharray="3 3"
-      />
-      {dividers.map((q) => {
-        const x0 = 8 + (q * 284) / 4;
-        const x1 = 8 + ((q + 1) * 284) / 4;
-        const mid = (x0 + x1) / 2;
-        return (
-          <g key={q}>
-            {q > 0 ? (
-              <line
-                x1={x0}
-                y1="40"
-                x2={x0}
-                y2="56"
-                stroke="var(--ink-3)"
-                strokeWidth="1"
-                opacity="0.4"
-              />
-            ) : null}
-            <text
-              x={mid}
-              y="88"
-              textAnchor="middle"
-              className="microlabel-data"
-              style={{ fill: "var(--ink-3)" }}
-            >
-              {`Q${q + 1}`}
-            </text>
-          </g>
-        );
-      })}
-    </svg>
+    <LiveLine
+      series={[{ time: 0, value: baseline }]}
+      value={baseline}
+      height={124}
+      windowSecs={3600}
+      padding={{ left: 8, right: 36, top: 10, bottom: 18 }}
+      momentum={false}
+      emptyText="No data to display"
+      ariaLabel="Waiting for kickoff"
+    />
   );
 }
 
@@ -143,7 +107,7 @@ export function ProjectionBlock({
             value={s.expected}
             tone={tone}
             height={124}
-            windowSecs={windowSecs ?? Math.max(600, now - s.kickoffWall + 120)}
+            windowSecs={windowSecs ?? chartWindowSecs(now - s.kickoffWall)}
             referenceLine={{ value: s.baseline, label: `PROJ ${formatPts(s.baseline, 1)}` }}
             momentum={s.swing.dir}
             padding={{ left: 8, right: 36, top: 10, bottom: 18 }}
@@ -155,7 +119,7 @@ export function ProjectionBlock({
             frozen
             tone={tone}
             height={124}
-            windowSecs={Math.max(3600, lastElapsed) + 60}
+            windowSecs={chartWindowSecs(Math.max(3600, lastElapsed))}
             referenceLine={{ value: s.baseline, label: `PROJ ${formatPts(s.baseline, 1)}` }}
             formatTime={(t) => fmtGameClock(t - (mountNowRef.current - lastElapsed))}
             padding={{ left: 8, right: 36, top: 10, bottom: 18 }}
