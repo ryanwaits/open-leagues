@@ -85,15 +85,18 @@ export function SlotPts({
         className,
       )}
     >
-      {formatPts(points, 1)}
+      <span className="leading-none">{formatPts(points, 1)}</span>
+      {/* The sub-line slot is always reserved (same trick as TeamTotal's
+          `reserve`): a delta flashing in must never move the value above it
+          or change the row height. */}
       {note ? (
-        <span className="mt-0.5 text-[10px] leading-tight uppercase tracking-wide text-faint">
+        <span className="mt-0.5 h-[13px] text-[10px] leading-[13px] uppercase tracking-wide text-faint">
           {note}
         </span>
       ) : gain ? (
         <span
           className={cn(
-            "mt-0.5 text-[10px] leading-tight motion-safe:animate-[score-flash_4.5s_ease-out_forwards]",
+            "mt-0.5 h-[13px] text-[10px] leading-[13px] motion-safe:animate-[score-flash_4.5s_ease-out_forwards]",
             flash < 0 ? "text-loss" : "text-accent-strong",
           )}
         >
@@ -102,7 +105,7 @@ export function SlotPts({
       ) : rest ? (
         <span
           className={cn(
-            "mt-0.5 text-[10px] leading-tight",
+            "mt-0.5 h-[13px] text-[10px] leading-[13px]",
             expectedTone === "good"
               ? "text-accent-strong"
               : expectedTone === "alarm"
@@ -113,7 +116,11 @@ export function SlotPts({
           {expectedTone ? "pace " : ""}
           {formatPts(expected, 1)}
         </span>
-      ) : null}
+      ) : (
+        <span className="invisible mt-0.5 h-[13px] text-[10px] leading-[13px]" aria-hidden="true">
+          &nbsp;
+        </span>
+      )}
     </span>
   );
 }
