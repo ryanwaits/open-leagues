@@ -11,7 +11,7 @@
 /* ============================================================================
    Ledger — Hum
    ----------------------------------------------------------------------------
-   Cream paper, rounded everything, one identity colour, one alarm colour.
+   Off-white paper, white ringed cards, one identity colour, one alarm colour.
 
    Three layers, in order:
      1. Raw values in src/skin/tokens.css on :root / [data-theme] /
@@ -66,8 +66,9 @@
   --radius-xl: var(--r-xl);
   --radius-pill: var(--r-pill);
 
-  --shadow-border: 0 0 0 1px var(--hairline), var(--lift);
-  --shadow-border-hover: 0 0 0 1px var(--hairline-strong), var(--lift-hover);
+  --shadow-border: 0 0 0 1px var(--card-ring, transparent), var(--lift);
+  --shadow-border-hover:
+    0 0 0 1px var(--card-ring-hover, var(--hairline-strong)), var(--lift-hover);
   --shadow-lift: var(--lift);
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -109,8 +110,8 @@
   h2,
   h3 {
     text-wrap: balance;
-    font-weight: 700;
-    letter-spacing: -0.025em;
+    font-weight: 500;
+    letter-spacing: -0.02em;
   }
 
   p {
@@ -176,12 +177,15 @@
    The shadow is the button's thickness: a full-width solid edge plus a
    separate soft cast on the ground. Never a negative spread — that makes the
    edge narrower than the button. Lift on hover, press DOWN on :active, so the
-   press is the feedback. No scale, no overshoot.
+   press is the feedback. No scale, no overshoot. Ledger zeroes the edge and
+   the motion via tokens (--push-edge / --push-hover-y / --push-press-y), so
+   a Ledger .push is a flat ink pill; a skin that wants the tactile edge back
+   sets those tokens instead of overriding the rules below.
    ========================================================================= */
 
 .push {
   box-shadow:
-    0 4px 0 0 var(--brand-deep),
+    0 4px 0 0 var(--push-edge, var(--brand-deep)),
     0 6px 12px -3px var(--press-cast);
   transform: translateY(0);
   transition:
@@ -192,24 +196,24 @@
 
 @media (hover: hover) {
   .push:hover:not(:disabled) {
-    transform: translateY(-2px);
+    transform: translateY(var(--push-hover-y, -2px));
     box-shadow:
-      0 6px 0 0 var(--brand-deep),
+      0 6px 0 0 var(--push-edge, var(--brand-deep)),
       0 12px 22px -4px var(--press-cast);
   }
 }
 
 .push:active:not(:disabled) {
-  transform: translateY(3px);
+  transform: translateY(var(--push-press-y, 3px));
   box-shadow:
-    0 1px 0 0 var(--brand-deep),
+    0 1px 0 0 var(--push-edge, var(--brand-deep)),
     0 2px 6px -2px var(--press-cast);
   transition-duration: 70ms;
 }
 
 .push:disabled {
   transform: none;
-  box-shadow: 0 4px 0 0 var(--brand-deep);
+  box-shadow: 0 4px 0 0 var(--push-edge, var(--brand-deep));
 }
 
 /* ============================================================================
@@ -314,17 +318,18 @@
 @layer components {
   /* The label voice. Skins own it; components only name the role. */
   .microlabel {
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: 11px;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.08em;
     color: var(--ink-3);
   }
   .microlabel-data {
     font-family: var(--font-mono);
     font-size: 10px;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     color: var(--ink-3);
   }
   /* The card edge. Ledger: lifted ring. */

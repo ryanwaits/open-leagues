@@ -2,103 +2,123 @@
    in styles.css and references these names. */
 
 :root {
-  /* surface */
-  --paper: #f7f4ea;
-  --paper-raised: #fffdf7;
-  --paper-sunken: #f0ece0;
-  --band: #f2eee2;
+  /* surface — off-white ground, white ringed cards (x.ai/bot, variant B) */
+  --paper: #fafaf8;
+  --paper-raised: #ffffff;
+  --paper-sunken: #f3f2ef;
+  --band: #f6f5f2;
 
   /* ink */
-  --ink: #17191d;
-  --ink-2: #5b5e60;
-  --ink-3: #8a8b83;
+  --ink: #0a0a0a;
+  --ink-2: #5c6066;
+  --ink-3: #7d8187;
 
-  /* structure */
-  --hairline: #e4dfd1;
-  --hairline-strong: #d2ccba;
+  /* structure — ink at ~8% / ~15% on white, flattened to hex */
+  --hairline: #e9e9e6;
+  --hairline-strong: #d6d6d3;
 
-  /* identity — green */
+  /* card edge ring: a hairline at rest, stronger on hover. Set transparent for a flat skin. */
+  --card-ring: var(--hairline);
+  --card-ring-hover: var(--hairline-strong);
+
+  /* identity — green (mint for lines/meters/tints, sober green for text-on-tint) */
   --brand: #6fdc93;
   --brand-deep: #3fa765;
-  --brand-strong: #1d7a45;
-  --brand-ink: #12251a;
-  --highlight: #a9e9bd;
+  --brand-strong: #1f8a65;
+  --brand-ink: #0f2a1b;
+  --highlight: #b6ecc7;
 
   /* the only alarm colour. Wins are not coloured: winning is the default
      state, losing is the exception that gets marked. */
-  --alarm: #c8503a;
-  --caution: #c4921a;
+  --alarm: #e0532f;
+  --caution: #b26a00;
 
-  --lift: 0 10px 26px -16px rgb(23 25 29 / 0.3);
-  --lift-hover: 0 16px 34px -18px rgb(23 25 29 / 0.4);
-  --press-cast: rgb(63 167 101 / 0.4);
+  /* no card shadow in Ledger — the edge is the 1px ring */
+  --lift: 0 0 0 0 rgb(0 0 0 / 0);
+  --lift-hover: 0 0 0 0 rgb(0 0 0 / 0);
+  --press-cast: rgb(0 0 0 / 0);
+  --push-edge: transparent;
+  --push-hover-y: 0px;
+  --push-press-y: 0px;
 
   /* shape + type — per-skin knobs; Tailwind's @theme reads these names */
-  --r-xs: 8px;
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 18px;
-  --r-xl: 22px;
+  --r-xs: 10px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 24px;
   --r-pill: 999px;
-  --font-stack-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-stack-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-stack-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --font-stack-display: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-stack-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-stack-mono: "Geist Mono", ui-monospace, Menlo, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #14161a;
-    --paper-raised: #1b1e22;
-    --paper-sunken: #23272c;
-    --band: #1a1d21;
+    --paper: #0d0d0d;
+    --paper-raised: #161616;
+    --paper-sunken: #202020;
+    --band: #121212;
 
-    --ink: #f2f1ea;
-    --ink-2: #a8aba6;
-    --ink-3: #7a7e7b;
+    --ink: #ededed;
+    --ink-2: #a3a6aa;
+    --ink-3: #7b7f85;
 
-    --hairline: #2b2f34;
-    --hairline-strong: #3a3f45;
+    --hairline: #262626;
+    --hairline-strong: #363636;
 
-    --brand: #64d68c;
+    --card-ring: var(--hairline);
+    --card-ring-hover: var(--hairline-strong);
+
+    --brand: #5fd48a;
     --brand-deep: #2f8f55;
     --brand-strong: #7fe3a2;
-    --brand-ink: #0e1f15;
-    --highlight: #2c5c3e;
+    --brand-ink: #0b1f14;
+    --highlight: #234c33;
 
-    --alarm: #e4705a;
-    --caution: #e3b341;
+    --alarm: #ef6b4f;
+    --caution: #e3a33b;
 
-    --lift: 0 10px 26px -16px rgb(0 0 0 / 0.7);
-    --lift-hover: 0 16px 34px -18px rgb(0 0 0 / 0.8);
-    --press-cast: rgb(0 0 0 / 0.5);
+    --lift: 0 0 0 0 rgb(0 0 0 / 0);
+    --lift-hover: 0 0 0 0 rgb(0 0 0 / 0);
+    --press-cast: rgb(0 0 0 / 0);
+    --push-edge: transparent;
+    --push-hover-y: 0px;
+    --push-press-y: 0px;
   }
 }
 
 [data-theme="dark"] {
-  --paper: #14161a;
-  --paper-raised: #1b1e22;
-  --paper-sunken: #23272c;
-  --band: #1a1d21;
+  --paper: #0d0d0d;
+  --paper-raised: #161616;
+  --paper-sunken: #202020;
+  --band: #121212;
 
-  --ink: #f2f1ea;
-  --ink-2: #a8aba6;
-  --ink-3: #7a7e7b;
+  --ink: #ededed;
+  --ink-2: #a3a6aa;
+  --ink-3: #7b7f85;
 
-  --hairline: #2b2f34;
-  --hairline-strong: #3a3f45;
+  --hairline: #262626;
+  --hairline-strong: #363636;
 
-  --brand: #64d68c;
+  --card-ring: var(--hairline);
+  --card-ring-hover: var(--hairline-strong);
+
+  --brand: #5fd48a;
   --brand-deep: #2f8f55;
   --brand-strong: #7fe3a2;
-  --brand-ink: #0e1f15;
-  --highlight: #2c5c3e;
+  --brand-ink: #0b1f14;
+  --highlight: #234c33;
 
-  --alarm: #e4705a;
-  --caution: #e3b341;
+  --alarm: #ef6b4f;
+  --caution: #e3a33b;
 
-  --lift: 0 10px 26px -16px rgb(0 0 0 / 0.7);
-  --lift-hover: 0 16px 34px -18px rgb(0 0 0 / 0.8);
-  --press-cast: rgb(0 0 0 / 0.5);
+  --lift: 0 0 0 0 rgb(0 0 0 / 0);
+  --lift-hover: 0 0 0 0 rgb(0 0 0 / 0);
+  --press-cast: rgb(0 0 0 / 0);
+  --push-edge: transparent;
+  --push-hover-y: 0px;
+  --push-press-y: 0px;
 }
 
 /* --- accent ramp: blue ---------------------------------------------------- */

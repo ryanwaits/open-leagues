@@ -32,8 +32,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
           "A custom fantasy football desk for your leagues — standings, matchups, scores, and weekly recaps.",
       },
       { name: "apple-mobile-web-app-title", content: APP_NAME },
-      { name: "theme-color", media: "(prefers-color-scheme: light)", content: "#f7f4ea" },
-      { name: "theme-color", media: "(prefers-color-scheme: dark)", content: "#14161a" },
+      { name: "theme-color", media: "(prefers-color-scheme: light)", content: "#fafaf8" },
+      { name: "theme-color", media: "(prefers-color-scheme: dark)", content: "#0d0d0d" },
       { name: "twitter:card", content: "summary_large_image" },
       ...(ogImage
         ? [
@@ -52,7 +52,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap",
       },
     ],
   }),
@@ -60,7 +60,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 const THEME_COLOR = {
-  ledger: { light: "#f7f4ea", dark: "#14161a" },
+  ledger: { light: "#fafaf8", dark: "#0d0d0d" },
   boxscore: { light: "#fbfaf6", dark: "#141519" },
 } as const;
 

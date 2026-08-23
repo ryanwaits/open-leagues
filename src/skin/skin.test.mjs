@@ -151,3 +151,32 @@ test("flourishes are mounted in representative components", () => {
   const lineupBoard = readFileSync(join(root, "src/components/lineup-board.tsx"), "utf8");
   assert.match(lineupBoard, /slot-rail/);
 });
+
+test("ledger default tokens are the x.ai/bot cut", () => {
+  const tokens = readFileSync(join(root, "src/skin/tokens.css"), "utf8");
+  assert.match(tokens, /--paper:\s*#fafaf8/);
+  assert.match(tokens, /--paper-raised:\s*#ffffff/);
+  assert.match(tokens, /--font-stack-sans:\s*"Geist"/);
+  assert.match(tokens, /--font-stack-mono:\s*"Geist Mono"/);
+  assert.match(tokens, /--r-xl:\s*24px/);
+  assert.ok(
+    (tokens.match(/--card-ring:/g) ?? []).length >= 3,
+    "expected --card-ring: at least 3 times in tokens.css",
+  );
+  assert.ok(
+    (tokens.match(/--push-edge:/g) ?? []).length >= 3,
+    "expected --push-edge: at least 3 times in tokens.css",
+  );
+
+  const styles = readFileSync(join(root, "src/styles.css"), "utf8");
+  assert.match(styles, /\.microlabel\s*\{[^}]*font-family:\s*var\(--font-sans\)/s);
+  assert.match(styles, /h1,\s*h2,\s*h3\s*\{[^}]*font-weight:\s*500/s);
+});
+
+test("__root.tsx loads Geist and stamps the Ledger theme-color", () => {
+  const rootTsx = readFileSync(join(root, "src/routes/__root.tsx"), "utf8");
+  assert.match(rootTsx, /family=Geist/);
+  assert.match(rootTsx, /#fafaf8/);
+  assert.match(rootTsx, /#0d0d0d/);
+  assert.doesNotMatch(rootTsx, /Jakarta|JetBrains/);
+});

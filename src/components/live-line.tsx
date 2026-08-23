@@ -82,8 +82,8 @@ export type LiveLineProps = {
 
 const TOKEN_FALLBACK: Record<string, string> = {
   "--brand": "#6fdc93",
-  "--ink-3": "#8a8b83",
-  "--alarm": "#c8503a",
+  "--ink-3": "#7d8187",
+  "--alarm": "#e0532f",
 };
 
 function useTokenColor(name: keyof typeof TOKEN_FALLBACK, resolved: string): string {

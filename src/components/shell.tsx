@@ -186,7 +186,7 @@ export function Shell({
               {live ? (
                 <span
                   aria-hidden="true"
-                  className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-live ring-2 ring-bg sm:static sm:ml-0.5 sm:ring-0 sm:shadow-[0_0_0_3px_rgb(228_112_90/0.18)]"
+                  className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-live ring-2 ring-bg sm:static sm:ml-0.5 sm:ring-0 sm:shadow-[0_0_0_3px_color-mix(in_oklab,var(--alarm)_18%,transparent)]"
                 />
               ) : null}
             </Link>
