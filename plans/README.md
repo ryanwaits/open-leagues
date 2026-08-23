@@ -47,7 +47,7 @@ Slices live here. Read the one you are executing from.
   recipes (058), then phone polish incl. the matchup-edge caption bug (059).
   Ryan's calls: variant B (ringed white cards), sans eyebrows, ship as
   default, Geist. Advisor's: retire `.push`. **All three DONE** (2a9b93f,
-  a33f297+3b905a2, 7d11914+ca770a1 — not pushed). Design artifact:
+  a33f297+3b905a2, 7d11914+ca770a1 — pushed 2026-08-23). Design artifact:
   https://claude.ai/code/artifact/4e0119fb-6b78-48ec-9a77-abaf4c55675e
 - **060–063 — Pocket Ledger: mobile-native gestures** (improve skill, 2026-08-23,
   commit `37ed78d`). Goal: the six-move gesture vocabulary from the Pocket Ledger
@@ -69,12 +69,12 @@ Slices live here. Read the one you are executing from.
   on *their* origin) and run migrate / sit / book playbooks. Not
   a multi-tenant SaaS. The PWA stays client zero. **All four DONE.**
 - **045 — Migrate sources** (improve skill, 2026-08-19, commit
-  `735b0ba`). **DONE** `6a0df03` + split `29f7a2e` (not pushed).
+  `735b0ba`). **DONE** `6a0df03` + split `29f7a2e` (pushed 2026-08-23).
   Canonical `ImportPack`; Sleeper/ESPN/rebuild → `commitImportPack`;
   file always works; NFL hops to ESPN; Yahoo OAuth not shipped.
 - **046 — Dead-simple self-host** (improve skill, 2026-08-19,
   commit `735b0ba`). **DONE** `c1769d2` + secret persist `bb965bd`
-  (not pushed). Docker + in-process tick. They only pay the host.
+  (pushed 2026-08-23). Docker + in-process tick. They only pay the host.
 
 Execute in the order below. Each executor: read the plan fully, honor STOP
 conditions, update your row when done.
@@ -309,26 +309,26 @@ reconcile). Source tree clean.
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| 001  | League tabs are in-app Links; router preloads on intent | P1 | S | — | DONE `e79cfbc` (not pushed) |
-| 002  | Never unmount last-known data; never lie about empty | P1 | S | — | DONE `ae6e12d` (not pushed) |
-| 003  | Shared QueryClient + loaders warm the next sheet | P1 | M | 001 | DONE `2f203be` (not pushed) |
-| 004  | Persist the workbook across refresh | P1 | M | 003 | DONE `9948a37` (not pushed) |
-| 005  | Cheap GETs: no tick-on-read, no extra bundle | P2 | M | — | DONE `deab224` (not pushed; step 4 slim week-stats skipped) |
-| 006  | Draft schema — clock deadline, sticky autodraft, pick queue | P1 | S | — | DONE `32fc696` (not pushed) |
-| 007  | Draft board grid — every pick visible at once | P1 | M | — | DONE `304cfb7` (not pushed) |
-| 008  | Draft clock — 90s a pick, advanced by whoever is looking | P1 | M | 006 | DONE `6ef392e` (not pushed; live expiry race not exercised — no unlocked draft) |
-| 009  | Sticky autodraft after a missed pick | P1 | S | 006, 008 | DONE `7cfd24c` (not pushed; live toggle tests skipped) |
-| 010  | Draft queue — the list that drafts for you | P1 | M | 006, 009 | DONE `ee66f0a` (not pushed) |
-| 011  | Mid-draft trading — picks, drafted players, FAAB | P2 | M | 007 | DONE `cf6fa91` (not pushed; live trade tests skipped — no signed-in mid-draft league) |
-| 012  | Mock draft — the same room with the writes turned off | P3 | M | 007, 010 | DONE `81b0c4c` (not pushed) |
-| 013  | Derived league facts — roll the ledger into standing facts | P2 | M | — | DONE `5009378` (not pushed; `832ba4e` locked-only, `ce31848` format) |
+| 001  | League tabs are in-app Links; router preloads on intent | P1 | S | — | DONE `e79cfbc` (pushed 2026-08-23) |
+| 002  | Never unmount last-known data; never lie about empty | P1 | S | — | DONE `ae6e12d` (pushed 2026-08-23) |
+| 003  | Shared QueryClient + loaders warm the next sheet | P1 | M | 001 | DONE `2f203be` (pushed 2026-08-23) |
+| 004  | Persist the workbook across refresh | P1 | M | 003 | DONE `9948a37` (pushed 2026-08-23) |
+| 005  | Cheap GETs: no tick-on-read, no extra bundle | P2 | M | — | DONE `deab224` (pushed 2026-08-23; step 4 slim week-stats skipped) |
+| 006  | Draft schema — clock deadline, sticky autodraft, pick queue | P1 | S | — | DONE `32fc696` (pushed 2026-08-23) |
+| 007  | Draft board grid — every pick visible at once | P1 | M | — | DONE `304cfb7` (pushed 2026-08-23) |
+| 008  | Draft clock — 90s a pick, advanced by whoever is looking | P1 | M | 006 | DONE `6ef392e` (pushed 2026-08-23; live expiry race not exercised — no unlocked draft) |
+| 009  | Sticky autodraft after a missed pick | P1 | S | 006, 008 | DONE `7cfd24c` (pushed 2026-08-23; live toggle tests skipped) |
+| 010  | Draft queue — the list that drafts for you | P1 | M | 006, 009 | DONE `ee66f0a` (pushed 2026-08-23) |
+| 011  | Mid-draft trading — picks, drafted players, FAAB | P2 | M | 007 | DONE `cf6fa91` (pushed 2026-08-23; live trade tests skipped — no signed-in mid-draft league) |
+| 012  | Mock draft — the same room with the writes turned off | P3 | M | 007, 010 | DONE `81b0c4c` (pushed 2026-08-23) |
+| 013  | Derived league facts — roll the ledger into standing facts | P2 | M | — | DONE `5009378` (pushed 2026-08-23; `832ba4e` locked-only, `ce31848` format) |
 | 014  | The desk remembers — feed facts into the weekly write-up | P2 | S | 013 | DONE `7af3716` (verified `e6d44de`: desk calls `loadLeagueFacts`) |
-| 015  | Live weekly projections — a number that moves | P1 | M | — | DONE `d6d855d` (not pushed) |
+| 015  | Live weekly projections — a number that moves | P1 | M | — | DONE `d6d855d` (pushed 2026-08-23) |
 | 016  | Replacement value — price a trade by the lineup it produces | P1 | S | — | DONE `7af4bf4` (verified `e6d44de`: `lineup-value.ts`) |
-| 017  | The player stat row — avatar, projection, rank, shape | P1 | M | — | DONE `553f159` (not pushed) |
-| 018  | The offer card — decide with the facts in front of you | P1 | M | 016, 017 | DONE `5b092fa` (not pushed) |
+| 017  | The player stat row — avatar, projection, rank, shape | P1 | M | — | DONE `553f159` (pushed 2026-08-23) |
+| 018  | The offer card — decide with the facts in front of you | P1 | M | 016, 017 | DONE `5b092fa` (pushed 2026-08-23) |
 | 019  | The composer — a readable deal, and FAAB you can send | P2 | L | 016, 017, 018 | DONE `ec855c3` (verified: composer sends `kind: "faab"`) |
-| 020  | Three-team trades — every asset says where it lands | P3 | M | 019 | DONE `4356a5e` (not pushed) |
+| 020  | Three-team trades — every asset says where it lands | P3 | M | 019 | DONE `4356a5e` (pushed 2026-08-23) |
 | 021  | The read line — one sentence that arranges the numbers | P3 | S | 016, 018/019 | DONE `7e6cac7` (verified: `trade-read.ts`) |
 | 022  | Prove FAAB, settlement, and clock with tests | P1 | M | — | DONE `ec0bd72` (031 unskipped spendable/atRisk math; mint case flipped in 027) |
 | 023  | Close the public clock, invite leak, and bid leak | P1 | S | — | DONE `d9083ad` (verified: `CRON_SECRET` + commish-only invite) |
@@ -338,41 +338,41 @@ reconcile). Source tree clean.
 | 027  | Stop a lost wager from minting FAAB | P1 | M | 022 | DONE `9f512b5` (verified `dd9bc53`: `applyLoss` + `movePool(poolCredit)`) |
 | 028  | Invite-only desk — allowlist emails and member reads | P1 | M | 023 | DONE `fe3d1a6` (verified `dd9bc53`: allowlist + viewer on listed wrappers) |
 | 029  | Exercise the FAAB wager ticket for real | P2 | M | — | DONE `dd9bc53` (verified: `wager-qa.mjs` + testids; preseason no-price) |
-| 030  | Require a seat for every hosted league GET | P1 | S | 028 | DONE `4fd580c` (not pushed; eight hosted GETs + source test) |
-| 031  | Prove spendable and atRisk without a live database | P2 | S | 027 | DONE `443b8ac` (not pushed) |
+| 030  | Require a seat for every hosted league GET | P1 | S | 028 | DONE `4fd580c` (pushed 2026-08-23; eight hosted GETs + source test) |
+| 031  | Prove spendable and atRisk without a live database | P2 | S | 027 | DONE `443b8ac` (pushed 2026-08-23) |
 | 032  | Re-run the wager script when a week has a live line | P3 | S | 029 | TODO (ops; execute 2026-08-20 STOPPED — still no live line; no commit) |
-| 033  | Let the CLI place a wager when asked in writing | P2 | M | 027, 038 | DONE `262717f` (not pushed) |
-| 034  | Let a commish download their league | P2 | M | 025 | DONE `0764e94` (not pushed; DeleteLeague untouched) |
-| 035  | Optional native Google sign-in for self-host | P2 | M | 025 | DONE `112f48a` (not pushed) |
+| 033  | Let the CLI place a wager when asked in writing | P2 | M | 027, 038 | DONE `262717f` (pushed 2026-08-23) |
+| 034  | Let a commish download their league | P2 | M | 025 | DONE `0764e94` (pushed 2026-08-23; DeleteLeague untouched) |
+| 035  | Optional native Google sign-in for self-host | P2 | M | 025 | DONE `112f48a` (pushed 2026-08-23) |
 | 036  | Let a commish delete a league they run | P2 | M | 034 | DONE `fa38680` (verified `7545fdb`: type-name confirm; 034 skipped) |
-| 037  | Web Push after someone actually installs the PWA | P3 | L | 026 | DONE `07ca3c3` + `fc4ef7f` + `84d684e` (not pushed; operator waived install gate) |
-| 038  | One dump: seat, spendable, facts, verbs | P1 | M | 024 | DONE `e876e59` (not pushed) |
-| 039  | Pull an open ticket from the book list | P1 | S | 024 | DONE `6a77792` (not pushed) |
-| 040  | Refuse a FAAB trade the sender cannot cover | P1 | S | 027 | DONE `ff3d01b` (not pushed) |
-| 041  | Mint a personal token so a host can act as a seat | P1 | M | 038 | DONE `9537500` (not pushed) |
+| 037  | Web Push after someone actually installs the PWA | P3 | L | 026 | DONE `07ca3c3` + `fc4ef7f` + `84d684e` (pushed 2026-08-23; operator waived install gate) |
+| 038  | One dump: seat, spendable, facts, verbs | P1 | M | 024 | DONE `e876e59` (pushed 2026-08-23) |
+| 039  | Pull an open ticket from the book list | P1 | S | 024 | DONE `6a77792` (pushed 2026-08-23) |
+| 040  | Refuse a FAAB trade the sender cannot cover | P1 | S | 027 | DONE `ff3d01b` (pushed 2026-08-23) |
+| 041  | Mint a personal token so a host can act as a seat | P1 | M | 038 | DONE `9537500` (pushed 2026-08-23) |
 | 042  | Speak MCP on stdio (local Codex / Claude / Grok) | P1 | M | 038, 033 | DONE `337ed25` (biome `e72f4cb`; not pushed) |
-| 043  | Serve the same MCP over HTTP with the token | P1 | M | 041, 042 | DONE `9af8eff` (not pushed) |
+| 043  | Serve the same MCP over HTTP with the token | P1 | M | 041, 042 | DONE `9af8eff` (pushed 2026-08-23) |
 | 044  | Skills: migrate, lineup, book | P1 | S | 042 | DONE `969cf73` (worktree; not pushed) |
 | 045  | Canonical import pack; file fallback; no NFL scrape | P1 | L | 044 | DONE `6a0df03` (split `29f7a2e`; not pushed) |
 | 046  | Dead-simple self-host (Docker + in-process tick) | P1 | M | 025 | DONE `c1769d2` (secret persist `bb965bd`; not pushed) |
-| 047  | Runtime skin system (Ledger + Box Score) | P2 | M (slice 1) | 026 | DONE `ed6cdd4`+`303e7a0` (not pushed; reviewed/APPROVED 2026-08-20; slice 1 = tokens+plumbing+boxscore.css behind /account picker; voice codemod + flourishes still owed as 049/050 before the Box Score release is cut) |
-| 048  | Install drawer (dartwords-style A2HS) | P2 | M | 026, 047 | DONE `505ccb2` (not pushed; reviewed/APPROVED 2026-08-20; real-device iOS A2HS + Android native prompt PENDING OPERATOR; one sanctioned out-of-scope touch: scripts/join-redirect.test.mjs assertion updated for the InstallCoach removal) |
-| 049  | Voice codemod — semantic label/card classes per skin | P2 | M | 047 | DONE `cfbacc8`+`06091c8` (not pushed; reviewed/APPROVED 2026-08-20; 57 files, Ledger pixel-identical, Box Score voice live; one revision: state-driven `ring-card-lit` for the import dropzone) |
-| 050  | Box Score flourishes — ghost numerals, rails, stamp | P2 | M | 047, 049 | DONE `8e660ba` (not pushed; reviewed/APPROVED 2026-08-20; all CSS-gated, Ledger zero-change verified; **Box Score release complete: 047+049+050**) |
+| 047  | Runtime skin system (Ledger + Box Score) | P2 | M (slice 1) | 026 | DONE `ed6cdd4`+`303e7a0` (pushed 2026-08-23; reviewed/APPROVED 2026-08-20; slice 1 = tokens+plumbing+boxscore.css behind /account picker; voice codemod + flourishes still owed as 049/050 before the Box Score release is cut) |
+| 048  | Install drawer (dartwords-style A2HS) | P2 | M | 026, 047 | DONE `505ccb2` (pushed 2026-08-23; reviewed/APPROVED 2026-08-20; real-device iOS A2HS + Android native prompt PENDING OPERATOR; one sanctioned out-of-scope touch: scripts/join-redirect.test.mjs assertion updated for the InstallCoach removal) |
+| 049  | Voice codemod — semantic label/card classes per skin | P2 | M | 047 | DONE `cfbacc8`+`06091c8` (pushed 2026-08-23; reviewed/APPROVED 2026-08-20; 57 files, Ledger pixel-identical, Box Score voice live; one revision: state-driven `ring-card-lit` for the import dropzone) |
+| 050  | Box Score flourishes — ghost numerals, rails, stamp | P2 | M | 047, 049 | DONE `8e660ba` (pushed 2026-08-23; reviewed/APPROVED 2026-08-20; all CSS-gated, Ledger zero-change verified; **Box Score release complete: 047+049+050**) |
 | 052  | BYOK AI foundation + import analyst (AI SDK multi-provider) | P2 | L | — | DONE `38186f9` (not pushed→pushed; reviewed/APPROVED 2026-08-20; one mid-flight STOP correctly raised: agent-catalog parity — resolved by registering the 5 fns; follow-up: scoring-record extraction thinner than slots in live smoke test — prompt/schema tuning candidate 053) |
-| 053  | Liveline foundation — `<LiveLine>` wrapper, series utils, dev gallery | P1 | M | — | DONE `89ced48` (not pushed; reviewed/APPROVED 2026-08-21; 17+3 tests; `/dev/liveline` gallery; executor fixed fractional-seconds label bug + import-rule test self-match) |
-| 054  | Player projection line — drawer, sheet, player page, lineup pace toggle | P1 | L | 053 | DONE `b4574bd` (not pushed; reviewed/APPROVED 2026-08-21; 10 new tests; executor fixed playWhen 900s offset + a render loop in the series hook; player page left without the block — no weekly projection on that route; bench rows on the box-score route not threaded) |
-| 055  | Matchup finals chart + home win-prob meter + `ff_ticks` writer (on read + tick) | P1 | L | 053, 054 | DONE `9b8f62e`+`fdfd48c`+`8c31e11`+`efabd40` (not pushed; reviewed/APPROVED 2026-08-21 after 2 revision rounds: no sample until outlooks load, caption clears the time axis; getTicks registered in the agent catalog — sanctioned out-of-scope touch) |
-| 056  | The book's line-movement strip (LinePanel + ticket) + in-play wagering spec | P2 | M | 055 | DONE `7ce8cef` (not pushed; reviewed/APPROVED 2026-08-21; strip quiet + opened/now caption; in-play wagering left as spec in the plan file — not built) |
+| 053  | Liveline foundation — `<LiveLine>` wrapper, series utils, dev gallery | P1 | M | — | DONE `89ced48` (pushed 2026-08-23; reviewed/APPROVED 2026-08-21; 17+3 tests; `/dev/liveline` gallery; executor fixed fractional-seconds label bug + import-rule test self-match) |
+| 054  | Player projection line — drawer, sheet, player page, lineup pace toggle | P1 | L | 053 | DONE `b4574bd` (pushed 2026-08-23; reviewed/APPROVED 2026-08-21; 10 new tests; executor fixed playWhen 900s offset + a render loop in the series hook; player page left without the block — no weekly projection on that route; bench rows on the box-score route not threaded) |
+| 055  | Matchup finals chart + home win-prob meter + `ff_ticks` writer (on read + tick) | P1 | L | 053, 054 | DONE `9b8f62e`+`fdfd48c`+`8c31e11`+`efabd40` (pushed 2026-08-23; reviewed/APPROVED 2026-08-21 after 2 revision rounds: no sample until outlooks load, caption clears the time axis; getTicks registered in the agent catalog — sanctioned out-of-scope touch) |
+| 056  | The book's line-movement strip (LinePanel + ticket) + in-play wagering spec | P2 | M | 055 | DONE `7ce8cef` (pushed 2026-08-23; reviewed/APPROVED 2026-08-21; strip quiet + opened/now caption; in-play wagering left as spec in the plan file — not built) |
 
-| 057  | Ledger·Bot tokens + type — off-white ground, ringed white cards, Geist, sans eyebrows, `.push` zeroed | P1 | M | — | DONE `2a9b93f` (not pushed; reviewed/APPROVED 2026-08-23; 2 new skin tests; gate green; Box Score verified unchanged) |
-| 058  | Ledger·Bot primitives — ink primary pill, sans badges, one segmented recipe, 500-weight nav/headings, edged sheets | P1 | M | 057 | DONE `a33f297`+`3b905a2` (not pushed; reviewed/APPROVED 2026-08-23; 30 files, class strings only; 1 new skin test; 2 leftover `bg-bg/50` scrims in player-watch/player-peek were out of scope → folded into 059) |
-| 059  | Ledger·Bot mobile polish — header/thumb bar/masthead/week pill, matchup-edge caption wrap fix, dev toolbar | P2 | M | 058 | DONE `7d11914`+`ca770a1` (not pushed; reviewed/APPROVED 2026-08-23; caption ≤2 lines verified at 390px; 1 new skin test; week-picker kept `group`/focus classes — sanctioned) |
-| 060  | Shell gestures — thumb bar hides on scroll-down, re-tap = top | P1 | S | — | DONE `e84ea66` (not pushed; reviewed/APPROVED 2026-08-23; executor's StrictMode fix sanctioned — closure state instead of impure functional updater; 5 reducer tests) |
-| 061  | Game page — pinned segment rail + swipeable Plays·Box·Scoring panes | P1 | M | 060 | DONE `3c0bd20`+`c3f4272` (not pushed; reviewed/APPROVED 2026-08-23 after 1 revision — short-pane landing kept in view; items-start height-sync fix sanctioned; 1 new skin test) |
-| 062  | Player sheet + watch drawer on vaul — half/full detents, drag dismiss | P2 | M | 061 | DONE `75475d2` (not pushed; reviewed/APPROVED 2026-08-23; reduced-motion → [1] only; deps-array deviation sanctioned; 1 new skin test) |
-| 063  | Matchup page — score card swipes the week's slate, page re-anchors on settle | P2 | M | 062 | DONE `d2b1242` (not pushed; reviewed/APPROVED 2026-08-23; settle→navigate replace:true, no ping-pong; snap-settle helper + 6 tests; deps [matchupId, slate.length] deviation sanctioned) |
-| 064  | Gate the matchup liveline until kickoff; stop the tab-switch reveal flicker | P1 | S | 063 | DONE `fdc1bed` (not pushed; reviewed/APPROVED 2026-08-23; 3 new matchupChartReady tests; preseason card verified chart-free; Win%↔Margin canvas identity verified stable; executor's reported slate auto-nav quirk NOT reproduced in 16 rounds — watched, guard idea recorded in memory) |
+| 057  | Ledger·Bot tokens + type — off-white ground, ringed white cards, Geist, sans eyebrows, `.push` zeroed | P1 | M | — | DONE `2a9b93f` (pushed 2026-08-23; reviewed/APPROVED 2026-08-23; 2 new skin tests; gate green; Box Score verified unchanged) |
+| 058  | Ledger·Bot primitives — ink primary pill, sans badges, one segmented recipe, 500-weight nav/headings, edged sheets | P1 | M | 057 | DONE `a33f297`+`3b905a2` (pushed 2026-08-23; reviewed/APPROVED 2026-08-23; 30 files, class strings only; 1 new skin test; 2 leftover `bg-bg/50` scrims in player-watch/player-peek were out of scope → folded into 059) |
+| 059  | Ledger·Bot mobile polish — header/thumb bar/masthead/week pill, matchup-edge caption wrap fix, dev toolbar | P2 | M | 058 | DONE `7d11914`+`ca770a1` (pushed 2026-08-23; reviewed/APPROVED 2026-08-23; caption ≤2 lines verified at 390px; 1 new skin test; week-picker kept `group`/focus classes — sanctioned) |
+| 060  | Shell gestures — thumb bar hides on scroll-down, re-tap = top | P1 | S | — | DONE `e84ea66` (pushed 2026-08-23; reviewed/APPROVED 2026-08-23; executor's StrictMode fix sanctioned — closure state instead of impure functional updater; 5 reducer tests) |
+| 061  | Game page — pinned segment rail + swipeable Plays·Box·Scoring panes | P1 | M | 060 | DONE `3c0bd20`+`c3f4272` (pushed 2026-08-23; reviewed/APPROVED 2026-08-23 after 1 revision — short-pane landing kept in view; items-start height-sync fix sanctioned; 1 new skin test) |
+| 062  | Player sheet + watch drawer on vaul — half/full detents, drag dismiss | P2 | M | 061 | DONE `75475d2` (pushed 2026-08-23; reviewed/APPROVED 2026-08-23; reduced-motion → [1] only; deps-array deviation sanctioned; 1 new skin test) |
+| 063  | Matchup page — score card swipes the week's slate, page re-anchors on settle | P2 | M | 062 | DONE `d2b1242` (pushed 2026-08-23; reviewed/APPROVED 2026-08-23; settle→navigate replace:true, no ping-pong; snap-settle helper + 6 tests; deps [matchupId, slate.length] deviation sanctioned) |
+| 064  | Gate the matchup liveline until kickoff; stop the tab-switch reveal flicker | P1 | S | 063 | DONE `fdc1bed` (pushed 2026-08-23; reviewed/APPROVED 2026-08-23; 3 new matchupChartReady tests; preseason card verified chart-free; Win%↔Margin canvas identity verified stable; executor's reported slate auto-nav quirk NOT reproduced in 16 rounds — watched, guard idea recorded in memory) |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
 ## Dependency notes
@@ -539,7 +539,7 @@ speaks the same verbs. PWA is client zero, not the product.
 
 ### Sprint 1 — Honest loop (in-repo, no host yet)
 
-**DONE** (not pushed): `038` `e876e59` · `040` `ff3d01b` · `039`
+**DONE** (pushed 2026-08-23): `038` `e876e59` · `040` `ff3d01b` · `039`
 `6a77792` · `031` `443b8ac` · `033` `262717f`.
 
 Done when: an operator with `DATABASE_URL` can dump context and
@@ -547,7 +547,7 @@ the purse cannot mint on trade accept. Pull exists in the PWA.
 
 ### Sprint 2 — Local host (commish Codex on the box)
 
-**DONE** (not pushed): `042` `337ed25` + biome `e72f4cb`.
+**DONE** (pushed 2026-08-23): `042` `337ed25` + biome `e72f4cb`.
 
 Done when:
 
@@ -560,7 +560,7 @@ and “sit the injured RB” hits `sitPlayer`.
 
 ### Sprint 3 — Hosted host (a friend’s Codex)
 
-**DONE** (not pushed): `041` `9537500` · `043` `9af8eff`.
+**DONE** (pushed 2026-08-23): `041` `9537500` · `043` `9af8eff`.
 
 Done when:
 
@@ -573,7 +573,7 @@ Same `dispatch`. Cookie still for the PWA.
 
 ### Sprint 4 — Playbooks (features as files)
 
-**DONE** (not pushed): `044` `969cf73`.
+**DONE** (pushed 2026-08-23): `044` `969cf73`.
 
 Done when “migrate my sdiff league” is a skill over
 `preview*` → `confirm: true` → `import*` (Sleeper / ESPN /
