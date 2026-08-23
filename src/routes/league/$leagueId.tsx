@@ -206,9 +206,9 @@ function LeagueLayout() {
       ) : q.error && q.data == null ? (
         <p className="text-sm text-loss">Couldn't load that league.</p>
       ) : q.data ? (
-        <header className="mb-6">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <h1 className="font-display text-4xl font-medium tracking-[-0.02em]">
+        <header className="mb-5">
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="min-w-0 truncate font-display text-[30px] font-medium tracking-[-0.02em] sm:text-4xl">
               {q.data.league.name}
             </h1>
             {usesWeek ? (
@@ -223,6 +223,7 @@ function LeagueLayout() {
                     search: (prev) => ({ ...prev, week: w, focus: undefined }),
                   })
                 }
+                className="shrink-0"
               />
             ) : null}
           </div>

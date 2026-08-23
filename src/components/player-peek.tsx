@@ -56,7 +56,7 @@ export function PlayerPeek({
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="fixed inset-0 z-40 bg-bg/50 sm:hidden"
+        className="fixed inset-0 z-40 bg-fg/40 sm:hidden"
       />
       <div
         ref={ref}

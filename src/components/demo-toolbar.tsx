@@ -54,7 +54,7 @@ export function DemoToolbar({ state }: { state: PrototypeState | undefined }) {
   return (
     // High enough to clear both the mobile tab bar and any page that parks a
     // fixed action rail above it. A dev toy must never sit on a real control.
-    <div className="pointer-events-none fixed right-3 bottom-36 z-40 flex items-center gap-1.5 md:bottom-20">
+    <div className="pointer-events-none fixed right-3 bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] z-40 flex items-center gap-1.5 max-sm:origin-bottom-right max-sm:scale-90 md:bottom-20">
       <Chip
         onClick={() => setPreLive(!preLive)}
         label="Pre live"

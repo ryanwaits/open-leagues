@@ -32,7 +32,7 @@ export function WeekPicker({
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
         className={cn(
-          "group inline-flex h-9 items-center gap-1.5 rounded-pill border border-line bg-surface px-3.5 text-sm font-semibold transition-colors duration-150 hover:border-line-strong hover:bg-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep",
+          "group inline-flex h-9 items-center gap-1.5 rounded-pill bg-surface pl-3.5 pr-2.5 text-sm font-medium text-fg shadow-[0_0_0_1px_var(--color-line-strong)] hover:bg-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep",
           className,
         )}
       >

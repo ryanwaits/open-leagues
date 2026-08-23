@@ -34,11 +34,11 @@ export function TeamMasthead({
         params={{ leagueId }}
         className="group min-w-0 border-b border-l border-line px-5 py-4 hover:bg-raised"
       >
-        <span className="block font-mono text-lg font-semibold tabular-nums group-hover:text-accent-strong">
+        <span className="block font-mono text-[22px] font-medium leading-none tabular-nums group-hover:text-accent-strong">
           {ordinal(idx + 1)}
-          <small className="ml-1 text-[11px] font-medium text-faint">of {standings.length}</small>
+          <small className="ml-1 text-[12px] font-normal text-faint">of {standings.length}</small>
         </span>
-        <span className="block microlabel-data">Rank</span>
+        <span className="mt-1.5 block microlabel">Rank</span>
       </Link>
       <Cell label="Week" value={String(week)} last />
       {faab != null ? (
@@ -65,8 +65,10 @@ function Cell({
 }) {
   return (
     <div className={cn("min-w-0 border-line px-5 py-4", !last && "border-b", side && "border-l")}>
-      <span className="block truncate font-mono text-lg font-semibold tabular-nums">{value}</span>
-      <span className="block microlabel-data">{label}</span>
+      <span className="block truncate font-mono text-[22px] font-medium leading-none tabular-nums">
+        {value}
+      </span>
+      <span className="mt-1.5 block microlabel">{label}</span>
     </div>
   );
 }

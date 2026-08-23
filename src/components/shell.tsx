@@ -138,7 +138,7 @@ export function Shell({
   return (
     <div className="flex min-h-dvh flex-col bg-bg text-fg">
       <header className="sticky top-0 z-30 border-b border-line bg-bg/85 pt-[env(safe-area-inset-top)] backdrop-blur-md">
-        <div className="mx-auto flex min-h-15 max-w-6xl items-center gap-3 px-4">
+        <div className="mx-auto flex h-15 max-w-6xl items-center gap-3 px-4">
           <Link to="/" className="shrink-0" aria-label={`${brand.name} — the desk`}>
             <span className="flex items-center gap-2">
               <LogoMark className="size-6" />
@@ -177,11 +177,11 @@ export function Shell({
               to="/scores"
               aria-label={live ? "NFL scores · games in progress" : "NFL scores"}
               className={cn(
-                "relative inline-flex h-9 items-center gap-1.5 rounded-pill px-2.5 text-sm font-medium transition-colors duration-150 sm:px-3",
+                "relative inline-flex h-9 items-center gap-1.5 rounded-pill text-sm font-medium transition-colors duration-150 max-sm:size-9 max-sm:justify-center max-sm:shadow-[0_0_0_1px_var(--color-line-strong)] sm:px-3",
                 inScores ? "bg-raised text-fg" : "text-fg/55 hover:bg-raised hover:text-fg",
               )}
             >
-              <Radio className="size-[18px] sm:size-4" strokeWidth={1.9} />
+              <Radio className="size-[18px] sm:size-4" strokeWidth={1.8} />
               <span className="hidden sm:inline">Scores</span>
               {live ? (
                 <span
@@ -222,7 +222,7 @@ export function Shell({
 
       <InstallDrawer />
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/95 backdrop-blur-md md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/92 backdrop-blur-md md:hidden">
         {navTabs.length ? (
           <div
             className="mx-auto grid max-w-lg px-2 pb-[env(safe-area-inset-bottom)]"
@@ -237,10 +237,10 @@ export function Shell({
                 preload="intent"
                 className={cn(
                   "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150",
-                  t.active ? "bg-raised text-fg" : "text-faint",
+                  t.active ? "bg-fg/6 text-fg" : "text-faint",
                 )}
               >
-                <t.Icon className="size-4" strokeWidth={1.9} />
+                <t.Icon className="size-[18px]" strokeWidth={1.8} />
                 <span className="max-w-full truncate px-1">{t.label}</span>
               </Link>
             ))}
@@ -250,45 +250,45 @@ export function Shell({
             <Link
               to="/"
               className={cn(
-                "mx-1 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[11px] font-medium transition-colors duration-150",
-                pathname === "/" ? "bg-raised text-fg" : "text-faint",
+                "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150",
+                pathname === "/" ? "bg-fg/6 text-fg" : "text-faint",
               )}
             >
-              <Trophy className="size-4" strokeWidth={1.75} />
+              <Trophy className="size-[18px]" strokeWidth={1.8} />
               Home
             </Link>
             <Link
               to="/scores"
               className={cn(
-                "mx-1 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[11px] font-medium transition-colors duration-150",
-                inScores ? "bg-raised text-fg" : "text-faint",
+                "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150",
+                inScores ? "bg-fg/6 text-fg" : "text-faint",
               )}
             >
-              <Radio className="size-4" strokeWidth={1.75} />
+              <Radio className="size-[18px]" strokeWidth={1.8} />
               Scores
             </Link>
             {isPending ? (
-              <div className="mx-1 min-h-12" />
+              <div className="mx-0.5 min-h-12" />
             ) : (
               <>
                 <SignedIn>
                   <Link
                     to="/join"
                     className={cn(
-                      "mx-1 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[11px] font-medium transition-colors duration-150",
-                      pathname === "/join" ? "bg-raised text-fg" : "text-faint",
+                      "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150",
+                      pathname === "/join" ? "bg-fg/6 text-fg" : "text-faint",
                     )}
                   >
-                    <UserRound className="size-4" strokeWidth={1.75} />
+                    <UserRound className="size-[18px]" strokeWidth={1.8} />
                     Join
                   </Link>
                 </SignedIn>
                 <SignedOut>
                   <Link
                     to="/login"
-                    className="mx-1 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[11px] font-medium text-faint"
+                    className="mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium text-faint"
                   >
-                    <UserRound className="size-4" strokeWidth={1.75} />
+                    <UserRound className="size-[18px]" strokeWidth={1.8} />
                     Sign in
                   </Link>
                 </SignedOut>

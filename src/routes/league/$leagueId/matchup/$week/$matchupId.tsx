@@ -529,7 +529,7 @@ function NavChip({
     <Link
       to="/league/$leagueId/matchup/$week/$matchupId"
       params={{ leagueId, week: String(week), matchupId: String(matchupId) }}
-      className="inline-flex size-10 items-center justify-center rounded-sm bg-raised text-muted hover:text-fg"
+      className="inline-flex size-10 items-center justify-center rounded-pill bg-raised text-muted hover:bg-line hover:text-fg"
       aria-label={label}
     >
       {icon === "left" ? (

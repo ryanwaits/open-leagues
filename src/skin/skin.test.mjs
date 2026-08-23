@@ -208,6 +208,14 @@ test("no component carries the retired push / shadow-thumb / heavy-weight recipe
   assert.doesNotMatch(badge, /font-mono/);
 });
 
+test("thumb bar uses one icon stroke and the masthead uses sans eyebrows", () => {
+  const shell = readFileSync(join(root, "src/components/shell.tsx"), "utf8");
+  assert.doesNotMatch(shell, /strokeWidth=\{1\.75\}/);
+
+  const teamMasthead = readFileSync(join(root, "src/components/team-masthead.tsx"), "utf8");
+  assert.doesNotMatch(teamMasthead, /microlabel-data/);
+});
+
 test("__root.tsx loads Geist and stamps the Ledger theme-color", () => {
   const rootTsx = readFileSync(join(root, "src/routes/__root.tsx"), "utf8");
   assert.match(rootTsx, /family=Geist/);

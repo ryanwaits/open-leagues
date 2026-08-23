@@ -85,7 +85,7 @@ export function PlayerWatch({
       <button
         type="button"
         aria-label="Close player watch"
-        className="absolute inset-0 bg-bg/50"
+        className="absolute inset-0 bg-fg/40"
         onClick={onClose}
       />
       <section
