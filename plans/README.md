@@ -351,7 +351,7 @@ reconcile). Source tree clean.
 | 056  | The book's line-movement strip (LinePanel + ticket) + in-play wagering spec | P2 | M | 055 | DONE `7ce8cef` (not pushed; reviewed/APPROVED 2026-08-21; strip quiet + opened/now caption; in-play wagering left as spec in the plan file — not built) |
 
 | 057  | Ledger·Bot tokens + type — off-white ground, ringed white cards, Geist, sans eyebrows, `.push` zeroed | P1 | M | — | DONE `2a9b93f` (not pushed; reviewed/APPROVED 2026-08-23; 2 new skin tests; gate green; Box Score verified unchanged) |
-| 058  | Ledger·Bot primitives — ink primary pill, sans badges, one segmented recipe, 500-weight nav/headings, edged sheets | P1 | M | 057 | TODO |
+| 058  | Ledger·Bot primitives — ink primary pill, sans badges, one segmented recipe, 500-weight nav/headings, edged sheets | P1 | M | 057 | DONE `a33f297`+`3b905a2` (not pushed; reviewed/APPROVED 2026-08-23; 30 files, class strings only; 1 new skin test; 2 leftover `bg-bg/50` scrims in player-watch/player-peek were out of scope → folded into 059) |
 | 059  | Ledger·Bot mobile polish — header/thumb bar/masthead/week pill, matchup-edge caption wrap fix, dev toolbar | P2 | M | 058 | TODO |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 

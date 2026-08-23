@@ -7,7 +7,7 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat <058-landed SHA>..HEAD -- src/components/shell.tsx src/components/team-masthead.tsx src/components/matchup-edge.tsx src/components/demo-toolbar.tsx src/components/week-picker.tsx 'src/routes/league/$leagueId.tsx' 'src/routes/league/$leagueId/matchup/$week/$matchupId.tsx' 'src/routes/league/$leagueId/matchups.tsx'`
+> **Drift check (run first)**: `git diff --stat <058-landed SHA>..HEAD -- src/components/player-watch.tsx src/components/player-peek.tsx src/components/shell.tsx src/components/team-masthead.tsx src/components/matchup-edge.tsx src/components/demo-toolbar.tsx src/components/week-picker.tsx 'src/routes/league/$leagueId.tsx' 'src/routes/league/$leagueId/matchup/$week/$matchupId.tsx' 'src/routes/league/$leagueId/matchups.tsx'`
 > (Use the SHA recorded for plan 058 in `plans/README.md`.) Excerpts below
 > are from `d370e29`; 058 edits `shell.tsx:146,164–167,180–182` and
 > `matchup-edge.tsx:149–161` only. On any other mismatch, STOP.
@@ -157,6 +157,7 @@ Same as 057/058: tokens/utilities only; `cn()`; Biome scoped `--write`; commit `
 - `src/components/demo-toolbar.tsx` (positioning only)
 - `src/routes/league/$leagueId/matchup/$week/$matchupId.tsx` (`BackLink`, `NavChip` recipes only)
 - `src/routes/league/$leagueId/matchups.tsx` (the two edge-arrow buttons only)
+- `src/components/player-watch.tsx` (line 88 scrim class only), `src/components/player-peek.tsx` (line 59 scrim class only)
 - `src/skin/skin.test.mjs` (assertion add)
 
 **Out of scope**:
@@ -246,7 +247,9 @@ Replace lines 218–228 with:
 
 **Verify**: at 390 the rail sits above the thumb bar, not over card content.
 
-### Step 7: Edged arrows
+### Step 7: Edged arrows + two leftover scrims
+
+- `src/components/player-watch.tsx:88` (`absolute inset-0 bg-bg/50`) and `src/components/player-peek.tsx:59` (`fixed inset-0 z-40 bg-bg/50 sm:hidden`): `bg-bg/50` → `bg-fg/40` (plan 058 unified every other scrim to `bg-fg/40`; these two were outside its file list). Class string only.
 
 - `matchups.tsx` both edge buttons: `shadow-[var(--shadow-lift)]` → `shadow-[0_0_0_1px_var(--color-line-strong)]`, drop `border border-line`.
 - `$matchupId.tsx` `NavChip`: `rounded-sm bg-raised` → `rounded-pill bg-raised hover:bg-line`; `BackLink` unchanged.
@@ -267,6 +270,7 @@ Typecheck, lint ≤ baseline, tests ≥ 322, build:dev. Screenshots at 390×844 
 - [ ] typecheck 0; build:dev 0; tests ≥ 323 pass, no new fails
 - [ ] `grep -c "strokeWidth={1.75}" src/components/shell.tsx` → 0
 - [ ] `grep -c "microlabel-data" src/components/team-masthead.tsx` → 0
+- [ ] `grep -rn "bg-bg/50" src` → none
 - [ ] Caption screenshot at 390 shows no overlap (attach path in report)
 - [ ] `git status` clean outside scope
 - [ ] No change to nav tab order/labels (`git diff` of `shell.tsx` touches only class strings and `strokeWidth`)
