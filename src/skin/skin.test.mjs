@@ -231,3 +231,12 @@ test("the game page rail is a pinned tablist over snap panes", () => {
   assert.match(gamePage, /sticky top-\[calc\(3\.75rem/);
   assert.doesNotMatch(gamePage, /bg-accent text-accent-fg/);
 });
+
+test("player sheets ride vaul with detents", () => {
+  for (const file of ["src/components/player-sheet.tsx", "src/components/player-watch.tsx"]) {
+    const content = readFileSync(join(root, file), "utf8");
+    assert.match(content, /from "vaul"/, `${file} should import from vaul`);
+    assert.match(content, /snapPoints/, `${file} should use snapPoints`);
+    assert.match(content, /max-width: 639px/, `${file} should gate on the phone breakpoint`);
+  }
+});

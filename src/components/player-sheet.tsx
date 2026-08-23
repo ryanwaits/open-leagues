@@ -1,7 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Drawer } from "vaul";
 import {
   type LeagueContext,
   ProfileGameLog,
@@ -21,6 +22,7 @@ import {
 } from "@/lib/data/player-view";
 import type { GameChip, SlimPlayer } from "@/lib/data/types";
 import type { ScoringBook } from "@/lib/league/scoring";
+import { motionOk } from "@/lib/scroll-hide";
 
 export type SheetTarget = {
   player: SlimPlayer;
@@ -30,6 +32,20 @@ export type SheetTarget = {
   projection?: number | null;
   book?: ScoringBook | null;
 };
+
+/** True under the phone breakpoint — decides sheet vs. drawer chrome. */
+function useIsPhone() {
+  const [phone, setPhone] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const on = () => setPhone(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return phone;
+}
 
 /**
  * The quick look, for when you are mid-task and do not want to lose the page
@@ -45,8 +61,17 @@ export function PlayerSheet({
   leagueId: string;
   onClose: () => void;
 }) {
+  const isPhone = useIsPhone();
+  const snapPoints = motionOk() ? [0.55, 1] : [1];
+  const [snap, setSnap] = useState<number | string | null>(snapPoints[0]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: target.player_id is the reset trigger, not a read inside the effect — a new player should snap back to the half detent.
   useEffect(() => {
-    if (!target) return;
+    setSnap(snapPoints[0]);
+  }, [target?.player.player_id, snapPoints[0]]);
+
+  useEffect(() => {
+    if (isPhone || !target) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
@@ -57,7 +82,33 @@ export function PlayerSheet({
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [target, onClose]);
+  }, [isPhone, target, onClose]);
+
+  if (isPhone) {
+    return (
+      <Drawer.Root
+        open={Boolean(target)}
+        onOpenChange={(o) => {
+          if (!o) onClose();
+        }}
+        snapPoints={snapPoints}
+        activeSnapPoint={snap}
+        setActiveSnapPoint={setSnap}
+        fadeFromIndex={0}
+      >
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-50 bg-fg/40" />
+          <Drawer.Content
+            aria-label={target?.player.full_name}
+            className="fixed inset-x-0 bottom-0 z-50 flex h-[94%] flex-col rounded-t-xl bg-surface ring-card outline-none"
+          >
+            <Drawer.Handle className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-line-strong" />
+            {target ? <Body target={target} leagueId={leagueId} onClose={onClose} /> : null}
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+    );
+  }
 
   if (!target) return null;
 
@@ -75,7 +126,6 @@ export function PlayerSheet({
         aria-label={target.player.full_name}
         className="relative z-10 flex h-[min(88vh,44rem)] w-full flex-col rounded-t-xl bg-surface ring-card sm:h-full sm:w-[34rem] sm:rounded-none sm:border-l sm:border-line"
       >
-        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-line-strong sm:hidden" />
         <Body target={target} leagueId={leagueId} onClose={onClose} />
       </section>
     </div>
