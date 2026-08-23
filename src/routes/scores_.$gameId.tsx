@@ -23,7 +23,6 @@ import { type PlaySegment, type TrackedPlayer, tagPlayText } from "@/lib/data/pl
 import { canonTeam, isDefense, playerHeadshot, playerTeam, teamLogo } from "@/lib/data/teams";
 import type { BoxRow, GameDrive, GamePlay, GameSummary, TeamBox } from "@/lib/data/types";
 import { type GameTracking, useGameTracking } from "@/lib/data/use-game-tracking";
-import { motionOk } from "@/lib/scroll-hide";
 import { useSwipe } from "@/lib/swipe";
 import { cn } from "@/lib/utils";
 
@@ -44,9 +43,7 @@ function GamePage() {
   const [peek, setPeek] = useState<Peek | null>(null);
   const closePeek = useCallback(() => setPeek(null), []);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const railRef = useRef<HTMLDivElement | null>(null);
   const [stuck, setStuck] = useState(false);
-  const panesRef = useRef<HTMLDivElement | null>(null);
   const paneRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [paneH, setPaneH] = useState<number>();
   const q = useQuery({
@@ -80,27 +77,12 @@ function GamePage() {
   const pickTab = useCallback(
     (i: number) => {
       const clamped = Math.max(0, Math.min(TABS.length - 1, i));
-      const already = clamped === idx;
       setTab(TABS[clamped][0]);
-      const el = panesRef.current;
-      if (already) {
-        window.scrollTo({ top: 0, behavior: motionOk() ? "smooth" : "auto" });
-      } else if (stuck && el) {
-        // Landing on a different (possibly shorter) pane while the rail is
-        // pinned deep in the page: pull the window up just enough so the new
-        // pane's top sits under the rail instead of leaving a blank gap.
-        const railBottom = railRef.current?.getBoundingClientRect().bottom ?? 0;
-        const paneTop = el.getBoundingClientRect().top;
-        const delta = paneTop - railBottom;
-        if (delta < 0) {
-          window.scrollTo({
-            top: Math.max(0, window.scrollY + delta),
-            behavior: motionOk() ? "smooth" : "auto",
-          });
-        }
-      }
+      // Tab switches are high-frequency product UI: no easing, no travel.
+      // The new pane paints immediately, reading from the top.
+      window.scrollTo(0, 0);
     },
-    [TABS, idx, stuck],
+    [TABS],
   );
 
   const onTablistKeys = useCallback(
@@ -174,7 +156,6 @@ function GamePage() {
 
           <div ref={sentinelRef} aria-hidden="true" className="h-px" />
           <div
-            ref={railRef}
             className={cn(
               "sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-20 -mx-4 mt-4 bg-bg/90 px-4 py-2 backdrop-blur-md",
               stuck && "border-b border-line",
@@ -217,19 +198,11 @@ function GamePage() {
             </div>
           </div>
 
-          <div
-            ref={panesRef}
-            className="-mx-4 overflow-hidden"
-            style={paneH ? { height: paneH } : undefined}
-          >
+          <div className="-mx-4 overflow-hidden" style={paneH ? { height: paneH } : undefined}>
             {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: touch-swipe surface; the rail tablist above is the keyboard/AT path */}
             <div
               {...swipe.handlers}
-              className={cn(
-                "flex touch-pan-y items-start",
-                !swipe.dragging &&
-                  "motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out",
-              )}
+              className="flex touch-pan-y items-start"
               style={{ transform: `translateX(calc(${idx * -100}% + ${edgeDrag}px))` }}
             >
               <div
