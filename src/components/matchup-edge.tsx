@@ -140,6 +140,7 @@ export function MatchupEdge({
       : s.swingThem.dir === "up"
         ? "down"
         : "flat";
+  const multi = edgeView === "finals";
 
   return (
     <section className="mt-6 rounded-xl bg-surface ring-card">
@@ -169,51 +170,50 @@ export function MatchupEdge({
 
       {s.started ? (
         <div className="px-5 pb-4">
-          {edgeView === "finals" ? (
-            <LiveLine
-              series={[
-                { id: "you", label: a.teamName, points: s.you, tone: "brand" },
-                { id: "them", label: b.teamName, points: s.them, tone: "muted" },
-              ]}
-              height={196}
-              windowSecs={simOn ? 150 : edgeWindow}
-              windows={simOn ? undefined : WINDOWS}
-              onWindowChange={setEdgeWindow}
-              frozen={s.final}
-              padding={{ top: 8, right: 8, bottom: 26, left: 0 }}
-              ariaLabel="Projected finals"
-            />
-          ) : edgeView === "pct" ? (
-            <LiveLine
-              series={s.pct}
-              value={s.last?.youPct}
-              height={196}
-              windowSecs={simOn ? 150 : edgeWindow}
-              windows={simOn ? undefined : WINDOWS}
-              onWindowChange={setEdgeWindow}
-              referenceLine={{ value: 50, label: "COIN FLIP" }}
-              momentum={swing(s.pct, 300, 3).dir}
-              formatValue={(v) => `${Math.round(v)}%`}
-              frozen={s.final}
-              padding={{ top: 8, right: 8, bottom: 26, left: 0 }}
-              ariaLabel="Win probability"
-            />
-          ) : (
-            <LiveLine
-              series={s.margin}
-              value={s.last?.margin}
-              height={196}
-              windowSecs={simOn ? 150 : edgeWindow}
-              windows={simOn ? undefined : WINDOWS}
-              onWindowChange={setEdgeWindow}
-              referenceLine={{ value: 0, label: "EVEN" }}
-              momentum={marginMomentum}
-              formatValue={(v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}`}
-              frozen={s.final}
-              padding={{ top: 8, right: 8, bottom: 26, left: 0 }}
-              ariaLabel="Projected margin"
-            />
-          )}
+          <LiveLine
+            key={multi ? "multi" : "single"}
+            series={
+              multi
+                ? [
+                    { id: "you", label: a.teamName, points: s.you, tone: "brand" },
+                    { id: "them", label: b.teamName, points: s.them, tone: "muted" },
+                  ]
+                : edgeView === "pct"
+                  ? s.pct
+                  : s.margin
+            }
+            value={multi ? undefined : edgeView === "pct" ? s.last?.youPct : s.last?.margin}
+            height={196}
+            windowSecs={simOn ? 150 : edgeWindow}
+            windows={simOn ? undefined : WINDOWS}
+            onWindowChange={setEdgeWindow}
+            referenceLine={
+              multi
+                ? undefined
+                : edgeView === "pct"
+                  ? { value: 50, label: "COIN FLIP" }
+                  : { value: 0, label: "EVEN" }
+            }
+            momentum={
+              multi ? false : edgeView === "pct" ? swing(s.pct, 300, 3).dir : marginMomentum
+            }
+            formatValue={
+              multi
+                ? undefined
+                : edgeView === "pct"
+                  ? (v) => `${Math.round(v)}%`
+                  : (v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}`
+            }
+            frozen={s.final}
+            padding={{ top: 8, right: 8, bottom: 26, left: 0 }}
+            ariaLabel={
+              multi
+                ? "Projected finals"
+                : edgeView === "pct"
+                  ? "Win probability"
+                  : "Projected margin"
+            }
+          />
 
           <div className="mt-5 flex items-start justify-between gap-3 microlabel-data">
             <span className="min-w-0">

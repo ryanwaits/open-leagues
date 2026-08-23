@@ -2,6 +2,7 @@ import { test } from "bun:test";
 import assert from "node:assert/strict";
 import {
   lastPointOnly,
+  matchupChartReady,
   mergeSamples,
   pairIsFinal,
   sampleMatchup,
@@ -192,4 +193,40 @@ test("pairIsFinal: true only when all starters are post", () => {
     },
   };
   assert.equal(pairIsFinal(mixed), false);
+});
+
+function withState(p, state) {
+  return {
+    ...p,
+    home: {
+      ...p.home,
+      starters: p.home.starters.map((s) => ({ ...s, game: { ...s.game, state } })),
+    },
+    away: {
+      ...p.away,
+      starters: p.away.starters.map((s) => ({ ...s, game: { ...s.game, state } })),
+    },
+  };
+}
+
+test("matchupChartReady: all games pre, 0 ticks -> false", () => {
+  const p = withState(pair(), "pre");
+  assert.equal(matchupChartReady(p, 0), false);
+});
+
+test("matchupChartReady: all games pre, 3 ticks -> true", () => {
+  const p = withState(pair(), "pre");
+  assert.equal(matchupChartReady(p, 3), true);
+});
+
+test("matchupChartReady: one starter in/post, 0 ticks -> true", () => {
+  const p = withState(pair(), "pre");
+  const started = {
+    ...p,
+    home: {
+      ...p.home,
+      starters: [p.home.starters[0], { ...p.home.starters[1], game: { state: "in" } }],
+    },
+  };
+  assert.equal(matchupChartReady(started, 0), true);
 });

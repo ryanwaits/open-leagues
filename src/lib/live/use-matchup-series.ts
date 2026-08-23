@@ -12,6 +12,7 @@ import type { MatchupPair } from "@/lib/data/types";
 import {
   lastPointOnly,
   type MatchupSample,
+  matchupChartReady,
   mergeSamples,
   type OutlookMap,
   pairIsFinal,
@@ -63,10 +64,10 @@ export type MatchupSeries = {
   /** Every starter on both sides is post (or has no game). */
   final: boolean;
   /**
-   * Enough to draw the liveline: the pair has started, or there's at least
-   * one sample (pre-kick this draws as a single pulsing dot per series at
-   * the projection). False only when there's no sample at all yet
-   * (outlooks not loaded) — the panel falls back to the plain meter then.
+   * True when the canvas should show — kickoff, or stored ticks from a
+   * prior session. False means "outlooks loaded but nothing has kicked
+   * off yet": MatchupEdge falls back to "Margin by slot" and renders no
+   * `<LiveLine>`, regardless of how many samples have been taken.
    */
   started: boolean;
   /** No server ticks came back — this line only knows what happened since the page opened. */
@@ -125,7 +126,7 @@ export function useMatchupSeries(args: {
     swingYou: swing(youFull, 300, 1.2),
     swingThem: swing(themFull, 300, 1.2),
     final: pairIsFinal(pair),
-    started: pairHasStarted(pair) || samples.length >= 1,
+    started: matchupChartReady(pair, stored.length),
     sinceOpened: stored.length === 0,
   };
 }

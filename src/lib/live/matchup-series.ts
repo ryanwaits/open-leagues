@@ -7,6 +7,7 @@
  * the caption and the stored history are never three approximations of the
  * same number.
  */
+import { pairHasStarted } from "@/lib/data/matchup-view";
 import type { MatchupPair, MatchupSide } from "@/lib/data/types";
 import { type PlayerOutlook, winProbability } from "@/lib/league/win-probability";
 import type { LinePoint } from "./series";
@@ -186,6 +187,11 @@ export function lastPointOnly(points: LinePoint[]): LinePoint[] {
   if (points.length === 0) return [];
   const last = points[points.length - 1]!;
   return [{ time: last.time - 1, value: last.value }, last];
+}
+
+/** Canvas + Finals/Win%/Margin tabs. Kickoff or stored ticks — not "outlooks loaded." */
+export function matchupChartReady(pair: MatchupPair, storedTickCount: number): boolean {
+  return pairHasStarted(pair) || storedTickCount > 0;
 }
 
 /** Everybody on both sides is `post` (or has no game at all). */
