@@ -372,7 +372,7 @@ reconcile). Source tree clean.
 | 061  | Game page — pinned segment rail + swipeable Plays·Box·Scoring panes | P1 | M | 060 | DONE `3c0bd20`+`c3f4272` (not pushed; reviewed/APPROVED 2026-08-23 after 1 revision — short-pane landing kept in view; items-start height-sync fix sanctioned; 1 new skin test) |
 | 062  | Player sheet + watch drawer on vaul — half/full detents, drag dismiss | P2 | M | 061 | DONE `75475d2` (not pushed; reviewed/APPROVED 2026-08-23; reduced-motion → [1] only; deps-array deviation sanctioned; 1 new skin test) |
 | 063  | Matchup page — score card swipes the week's slate, page re-anchors on settle | P2 | M | 062 | DONE `d2b1242` (not pushed; reviewed/APPROVED 2026-08-23; settle→navigate replace:true, no ping-pong; snap-settle helper + 6 tests; deps [matchupId, slate.length] deviation sanctioned) |
-| 064  | Gate the matchup liveline until kickoff; stop the tab-switch reveal flicker | P1 | S | 063 | TODO (run after 063 DONE) |
+| 064  | Gate the matchup liveline until kickoff; stop the tab-switch reveal flicker | P1 | S | 063 | DONE `fdc1bed` (not pushed; reviewed/APPROVED 2026-08-23; 3 new matchupChartReady tests; preseason card verified chart-free; Win%↔Margin canvas identity verified stable; executor's reported slate auto-nav quirk NOT reproduced in 16 rounds — watched, guard idea recorded in memory) |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
 ## Dependency notes
