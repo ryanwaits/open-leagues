@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Avatar } from "@/components/avatar";
 import { ClaimLedgerFoot, ClaimLedgerRow } from "@/components/claim-ledger";
+import { Deck } from "@/components/deck";
 import { LineupBoard } from "@/components/lineup-board";
 import { MoveRow } from "@/components/move-row";
 import { PlayerSheet, type SheetTarget } from "@/components/player-sheet";
@@ -46,6 +47,10 @@ export const Route = createFileRoute("/league/$leagueId/roster")({
   component: MyTeamPage,
 });
 
+/** The deck's tabs, in scroll order. Activity fronts for Waivers + Trades + Your moves. */
+const DECK_SECTIONS = ["Lineup", "Bench", "Activity"] as const;
+type DeckSection = (typeof DECK_SECTIONS)[number];
+
 /** No baseline for a bye/out/no-data week — nothing to project against. */
 function baselineOf(
   projections: Record<string, Projection> | undefined,
@@ -70,6 +75,41 @@ function MyTeamPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
+
+  // The deck's tabs both jump-scroll and track: the active chip always names
+  // the section under the header. Sections are queried fresh at track time
+  // (not cached at mount) since LineupBoard's bench can mount after the deck.
+  const [activeSec, setActiveSec] = useState<DeckSection>("Lineup");
+  useEffect(() => {
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        let current: DeckSection = "Lineup";
+        for (const name of DECK_SECTIONS) {
+          const el = document.querySelector(`[data-deck-sec="${name}"]`);
+          if (el && el.getBoundingClientRect().top <= 90) current = name;
+        }
+        setActiveSec(current);
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  function jumpToSection(name: DeckSection) {
+    const el = document.querySelector(`[data-deck-sec="${name}"]`);
+    if (!el) return;
+    window.scrollTo({
+      top: el.getBoundingClientRect().top + window.scrollY - 76,
+      behavior: "auto",
+    });
+  }
 
   function openPlayer(p: RosterPlayer) {
     const shelf =
@@ -333,6 +373,33 @@ function MyTeamPage() {
 
   return (
     <div className="flex flex-col gap-5">
+      <Deck>
+        <span className="flex items-center gap-0.5 rounded-pill bg-raised p-0.5">
+          {DECK_SECTIONS.map((name) => (
+            <button
+              key={name}
+              type="button"
+              aria-pressed={activeSec === name}
+              onClick={() => jumpToSection(name)}
+              className={cn(
+                "h-8 rounded-pill px-3 text-[13px] font-medium",
+                activeSec === name ? "bg-fg text-bg" : "text-faint",
+              )}
+            >
+              {name}
+            </button>
+          ))}
+        </span>
+        <span className="flex-1" />
+        <Link
+          to="/league/$leagueId/trades"
+          params={{ leagueId }}
+          className="inline-flex h-9 shrink-0 items-center rounded-pill bg-fg px-3.5 text-[13px] font-medium text-bg"
+        >
+          ⇄ Trade
+        </Link>
+      </Deck>
+
       <section className="rounded-xl bg-surface ring-card">
         <div className="flex flex-wrap items-center gap-4 p-5">
           <Avatar
@@ -351,7 +418,7 @@ function MyTeamPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button asChild size="sm">
+            <Button asChild size="sm" className="hidden sm:inline-flex">
               <Link to="/league/$leagueId/trades" params={{ leagueId }}>
                 Propose a trade
               </Link>
@@ -382,23 +449,25 @@ function MyTeamPage() {
 
       <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr] lg:items-start">
         <div className="flex min-w-0 flex-col gap-5">
-          <LineupBoard
-            team={t}
-            rosterPositions={league.data.league.roster_positions ?? []}
-            editable={Boolean(league.data.hosted && !league.data.locked)}
-            byes={byes.data}
-            week={week}
-            projections={projections.data}
-            stats={pre.on ? pre.stats : (weekStats.data ?? {})}
-            busy={start.isPending || sit.isPending || swap.isPending}
-            onIntentPlayer={(p) => void prefetchPlayerProfile(qc, leagueId, p.player_id)}
-            onOpenPlayer={openPlayer}
-            onStart={(playerId, replaceId, slot, name, into) =>
-              start.mutate({ playerId, replaceId, slot, name, into })
-            }
-            onSit={(playerId, name) => sit.mutate({ playerId, name })}
-            onSwap={(v) => swap.mutate(v)}
-          />
+          <div data-deck-sec="Lineup">
+            <LineupBoard
+              team={t}
+              rosterPositions={league.data.league.roster_positions ?? []}
+              editable={Boolean(league.data.hosted && !league.data.locked)}
+              byes={byes.data}
+              week={week}
+              projections={projections.data}
+              stats={pre.on ? pre.stats : (weekStats.data ?? {})}
+              busy={start.isPending || sit.isPending || swap.isPending}
+              onIntentPlayer={(p) => void prefetchPlayerProfile(qc, leagueId, p.player_id)}
+              onOpenPlayer={openPlayer}
+              onStart={(playerId, replaceId, slot, name, into) =>
+                start.mutate({ playerId, replaceId, slot, name, into })
+              }
+              onSit={(playerId, name) => sit.mutate({ playerId, name })}
+              onSwap={(v) => swap.mutate(v)}
+            />
+          </div>
 
           {ir.length || taxi.length ? (
             <section className="rounded-xl bg-surface ring-card">
@@ -434,7 +503,7 @@ function MyTeamPage() {
 
         <div className="flex min-w-0 flex-col gap-5">
           {league.data.hosted ? (
-            <section className="rounded-xl bg-surface ring-card">
+            <section className="rounded-xl bg-surface ring-card" data-deck-sec="Activity">
               <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
                 <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Waivers</h2>
                 <Link

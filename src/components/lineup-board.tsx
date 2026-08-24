@@ -358,6 +358,7 @@ export function LineupBoard({
       <button
         type="button"
         aria-expanded={benchShown}
+        data-deck-sec="Bench"
         onClick={() => setBenchOpen((v) => !v)}
         className="flex min-h-12 w-full items-center gap-2 border-t border-line px-5 text-left hover:bg-raised"
       >

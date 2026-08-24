@@ -288,3 +288,12 @@ test("the wire's context lives in the deck on phones", () => {
   assert.match(wire, /<Deck>/);
   assert.match(wire, /hidden gap-3 sm:flex/);
 });
+
+test("my team's sections answer to the deck", () => {
+  const roster = readFileSync(join(root, "src/routes/league/$leagueId/roster.tsx"), "utf8");
+  assert.match(roster, /<Deck>/);
+  assert.match(roster, /data-deck-sec="Lineup"/);
+
+  const lineupBoard = readFileSync(join(root, "src/components/lineup-board.tsx"), "utf8");
+  assert.match(lineupBoard, /data-deck-sec="Bench"/);
+});
