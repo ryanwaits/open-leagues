@@ -948,7 +948,6 @@ function Line({
       <SlotPts
         points={side.points}
         forecast={side.forecast}
-        expected={side.expected}
         live={live}
         align={align}
         chipSide={align === "left" ? "before" : "after"}
