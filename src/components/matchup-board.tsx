@@ -293,7 +293,6 @@ function Half({
       <SlotPts
         points={line?.points}
         forecast={line?.forecast}
-        expected={line?.expected}
         live={live}
         reserve
         align={flip ? "left" : "right"}
