@@ -259,4 +259,9 @@ test("the box score speaks in counts, not clocks", () => {
 
   const playerCell = readFileSync(join(root, "src/components/player-cell.tsx"), "utf8");
   assert.match(playerCell, /clock\s*=\s*true/, "clock should default on for every other caller");
+
+  // Desktop V1: a pinned 400px rail (pill strip · score · line) beside a
+  // flowing table column, sticky under the header at lg+.
+  assert.match(route, /lg:grid-cols-\[400px_minmax/);
+  assert.match(route, /lg:sticky/);
 });

@@ -380,7 +380,7 @@ function MatchupPage() {
 
       <div ref={sentinelRef} className="h-px" aria-hidden="true" />
       {stuck ? (
-        <div className="sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-20 -mx-4 flex items-center justify-between border-b border-line bg-bg/90 px-4 py-2 backdrop-blur-md">
+        <div className="sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-20 -mx-4 flex items-center justify-between border-b border-line bg-bg/90 px-4 py-2 backdrop-blur-md lg:hidden">
           <span className="font-mono text-sm tabular-nums">
             <span className={miniHomeLeads ? "text-fg" : "text-muted"}>
               {abbr(pair.home.teamName)} {formatPts(miniScores.home, 1)}
@@ -398,137 +398,145 @@ function MatchupPage() {
         </div>
       ) : null}
 
-      {slate.length > 1 ? (
-        <div className="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {slate.map((p) => (
-            <GamePill
-              key={p.matchupId}
-              pair={p}
-              leagueId={leagueId}
-              week={week}
-              active={p.matchupId === pair.matchupId}
-            />
-          ))}
-        </div>
-      ) : null}
-      {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: touch-swipe surface; the NavChips are the keyboard/AT path */}
-      <div {...slateSwipe.handlers} className="touch-pan-y">
-        <Scoreboard
-          pair={pair}
-          week={week}
-          leagueId={leagueId}
-          standings={standings}
-          live={liveFlag}
-        />
-      </div>
-
-      <MatchupEdge
-        pair={livePair ?? pair}
-        leagueId={leagueId}
-        season={league.data?.league.season ?? ""}
-        week={week}
-        mine={league.data?.myRosterId ?? null}
-      />
-
-      <section className="mt-6 rounded-xl bg-surface ring-card">
-        <header className="flex items-center justify-between border-b border-line px-3 py-2.5 sm:px-4">
-          <h2 className="microlabel">Starters</h2>
-          <p className="font-mono text-[11px] tabular-nums text-faint">
-            Tap a name · {formatPts(starterTotal(pair.home), 1)}
-            <span className="mx-1.5 text-line">·</span>
-            {pair.away ? formatPts(starterTotal(pair.away), 1) : "Bye"}
-          </p>
-        </header>
-        <ul>
-          {pair.home.starters.map((homeLine, i) => (
-            <StarterRow
-              key={homeLine.slot}
-              home={homeLine}
-              away={pair.away?.starters[i] ?? null}
-              prevHome={prevPair?.home.starters[i] ?? null}
-              prevAway={prevPair?.away?.starters[i] ?? null}
-              bye={!pair.away}
-              final={decided}
-              stats={stats}
-              homeClub={pair.home.teamName}
-              awayClub={pair.away?.teamName ?? ""}
-              onWatch={openPlayer}
-              projections={projections.data ?? {}}
-              book={book}
-            />
-          ))}
-        </ul>
-      </section>
-
-      {pair.away ? (
-        <section className="mt-6 rounded-xl bg-surface ring-card">
-          <header className="border-b border-line px-3 py-2.5 sm:px-4">
-            <h2 className="microlabel">Bench</h2>
-          </header>
-          {!homeTeam.data && !awayTeam.data ? (
-            <div className="space-y-2 p-3">
-              <Skeleton className="h-10" />
-              <Skeleton className="h-10" />
-            </div>
-          ) : (
-            <BenchGroups
-              home={viewHome}
-              away={viewAway}
-              stats={stats}
-              projections={projections.data ?? {}}
-              homeClub={pair.home.teamName}
-              awayClub={pair.away?.teamName ?? ""}
-              onWatch={openPlayer}
-            />
-          )}
-        </section>
-      ) : (
-        <section className="mt-6 rounded-xl bg-surface ring-card">
-          <header className="border-b border-line px-3 py-2.5 sm:px-4">
-            <h2 className="microlabel">Bench</h2>
-          </header>
-          {!homeTeam.data ? (
-            <div className="space-y-2 p-3">
-              <Skeleton className="h-10" />
-            </div>
-          ) : (
-            <ul>
-              {benchOf(viewHome).map((p) => (
-                <BenchRow
-                  key={p.player_id}
-                  player={p}
-                  stats={stats}
-                  projection={projections.data?.[p.player_id]}
-                  club={pair.home.teamName}
-                  onWatch={openPlayer}
-                />
-              ))}
-              {benchOf(viewHome).length === 0 ? (
-                <li className="px-3 py-4 text-sm text-muted sm:px-4">No one on the pine.</li>
-              ) : null}
-            </ul>
-          )}
-        </section>
-      )}
-
-      {slate.length > 1 ? (
-        <section className="mt-8">
-          <h2 className="microlabel">Rest of week {week}</h2>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {slate
-              .filter((p) => p.matchupId !== pair.matchupId)
-              .map((p) => (
+      <div className="lg:grid lg:grid-cols-[400px_minmax(0,1fr)] lg:items-start lg:gap-5">
+        <div className="lg:sticky lg:top-[calc(3.75rem+env(safe-area-inset-top)+1rem)] lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto scroll-thin">
+          {slate.length > 1 ? (
+            <div className="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:mb-4 lg:px-0 [&::-webkit-scrollbar]:hidden">
+              {slate.map((p) => (
                 <GamePill
                   key={p.matchupId}
                   pair={p}
                   leagueId={leagueId}
                   week={week}
-                  active={false}
+                  active={p.matchupId === pair.matchupId}
                 />
               ))}
+            </div>
+          ) : null}
+          {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: touch-swipe surface; the NavChips are the keyboard/AT path */}
+          <div {...slateSwipe.handlers} className="touch-pan-y">
+            <Scoreboard
+              pair={pair}
+              week={week}
+              leagueId={leagueId}
+              standings={standings}
+              live={liveFlag}
+            />
           </div>
-        </section>
-      ) : null}
+
+          <div className="lg:[&>section]:!mt-4">
+            <MatchupEdge
+              pair={livePair ?? pair}
+              leagueId={leagueId}
+              season={league.data?.league.season ?? ""}
+              week={week}
+              mine={league.data?.myRosterId ?? null}
+            />
+          </div>
+        </div>
+
+        <div className="lg:[&>section:first-child]:mt-0">
+          <section className="mt-6 rounded-xl bg-surface ring-card">
+            <header className="flex items-center justify-between border-b border-line px-3 py-2.5 sm:px-4">
+              <h2 className="microlabel">Starters</h2>
+              <p className="font-mono text-[11px] tabular-nums text-faint">
+                Tap a name · {formatPts(starterTotal(pair.home), 1)}
+                <span className="mx-1.5 text-line">·</span>
+                {pair.away ? formatPts(starterTotal(pair.away), 1) : "Bye"}
+              </p>
+            </header>
+            <ul>
+              {pair.home.starters.map((homeLine, i) => (
+                <StarterRow
+                  key={homeLine.slot}
+                  home={homeLine}
+                  away={pair.away?.starters[i] ?? null}
+                  prevHome={prevPair?.home.starters[i] ?? null}
+                  prevAway={prevPair?.away?.starters[i] ?? null}
+                  bye={!pair.away}
+                  final={decided}
+                  stats={stats}
+                  homeClub={pair.home.teamName}
+                  awayClub={pair.away?.teamName ?? ""}
+                  onWatch={openPlayer}
+                  projections={projections.data ?? {}}
+                  book={book}
+                />
+              ))}
+            </ul>
+          </section>
+
+          {pair.away ? (
+            <section className="mt-6 rounded-xl bg-surface ring-card">
+              <header className="border-b border-line px-3 py-2.5 sm:px-4">
+                <h2 className="microlabel">Bench</h2>
+              </header>
+              {!homeTeam.data && !awayTeam.data ? (
+                <div className="space-y-2 p-3">
+                  <Skeleton className="h-10" />
+                  <Skeleton className="h-10" />
+                </div>
+              ) : (
+                <BenchGroups
+                  home={viewHome}
+                  away={viewAway}
+                  stats={stats}
+                  projections={projections.data ?? {}}
+                  homeClub={pair.home.teamName}
+                  awayClub={pair.away?.teamName ?? ""}
+                  onWatch={openPlayer}
+                />
+              )}
+            </section>
+          ) : (
+            <section className="mt-6 rounded-xl bg-surface ring-card">
+              <header className="border-b border-line px-3 py-2.5 sm:px-4">
+                <h2 className="microlabel">Bench</h2>
+              </header>
+              {!homeTeam.data ? (
+                <div className="space-y-2 p-3">
+                  <Skeleton className="h-10" />
+                </div>
+              ) : (
+                <ul>
+                  {benchOf(viewHome).map((p) => (
+                    <BenchRow
+                      key={p.player_id}
+                      player={p}
+                      stats={stats}
+                      projection={projections.data?.[p.player_id]}
+                      club={pair.home.teamName}
+                      onWatch={openPlayer}
+                    />
+                  ))}
+                  {benchOf(viewHome).length === 0 ? (
+                    <li className="px-3 py-4 text-sm text-muted sm:px-4">No one on the pine.</li>
+                  ) : null}
+                </ul>
+              )}
+            </section>
+          )}
+
+          {slate.length > 1 ? (
+            <section className="mt-8">
+              <h2 className="microlabel">Rest of week {week}</h2>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {slate
+                  .filter((p) => p.matchupId !== pair.matchupId)
+                  .map((p) => (
+                    <GamePill
+                      key={p.matchupId}
+                      pair={p}
+                      leagueId={leagueId}
+                      week={week}
+                      active={false}
+                    />
+                  ))}
+              </div>
+            </section>
+          ) : null}
+        </div>
+      </div>
 
       <PlayerWatch target={watch} onClose={() => setWatch(null)} />
       <PlayerSheet target={sheet} leagueId={leagueId} onClose={() => setSheet(null)} />
