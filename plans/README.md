@@ -72,6 +72,15 @@ Slices live here. Read the one you are executing from.
   contract — the board compares (MatchupEdge leaves /matchups, compact mirror),
   the box score follows (067). Spec artifact (v2-locked):
   https://claude.ai/code/artifact/9f879d2c-915d-4bdb-bdfd-69ef2f4fb950
+- **068–069 — The context deck** (improve skill, 2026-08-24). Goal: nothing
+  interactive at the top of a phone page — each page's lens + one action dock
+  in a context deck fused above the thumb bar, with a control sheet on ☰/swipe
+  (stacked posture locked; unified bar and floating pills explored and
+  rejected). 068 = the Deck primitive in Shell + the Players wire (deck chips,
+  search/status sheet, continuous list replacing 22-page pagination); 069 =
+  My Team (Lineup·Bench·Activity tabs that jump and track + ⇄ Trade cap).
+  Desktop unchanged; shipped top rails migrate only after these prove it.
+  Spec artifact: https://claude.ai/code/artifact/0518fa1c-3e32-4d3d-a4ea-914ac8e7d02e
 - **041–044 — Headless engine: token, MCP, skills** (improve skill,
   2026-08-19, commit `735b0ba`). Goal: Codex / Claude / Grok can
   install open-ff as a tool server (stdio on the commish box, HTTP
@@ -385,6 +394,8 @@ reconcile). Source tree clean.
 | 065  | Box score core — stacked score card, game-pill strip, quiet rows, full bench, mini-scorebar | P1 | L | — | DONE `f2998e2`+`0725a13` (not pushed; reviewed/APPROVED 2026-08-24 after 1 reviewer fix — pace ± chips removed from rows; WP meter skipped per plan bar; bench = one-sided groups, sanctioned; WATCHED: demo replay double-paint fires a 4.5s flash burst on load, decays clean) |
 | 066  | Box score desktop — pinned 400px rail (V1) | P1 | M | 065 | DONE `547d467` (not pushed; reviewed/APPROVED 2026-08-24; overflow guard added after measuring; pill-strip bleed fix sanctioned; 1 canvas verified all states) |
 | 067  | Board slim-down — /matchups compares (chart leaves, compact mirror) | P2 | M | 066 | DONE `b5ca8f1`+`114777d` (reviewed/APPROVED 2026-08-24 after 1 reviewer fix — pace chips trimmed from board rows; 0 canvases verified; detail page keeps its 1) |
+| 068  | Context deck: shell slot + Players page (deck, control sheet, continuous list) | P1 | L | — | TODO |
+| 069  | My Team deck — tracking section tabs + trade cap | P1 | M | 068 | TODO |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
 ## Dependency notes
