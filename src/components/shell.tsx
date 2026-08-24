@@ -217,7 +217,7 @@ export function Shell({
 
       <main
         className={cn(
-          "mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 pb-24 pt-6 md:pb-12",
+          "mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 pb-36 pt-6 md:pb-12",
           center && "items-center justify-center",
         )}
       >
@@ -227,6 +227,7 @@ export function Shell({
       <InstallDrawer />
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/92 backdrop-blur-md md:hidden">
+        <div id="deck-slot" className="mx-auto max-w-lg border-b border-line empty:hidden" />
         {navTabs.length ? (
           <div
             className="mx-auto grid max-w-lg px-2 pb-[env(safe-area-inset-bottom)]"
