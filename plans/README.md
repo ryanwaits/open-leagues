@@ -63,6 +63,15 @@ Slices live here. Read the one you are executing from.
   loading is not kickoff) and Win % ↔ Margin share one `<LiveLine>` so
   liveline's `chartReveal` wave does not replay on every tab. Sequence after
   063 so the matchup-page swipe and this card cleanup do not review-collide.
+- **065–067 — The Box Score** (improve skill, 2026-08-24, commit `0bf3688`).
+  Goal: the matchup detail page matches the locked mocks — stacked score card
+  with count-based status (no quarter/preview badges; a matchup spans many NFL
+  games), game-pill strip (kills the carousel + its anchor bug), quiet rows
+  (no repeated clocks; winner bold at final, no glyphs), full bench rows,
+  condensing mini-scorebar (065); desktop V1 pinned rail (066); and the page
+  contract — the board compares (MatchupEdge leaves /matchups, compact mirror),
+  the box score follows (067). Spec artifact (v2-locked):
+  https://claude.ai/code/artifact/9f879d2c-915d-4bdb-bdfd-69ef2f4fb950
 - **041–044 — Headless engine: token, MCP, skills** (improve skill,
   2026-08-19, commit `735b0ba`). Goal: Codex / Claude / Grok can
   install open-ff as a tool server (stdio on the commish box, HTTP
@@ -373,6 +382,9 @@ reconcile). Source tree clean.
 | 062  | Player sheet + watch drawer on vaul — half/full detents, drag dismiss | P2 | M | 061 | DONE `75475d2` (pushed 2026-08-23; reviewed/APPROVED 2026-08-23; reduced-motion → [1] only; deps-array deviation sanctioned; 1 new skin test) |
 | 063  | Matchup page — score card swipes the week's slate, page re-anchors on settle | P2 | M | 062 | DONE `d2b1242` (pushed 2026-08-23; reviewed/APPROVED 2026-08-23; settle→navigate replace:true, no ping-pong; snap-settle helper + 6 tests; deps [matchupId, slate.length] deviation sanctioned) |
 | 064  | Gate the matchup liveline until kickoff; stop the tab-switch reveal flicker | P1 | S | 063 | DONE `fdc1bed` (pushed 2026-08-23; reviewed/APPROVED 2026-08-23; 3 new matchupChartReady tests; preseason card verified chart-free; Win%↔Margin canvas identity verified stable; executor's reported slate auto-nav quirk NOT reproduced in 16 rounds — watched, guard idea recorded in memory) |
+| 065  | Box score core — stacked score card, game-pill strip, quiet rows, full bench, mini-scorebar | P1 | L | — | TODO |
+| 066  | Box score desktop — pinned 400px rail (V1) | P1 | M | 065 | TODO |
+| 067  | Board slim-down — /matchups compares (chart leaves, compact mirror) | P2 | M | 066 | TODO |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
 ## Dependency notes
