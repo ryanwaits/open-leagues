@@ -4,7 +4,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LinePanel } from "@/components/book-panel";
 import { MatchupBoard } from "@/components/matchup-board";
-import { MatchupEdge } from "@/components/matchup-edge";
 import { PlayerSheet, type SheetTarget } from "@/components/player-sheet";
 import { PlayerWatch, type WatchTarget, watchFromLine } from "@/components/player-watch";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -410,7 +409,7 @@ function MatchupsPage() {
                             }}
                             className="microlabel text-accent-strong"
                           >
-                            Full box score
+                            Full box score →
                           </Link>
                         }
                         home={pair.home}
@@ -453,13 +452,6 @@ function MatchupsPage() {
                           ) : null;
                         })()
                       : null}
-                    <MatchupEdge
-                      pair={rawShown[selected] ?? pair}
-                      leagueId={leagueId}
-                      season={league.data?.league.season ?? ""}
-                      week={week}
-                      mine={mineRosterId}
-                    />
                   </>
                 );
               })()

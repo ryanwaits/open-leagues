@@ -265,3 +265,14 @@ test("the box score speaks in counts, not clocks", () => {
   assert.match(route, /lg:grid-cols-\[400px_minmax/);
   assert.match(route, /lg:sticky/);
 });
+
+test("the board compares; only the box score mounts the line", () => {
+  const board = readFileSync(join(root, "src/routes/league/$leagueId/matchups.tsx"), "utf8");
+  // The liveline chart card is the box score's — the board only scans.
+  assert.doesNotMatch(board, /MatchupEdge/);
+
+  const matchupBoard = readFileSync(join(root, "src/components/matchup-board.tsx"), "utf8");
+  // Board rows are one line — no stat line and no live clock in the meta.
+  assert.doesNotMatch(matchupBoard, /line=\{statLine\}/);
+  assert.match(matchupBoard, /clock=\{false\}/);
+});

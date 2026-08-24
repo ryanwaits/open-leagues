@@ -286,8 +286,8 @@ function Half({
           dense
           quiet
           game={line?.game}
-          line={statLine}
           align={flip ? "right" : "left"}
+          clock={false}
         />
       </span>
       <SlotPts
