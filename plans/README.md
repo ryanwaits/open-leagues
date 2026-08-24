@@ -394,7 +394,7 @@ reconcile). Source tree clean.
 | 065  | Box score core — stacked score card, game-pill strip, quiet rows, full bench, mini-scorebar | P1 | L | — | DONE `f2998e2`+`0725a13` (not pushed; reviewed/APPROVED 2026-08-24 after 1 reviewer fix — pace ± chips removed from rows; WP meter skipped per plan bar; bench = one-sided groups, sanctioned; WATCHED: demo replay double-paint fires a 4.5s flash burst on load, decays clean) |
 | 066  | Box score desktop — pinned 400px rail (V1) | P1 | M | 065 | DONE `547d467` (not pushed; reviewed/APPROVED 2026-08-24; overflow guard added after measuring; pill-strip bleed fix sanctioned; 1 canvas verified all states) |
 | 067  | Board slim-down — /matchups compares (chart leaves, compact mirror) | P2 | M | 066 | DONE `b5ca8f1`+`114777d` (reviewed/APPROVED 2026-08-24 after 1 reviewer fix — pace chips trimmed from board rows; 0 canvases verified; detail page keeps its 1) |
-| 068  | Context deck: shell slot + Players page (deck, control sheet, continuous list) | P1 | L | — | TODO |
+| 068  | Context deck: shell slot + Players page (deck, control sheet, continuous list) | P1 | L | — | DONE `0b1a5e7`+`068af75` (2026-08-24, pushed) |
 | 069  | My Team deck — tracking section tabs + trade cap | P1 | M | 068 | TODO |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
