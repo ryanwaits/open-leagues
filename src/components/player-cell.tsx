@@ -74,6 +74,7 @@ export function PlayerCell({
   game = null,
   align = "left",
   line = null,
+  clock = true,
 }: {
   player: SlimPlayer | null | undefined;
   empty?: string;
@@ -89,6 +90,12 @@ export function PlayerCell({
   game?: GameChip | null;
   align?: "left" | "right";
   line?: string | null;
+  /**
+   * The `quiet` sub-line's live clock / "Final" segment. Off in a matchup
+   * box score, where a repeated red game clock on every row is noise — the
+   * opponent, kickoff time, and stat line still show. On everywhere else.
+   */
+  clock?: boolean;
 }) {
   if (!player) {
     return <span className="text-sm text-faint">{empty}</span>;
@@ -144,7 +151,9 @@ export function PlayerCell({
           {isDef ? null : <InjuryMark status={player.injury_status} />}
         </span>
         {quiet ? (
-          <span className="block truncate text-xs text-faint">{quietLine(player, game, line)}</span>
+          <span className="block truncate text-xs text-faint">
+            {quietLine(player, game, line, clock)}
+          </span>
         ) : (
           <span className="block truncate microlabel">
             {meta}
@@ -169,17 +178,20 @@ export function PlayerCell({
  * Once the game is on, the own-team mark gives way to the stat line — the
  * player already says which team; the opponent is the context that stays.
  */
-function quietLine(player: SlimPlayer, game: GameChip | null, line?: string | null) {
+function quietLine(player: SlimPlayer, game: GameChip | null, line?: string | null, clock = true) {
   const team = player.position === "DEF" ? null : player.team;
   if (!game) return [team].filter(Boolean).join(" · ") || "—";
   const started = game.state === "in" || game.state === "post";
   const when =
     game.state === "pre"
       ? (shortKickoff(game.detail) ?? game.detail)
-      : game.state === "post"
-        ? "Final"
-        : [game.detail, game.situation].filter(Boolean).join(" · ") || "Live";
+      : !clock
+        ? null
+        : game.state === "post"
+          ? "Final"
+          : [game.detail, game.situation].filter(Boolean).join(" · ") || "Live";
   const ball =
+    clock &&
     game.state === "in" &&
     Boolean(game.possession) &&
     canonTeam(game.possession) != null &&

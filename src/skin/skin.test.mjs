@@ -240,3 +240,23 @@ test("player sheets ride vaul, full-height, single state", () => {
     assert.match(content, /max-width: 639px/, `${file} should gate on the phone breakpoint`);
   }
 });
+
+test("the box score speaks in counts, not clocks", () => {
+  const route = readFileSync(
+    join(root, "src/routes/league/$leagueId/matchup/$week/$matchupId.tsx"),
+    "utf8",
+  );
+  // The truncating bench grid and the old transform-driven card carousel are
+  // both gone — bench is full rows, and the game pills commit on release.
+  assert.doesNotMatch(route, /BenchGrid|snap-center|slateDrag/);
+  // A single Preview/quarter/Final chip can't speak for a whole slate of NFL
+  // games, so the header counts them instead.
+  assert.doesNotMatch(route, /status\.label/);
+  assert.match(route, /v .*(live|to play)/);
+  // Rows opt out of the repeated red game clock; the roster/lineup rows this
+  // prop defaults on for are untouched.
+  assert.match(route, /clock=\{false\}/);
+
+  const playerCell = readFileSync(join(root, "src/components/player-cell.tsx"), "utf8");
+  assert.match(playerCell, /clock\s*=\s*true/, "clock should default on for every other caller");
+});

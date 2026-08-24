@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar } from "@/components/avatar";
 import { MatchupEdge } from "@/components/matchup-edge";
 import { PlayerCell } from "@/components/player-cell";
@@ -24,6 +24,7 @@ import {
   paintMatchup,
   paintMatchups,
   pairPreviewScores,
+  sideExpected,
   slotDisplay,
 } from "@/lib/data/matchup-view";
 import { baseSlotLabel } from "@/lib/data/teams";
@@ -251,10 +252,22 @@ function MatchupPage() {
       });
     }
   });
-  const slateAtEdge =
-    (slateIdx === 0 && slateSwipe.drag > 0) ||
-    (slateIdx === slate.length - 1 && slateSwipe.drag < 0);
-  const slateDrag = slateAtEdge ? slateSwipe.drag / 3 : slateSwipe.drag;
+
+  // The mini-scorebar pins under the app header once the score card scrolls
+  // out of view — a 1px sentinel just above the card flips `stuck` the
+  // instant it leaves the viewport, no scroll-position math.
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [stuck, setStuck] = useState(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reattaches once the sentinel node exists (data load), not read directly in the effect body
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry) setStuck(!entry.isIntersecting);
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [pair != null]);
 
   const prevPair = useMemo(() => {
     if (!seeded || progress == null || progress <= 0) return null;
@@ -325,6 +338,9 @@ function MatchupPage() {
           tone: (phase >= lastPhase ? "win" : "live") as "live" | "muted" | "win",
         };
   const liveFlag = phase == null && Boolean(league.data?.scoringLive) && status.tone === "live";
+  const decided = isDecided(pair);
+  const miniScores = pairPreviewScores(pair);
+  const miniHomeLeads = !pair.away || miniScores.home >= miniScores.away;
 
   return (
     <div>
@@ -362,56 +378,46 @@ function MatchupPage() {
         </p>
       ) : null}
 
-      {slate.length > 1 ? (
-        <div className="sm:hidden">
-          <div className="-mx-4 overflow-hidden">
-            {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: touch-swipe surface; the NavChips are the keyboard/AT path */}
-            <div
-              {...slateSwipe.handlers}
-              className="flex touch-pan-y gap-3 px-4 pb-1"
-              // Each step is one card (100% − 2.75rem peek) plus the 12px gap,
-              // and 100% here is the track's own (= wrapper) width.
-              style={{
-                transform: `translateX(calc(${-slateIdx} * (100% - 32px) + ${slateDrag}px))`,
-              }}
-            >
-              {slate.map((p) => {
-                const isCurrent = p.matchupId === pair.matchupId;
-                return (
-                  <div key={p.matchupId} className="w-[calc(100%-2.75rem)] shrink-0">
-                    <Scoreboard
-                      pair={isCurrent ? pair : p}
-                      week={week}
-                      leagueId={leagueId}
-                      standings={standings}
-                      status={isCurrent ? status : statusOf(p)}
-                      live={isCurrent ? liveFlag : false}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          <div className="mt-2 flex justify-center gap-1.5" aria-hidden="true">
-            {slate.map((p) => (
-              <span
-                key={p.matchupId}
-                className={cn(
-                  "h-1.5 rounded-pill",
-                  p.matchupId === pair.matchupId ? "w-4 bg-fg" : "w-1.5 bg-line-strong",
-                )}
-              />
-            ))}
-          </div>
+      <div ref={sentinelRef} className="h-px" aria-hidden="true" />
+      {stuck ? (
+        <div className="sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-20 -mx-4 flex items-center justify-between border-b border-line bg-bg/90 px-4 py-2 backdrop-blur-md">
+          <span className="font-mono text-sm tabular-nums">
+            <span className={miniHomeLeads ? "text-fg" : "text-muted"}>
+              {abbr(pair.home.teamName)} {formatPts(miniScores.home, 1)}
+            </span>
+            <span className="text-faint"> – </span>
+            <span className={!miniHomeLeads ? "text-fg" : "text-muted"}>
+              {formatPts(miniScores.away, 1)} {abbr(pair.away?.teamName ?? "Bye")}
+            </span>
+          </span>
+          {!decided && pair.away && miniScores.live ? (
+            <span className="microlabel text-live">
+              ● {liveStarterCount(pair.home)} v {liveStarterCount(pair.away)}
+            </span>
+          ) : null}
         </div>
       ) : null}
-      <div className={cn(slate.length > 1 && "hidden sm:block")}>
+
+      {slate.length > 1 ? (
+        <div className="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {slate.map((p) => (
+            <GamePill
+              key={p.matchupId}
+              pair={p}
+              leagueId={leagueId}
+              week={week}
+              active={p.matchupId === pair.matchupId}
+            />
+          ))}
+        </div>
+      ) : null}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: touch-swipe surface; the NavChips are the keyboard/AT path */}
+      <div {...slateSwipe.handlers} className="touch-pan-y">
         <Scoreboard
           pair={pair}
           week={week}
           leagueId={leagueId}
           standings={standings}
-          status={status}
           live={liveFlag}
         />
       </div>
@@ -442,6 +448,7 @@ function MatchupPage() {
               prevHome={prevPair?.home.starters[i] ?? null}
               prevAway={prevPair?.away?.starters[i] ?? null}
               bye={!pair.away}
+              final={decided}
               stats={stats}
               homeClub={pair.home.teamName}
               awayClub={pair.away?.teamName ?? ""}
@@ -464,7 +471,7 @@ function MatchupPage() {
               <Skeleton className="h-10" />
             </div>
           ) : (
-            <BenchGrid
+            <BenchGroups
               home={viewHome}
               away={viewAway}
               stats={stats}
@@ -485,42 +492,17 @@ function MatchupPage() {
               <Skeleton className="h-10" />
             </div>
           ) : (
-            <ul className="divide-y divide-line">
-              {benchOf(viewHome).map((p) => {
-                const bag = stats[p.player_id];
-                const line = liveStatLine(p.position, p.game, bag);
-                const disp = slotDisplay(p.game, p.weekPts, projections.data?.[p.player_id]);
-                return (
-                  <li key={p.player_id}>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setWatch({
-                          player: p,
-                          slot: "BN",
-                          points: disp.points,
-                          line,
-                          gameState: p.game?.state ?? null,
-                          gameId: p.game?.gameId ?? null,
-                          gameDetail: p.game?.detail ?? null,
-                          club: pair.home.teamName,
-                          stats: bag ?? null,
-                        })
-                      }
-                      className="flex min-h-13 w-full items-center gap-3 px-3 py-2 text-left sm:px-4 hover:bg-raised"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <PlayerCell player={p} compact quiet game={p.game} line={line} />
-                      </div>
-                      <SlotPts
-                        points={disp.points}
-                        forecast={disp.forecast}
-                        className="w-12 text-sm"
-                      />
-                    </button>
-                  </li>
-                );
-              })}
+            <ul>
+              {benchOf(viewHome).map((p) => (
+                <BenchRow
+                  key={p.player_id}
+                  player={p}
+                  stats={stats}
+                  projection={projections.data?.[p.player_id]}
+                  club={pair.home.teamName}
+                  onWatch={openPlayer}
+                />
+              ))}
               {benchOf(viewHome).length === 0 ? (
                 <li className="px-3 py-4 text-sm text-muted sm:px-4">No one on the pine.</li>
               ) : null}
@@ -532,34 +514,19 @@ function MatchupPage() {
       {slate.length > 1 ? (
         <section className="mt-8">
           <h2 className="microlabel">Rest of week {week}</h2>
-          <ul className="mt-3 space-y-1.5">
+          <div className="mt-3 flex flex-wrap gap-1.5">
             {slate
               .filter((p) => p.matchupId !== pair.matchupId)
               .map((p) => (
-                <li key={p.matchupId}>
-                  <Link
-                    to="/league/$leagueId/matchup/$week/$matchupId"
-                    params={{
-                      leagueId,
-                      week: String(week),
-                      matchupId: String(p.matchupId),
-                    }}
-                    className="flex items-center gap-3 rounded-lg bg-surface px-3 py-2.5 text-sm ring-card transition-[box-shadow] duration-150 ring-card-h"
-                  >
-                    <span className="min-w-0 flex-1 truncate">{p.home.teamName}</span>
-                    <span className="shrink-0 font-mono tabular-nums text-muted">
-                      {(() => {
-                        const s = pairPreviewScores(p);
-                        return `${formatPts(s.home, 1)}–${formatPts(s.away, 1)}`;
-                      })()}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-right">
-                      {p.away?.teamName ?? "Bye"}
-                    </span>
-                  </Link>
-                </li>
+                <GamePill
+                  key={p.matchupId}
+                  pair={p}
+                  leagueId={leagueId}
+                  week={week}
+                  active={false}
+                />
               ))}
-          </ul>
+          </div>
         </section>
       ) : null}
 
@@ -612,19 +579,23 @@ function NavChip({
   );
 }
 
+/**
+ * The stacked score block. A fantasy matchup spans many NFL games, so a
+ * single Preview/Q2/Final chip in the header would lie — the header instead
+ * counts games (still-to-play or currently live), and a decided week gets
+ * the one honest badge: Final.
+ */
 function Scoreboard({
   pair,
   week,
   leagueId,
   standings,
-  status,
   live,
 }: {
   pair: MatchupPair;
   week: number;
   leagueId: string;
   standings: StandingRow[];
-  status: { label: string; tone: "live" | "muted" | "win" };
   live: boolean;
 }) {
   const away = pair.away;
@@ -634,107 +605,211 @@ function Scoreboard({
   const homeLeads = !away || scores.home > scores.away;
   const awayLeads = Boolean(away && scores.away > scores.home);
   const tied = Boolean(away && scores.home === scores.away && decided);
+  const homeWon = decided && !tied && homeLeads;
+  const awayWon = decided && !tied && awayLeads;
+
+  const rows: Array<{ side: MatchupSide; score: number; leading: boolean; winner: boolean }> = away
+    ? homeWon || awayWon
+      ? homeWon
+        ? [
+            { side: pair.home, score: scores.home, leading: true, winner: true },
+            { side: away, score: scores.away, leading: false, winner: false },
+          ]
+        : [
+            { side: away, score: scores.away, leading: true, winner: true },
+            { side: pair.home, score: scores.home, leading: false, winner: false },
+          ]
+      : [
+          { side: pair.home, score: scores.home, leading: homeLeads, winner: false },
+          { side: away, score: scores.away, leading: awayLeads, winner: false },
+        ]
+    : [{ side: pair.home, score: scores.home, leading: true, winner: false }];
+
+  const decidedSlot = decided ? decidedBySlot(pair) : null;
 
   return (
-    <section className="rounded-xl bg-surface px-4 py-5 ring-card sm:px-6 sm:py-6">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
+    <section className="rounded-xl bg-surface px-4 py-4 ring-card sm:px-5">
+      <div className="flex items-center justify-between gap-2">
         <p className="microlabel">
           Week {week}
           {pair.label ? ` · ${pair.label}` : pair.kind === "playoff" ? " · Playoff" : ""}
         </p>
-        <Badge tone={status.tone === "live" ? "live" : status.tone === "win" ? "win" : "default"}>
-          {status.label}
-        </Badge>
-      </div>
-
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
-        <TeamHead
-          side={pair.home}
-          leagueId={leagueId}
-          record={recordOf(standings, pair.home.rosterId)}
-          leading={homeLeads && decided}
-          align="left"
-        />
-        <div className="text-center">
-          <p className="font-display text-4xl tabular-nums tracking-tight sm:text-5xl">
-            <span className={homeLeads && decided ? "text-fg" : "text-muted"}>
-              {formatPts(scores.home, 1)}
-            </span>
-            <span className="mx-1.5 text-2xl text-faint sm:mx-2">–</span>
-            <span className={awayLeads && decided ? "text-fg" : "text-muted"}>
-              {formatPts(scores.away, 1)}
-            </span>
-          </p>
-          {preview ? <p className="mt-1 microlabel-data">proj</p> : null}
-          {tied ? <p className="mt-1 microlabel">Tie</p> : null}
-          {live ? (
-            <p className="mt-1 microlabel text-live">Unofficial · {LIVE_POLL_MS / 1000}s</p>
-          ) : null}
-        </div>
-        {away ? (
-          <TeamHead
-            side={away}
-            leagueId={leagueId}
-            record={recordOf(standings, away.rosterId)}
-            leading={awayLeads && decided}
-            align="right"
-          />
+        {!away ? (
+          <span className="microlabel">Bye</span>
+        ) : decided ? (
+          <span className="flex items-center gap-2">
+            <Badge tone="win">Final</Badge>
+            {tied ? <span className="microlabel">Tie</span> : null}
+          </span>
+        ) : preview ? (
+          <span className="microlabel">
+            {yetToPlay(pair.home)} v {yetToPlay(away)} to play
+          </span>
         ) : (
-          <div className="text-right">
-            <p className="font-display text-2xl tracking-tight text-faint">Bye</p>
-            <p className="mt-1 text-sm text-muted">No opponent this week</p>
-          </div>
+          <span className="microlabel text-live">
+            ● {liveStarterCount(pair.home)} v {liveStarterCount(away)} live
+          </span>
         )}
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-3 border-t border-line pt-4 microlabel">
-        <p>{yetLabel(pair.home)}</p>
-        <p className="text-right">{away ? yetLabel(away) : "Bye"}</p>
+      <div className="mt-4 space-y-1">
+        {rows.map(({ side, score, leading, winner }) => (
+          <ScoreRow
+            key={side.rosterId}
+            side={side}
+            leagueId={leagueId}
+            record={recordOf(standings, side.rosterId)}
+            score={score}
+            leading={leading}
+            winner={winner}
+          />
+        ))}
       </div>
+
+      {!away ? (
+        <p className="mt-3 text-sm text-muted">No opponent this week</p>
+      ) : decided ? (
+        <div className="mt-4 flex items-center justify-between border-t border-line pt-3">
+          <span className="microlabel">
+            {decidedSlot
+              ? `Decided by ${decidedSlot.slot} · +${formatPts(decidedSlot.margin, 1)}`
+              : ""}
+          </span>
+          <Link
+            to="/league/$leagueId/recap"
+            params={{ leagueId }}
+            search={{ week, story: undefined }}
+            className="microlabel text-accent-strong"
+          >
+            Recap →
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-4 flex items-center justify-between border-t border-line pt-3 microlabel-data">
+          <span>
+            proj {formatPts(sideExpected(pair.home), 1)} – {formatPts(sideExpected(away), 1)}
+          </span>
+          {live ? <span className="text-live">Unofficial · {LIVE_POLL_MS / 1000}s</span> : null}
+        </div>
+      )}
     </section>
   );
 }
 
-function TeamHead({
+function ScoreRow({
   side,
   leagueId,
   record,
+  score,
   leading,
-  align,
+  winner,
 }: {
   side: MatchupSide;
   leagueId: string;
   record: StandingRow | undefined;
+  score: number;
   leading: boolean;
-  align: "left" | "right";
+  winner: boolean;
 }) {
   return (
+    <div className="flex items-center gap-3">
+      <Link
+        to="/league/$leagueId/team/$rosterId"
+        params={{ leagueId, rosterId: String(side.rosterId) }}
+        className="flex min-w-0 flex-1 items-center gap-2.5 py-1"
+      >
+        <Avatar
+          src={side.avatar}
+          name={side.teamName}
+          className="size-8"
+          textClassName="text-[10px]"
+          tint
+        />
+        <span className="min-w-0">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span
+              className={cn(
+                "truncate text-sm sm:text-base",
+                winner ? "font-semibold text-fg" : leading ? "text-fg" : "text-muted",
+              )}
+            >
+              {side.teamName}
+            </span>
+            {winner ? <Badge tone="win">W</Badge> : null}
+          </span>
+          <span className="block truncate font-mono text-[11px] text-faint">
+            {side.manager}
+            {record ? ` · ${fmtRecord(record.wins, record.losses, record.ties)}` : ""}
+          </span>
+        </span>
+      </Link>
+      <span
+        className={cn(
+          "shrink-0 font-mono text-[28px] tabular-nums sm:text-3xl",
+          leading ? "text-fg" : "text-muted",
+        )}
+      >
+        {formatPts(score, 1)}
+      </span>
+    </div>
+  );
+}
+
+/** First-3-letters mark for the pill strip — enough to tell teams apart at 30px. */
+function abbr(name: string): string {
+  return name.trim().slice(0, 3).toUpperCase();
+}
+
+function liveStarterCount(side: MatchupSide | null | undefined): number {
+  return (side?.starters ?? []).filter((s) => s.game?.state === "in").length;
+}
+
+/** The slot with the largest home/away points gap — the game-within-the-game. */
+function decidedBySlot(pair: MatchupPair): { slot: string; margin: number } | null {
+  if (!pair.away) return null;
+  let best: { slot: string; margin: number } | null = null;
+  const len = Math.max(pair.home.starters.length, pair.away.starters.length);
+  for (let i = 0; i < len; i++) {
+    const h = pair.home.starters[i];
+    if (!h?.player) continue;
+    const a = pair.away.starters[i];
+    const margin = Math.abs((h.points ?? 0) - (a?.points ?? 0));
+    if (!best || margin > best.margin) {
+      best = { slot: baseSlotLabel(h.slot), margin };
+    }
+  }
+  return best;
+}
+
+/** Shared 30px pill: the game-switcher strip and the rest-of-week row both use it. */
+function GamePill({
+  pair,
+  leagueId,
+  week,
+  active,
+}: {
+  pair: MatchupPair;
+  leagueId: string;
+  week: number;
+  active: boolean;
+}) {
+  const s = pairPreviewScores(pair);
+  const liveDot = [pair.home, pair.away].some((sd) =>
+    sd?.starters.some((st) => st.game?.state === "in"),
+  );
+  return (
     <Link
-      to="/league/$leagueId/team/$rosterId"
-      params={{ leagueId, rosterId: String(side.rosterId) }}
+      to="/league/$leagueId/matchup/$week/$matchupId"
+      params={{ leagueId, week: String(week), matchupId: String(pair.matchupId) }}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "flex min-w-0 items-center gap-2.5",
-        align === "right" && "flex-row-reverse text-right",
+        "flex h-[30px] shrink-0 items-center gap-1.5 rounded-pill px-2.5 font-mono text-[11px] whitespace-nowrap",
+        active ? "bg-fg text-bg" : "text-muted shadow-[inset_0_0_0_1px_var(--color-line-strong)]",
       )}
     >
-      <Avatar
-        src={side.avatar}
-        name={side.teamName}
-        className="size-11 sm:size-12"
-        textClassName="text-sm"
-        tint
-      />
-      <span className="min-w-0">
-        <span
-          className={cn("block truncate text-sm sm:text-base", leading ? "text-fg" : "text-muted")}
-        >
-          {side.teamName}
-        </span>
-        <span className="block truncate font-mono text-[11px] text-faint">
-          {side.manager}
-          {record ? ` · ${fmtRecord(record.wins, record.losses, record.ties)}` : ""}
-        </span>
-      </span>
+      {liveDot && !active ? <span className="size-1.5 rounded-full bg-live" /> : null}
+      {abbr(pair.home.teamName)} {formatPts(s.home, 0)} · {abbr(pair.away?.teamName ?? "Bye")}{" "}
+      {formatPts(s.away, 0)}
     </Link>
   );
 }
@@ -756,6 +831,7 @@ function StarterRow({
   prevHome: _prevHome,
   prevAway: _prevAway,
   bye,
+  final,
   stats,
   homeClub,
   awayClub,
@@ -768,6 +844,8 @@ function StarterRow({
   prevHome: StarterLine | null;
   prevAway: StarterLine | null;
   bye: boolean;
+  /** Pair is decided — the higher side of the row goes bold, no glyph. */
+  final: boolean;
   stats: Record<string, Record<string, number>>;
   homeClub: string;
   awayClub: string;
@@ -786,6 +864,7 @@ function StarterRow({
         side={home}
         align="left"
         hot={homeHot}
+        won={final && homeHot}
         stats={stats}
         club={homeClub}
         onWatch={onWatch}
@@ -800,6 +879,7 @@ function StarterRow({
           side={away}
           align="right"
           hot={awayHot}
+          won={final && awayHot}
           stats={stats}
           club={awayClub}
           onWatch={onWatch}
@@ -815,6 +895,7 @@ function Line({
   side,
   align,
   hot,
+  won = false,
   stats,
   club,
   onWatch,
@@ -824,6 +905,8 @@ function Line({
   side: StarterLine | null;
   align: "left" | "right";
   hot: boolean;
+  /** Winning side of a decided row — bold name and points, no glyph. */
+  won?: boolean;
   stats: Record<string, Record<string, number>>;
   club: string;
   onWatch: (t: WatchTarget) => void;
@@ -850,7 +933,7 @@ function Line({
         target && "hover:bg-raised",
       )}
     >
-      <div className="min-w-0 flex-1">
+      <div className={cn("min-w-0 flex-1", won && "[&_.font-medium]:font-semibold")}>
         <PlayerCell
           player={side.player}
           empty="—"
@@ -859,6 +942,7 @@ function Line({
           game={side.game}
           align={align}
           line={line}
+          clock={false}
         />
       </div>
       <SlotPts
@@ -871,13 +955,21 @@ function Line({
         className={cn(
           "min-w-10 text-sm sm:min-w-12",
           !side.forecast && (hot ? "text-fg" : "text-muted"),
+          won && "font-semibold",
         )}
       />
     </button>
   );
 }
 
-function BenchGrid({
+/**
+ * Bench order has no starting-slot concept to pair on — the i-th home
+ * reserve and the i-th away reserve are not "matched up" the way two QBs
+ * are. Mirroring them by index would invent a relationship that is not
+ * there, so bench renders as two full-width, one-sided groups instead of
+ * the starters' side-by-side row.
+ */
+function BenchGroups({
   home,
   away,
   stats,
@@ -896,100 +988,89 @@ function BenchGrid({
 }) {
   const left = benchOf(home);
   const right = benchOf(away);
-  const rows = Math.max(left.length, right.length);
-  if (rows === 0) {
+  if (left.length === 0 && right.length === 0) {
     return <p className="px-3 py-4 text-sm text-muted sm:px-4">Both benches are empty.</p>;
   }
   return (
-    <ul>
-      {Array.from({ length: rows }, (_, i) => {
-        const h = left[i];
-        const a = right[i];
-        return (
-          <li
-            key={`${h?.player_id ?? "h"}-${a?.player_id ?? "a"}`}
-            className="grid grid-cols-2 gap-4 border-t border-line px-3 py-2.5 first:border-t-0 sm:px-4"
-          >
-            {h ? (
-              <BenchCell
-                player={h}
-                stats={stats}
-                projection={projections[h.player_id]}
-                club={homeClub}
-                align="left"
-                onWatch={onWatch}
-              />
-            ) : (
-              <span />
-            )}
-            {a ? (
-              <BenchCell
-                player={a}
-                stats={stats}
-                projection={projections[a.player_id]}
-                club={awayClub}
-                align="right"
-                onWatch={onWatch}
-              />
-            ) : (
-              <span />
-            )}
-          </li>
-        );
-      })}
-    </ul>
+    <>
+      <p className="microlabel px-3 pt-3 pb-1.5 sm:px-4">{homeClub}</p>
+      <ul>
+        {left.map((p) => (
+          <BenchRow
+            key={p.player_id}
+            player={p}
+            stats={stats}
+            projection={projections[p.player_id]}
+            club={homeClub}
+            onWatch={onWatch}
+          />
+        ))}
+        {left.length === 0 ? (
+          <li className="px-3 py-3 text-sm text-muted sm:px-4">No one on the pine.</li>
+        ) : null}
+      </ul>
+      <p className="microlabel border-t border-line px-3 pt-3 pb-1.5 sm:px-4">{awayClub}</p>
+      <ul>
+        {right.map((p) => (
+          <BenchRow
+            key={p.player_id}
+            player={p}
+            stats={stats}
+            projection={projections[p.player_id]}
+            club={awayClub}
+            onWatch={onWatch}
+          />
+        ))}
+        {right.length === 0 ? (
+          <li className="px-3 py-3 text-sm text-muted sm:px-4">No one on the pine.</li>
+        ) : null}
+      </ul>
+    </>
   );
 }
 
-function BenchCell({
+function BenchRow({
   player,
   stats,
   projection,
   club,
-  align,
   onWatch,
 }: {
   player: RosterPlayer;
   stats: Record<string, Record<string, number>>;
   projection?: Projection;
   club: string;
-  align: "left" | "right";
   onWatch: (t: WatchTarget) => void;
 }) {
   const bag = stats[player.player_id];
   const line = liveStatLine(player.position, player.game, bag);
   const disp = slotDisplay(player.game, player.weekPts, projection);
   return (
-    <button
-      type="button"
-      onClick={() =>
-        onWatch({
-          player,
-          slot: "BN",
-          points: disp.points,
-          line,
-          gameState: player.game?.state ?? null,
-          gameId: player.game?.gameId ?? null,
-          gameDetail: player.game?.detail ?? null,
-          club,
-          stats: bag ?? null,
-        })
-      }
-      className={cn(
-        "flex min-w-0 items-center gap-2 rounded-md px-1 py-0.5 hover:bg-raised",
-        align === "right" ? "flex-row-reverse text-right" : "text-left",
-      )}
-    >
-      <div className="min-w-0 flex-1">
-        <PlayerCell player={player} compact quiet game={player.game} align={align} line={line} />
-      </div>
-      <SlotPts
-        points={disp.points}
-        forecast={disp.forecast}
-        align={align}
-        className="w-10 text-sm text-muted"
-      />
-    </button>
+    <li className="border-t border-line first:border-t-0">
+      <button
+        type="button"
+        onClick={() =>
+          onWatch({
+            player,
+            slot: "BN",
+            points: disp.points,
+            line,
+            gameState: player.game?.state ?? null,
+            gameId: player.game?.gameId ?? null,
+            gameDetail: player.game?.detail ?? null,
+            club,
+            stats: bag ?? null,
+          })
+        }
+        className="flex min-h-13 w-full items-center gap-3 px-3 py-2 text-left sm:px-4 hover:bg-raised"
+      >
+        <div className="min-w-0 flex-1">
+          <PlayerCell player={player} compact quiet game={player.game} line={line} clock={false} />
+        </div>
+        <span className="microlabel-data shrink-0 text-faint">BN</span>
+        <SlotPts points={disp.points} forecast={disp.forecast} className="w-12 text-sm" />
+      </button>
+    </li>
   );
 }
 
@@ -1050,17 +1131,6 @@ function isDecided(pair: MatchupPair) {
 
 function yetToPlay(side: MatchupSide) {
   return side.starters.filter((s) => s.player && s.game?.state === "pre").length;
-}
-
-function yetLabel(side: MatchupSide) {
-  const n = yetToPlay(side);
-  const live = side.starters.filter((s) => s.game?.state === "in").length;
-  if (live) return live === 1 ? "1 live" : `${live} live`;
-  if (n === 0) {
-    const had = side.starters.some((s) => s.game);
-    return had ? "All in" : "Yet to play";
-  }
-  return n === 1 ? "1 still to play" : `${n} still to play`;
 }
 
 function statusOf(pair: MatchupPair): { label: string; tone: "live" | "muted" | "win" } {
