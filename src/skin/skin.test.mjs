@@ -287,12 +287,14 @@ test("the wire's context lives in the deck on phones", () => {
   const wire = readFileSync(join(root, "src/routes/league/$leagueId/wire.tsx"), "utf8");
   assert.match(wire, /<Deck>/);
   assert.match(wire, /hidden gap-3 sm:flex/);
+  assert.match(wire, /rootMargin/);
 });
 
 test("my team's sections answer to the deck", () => {
   const roster = readFileSync(join(root, "src/routes/league/$leagueId/roster.tsx"), "utf8");
   assert.match(roster, /<Deck>/);
   assert.match(roster, /data-deck-sec="Lineup"/);
+  assert.match(roster, /aria-expanded/);
 
   const lineupBoard = readFileSync(join(root, "src/components/lineup-board.tsx"), "utf8");
   assert.match(lineupBoard, /data-deck-sec="Bench"/);

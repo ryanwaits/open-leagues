@@ -51,6 +51,19 @@ export const Route = createFileRoute("/league/$leagueId/roster")({
 const DECK_SECTIONS = ["Lineup", "Bench", "Activity"] as const;
 type DeckSection = (typeof DECK_SECTIONS)[number];
 
+function useIsPhone() {
+  const [phone, setPhone] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const on = () => setPhone(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return phone;
+}
+
 /** No baseline for a bye/out/no-data week — nothing to project against. */
 function baselineOf(
   projections: Record<string, Projection> | undefined,
@@ -75,12 +88,16 @@ function MyTeamPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
+  const isPhone = useIsPhone();
 
   // The deck's tabs both jump-scroll and track: the active chip always names
   // the section under the header. Sections are queried fresh at track time
   // (not cached at mount) since LineupBoard's bench can mount after the deck.
+  // Tracking is phone-only: the deck's nav is md:hidden, so desktop has no
+  // reason to run a scroll listener.
   const [activeSec, setActiveSec] = useState<DeckSection>("Lineup");
   useEffect(() => {
+    if (!isPhone) return;
     let raf = 0;
     const onScroll = () => {
       if (raf) return;
@@ -100,15 +117,23 @@ function MyTeamPage() {
       window.removeEventListener("scroll", onScroll);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [isPhone]);
 
   function jumpToSection(name: DeckSection) {
-    const el = document.querySelector(`[data-deck-sec="${name}"]`);
+    const el = document.querySelector<HTMLElement>(`[data-deck-sec="${name}"]`);
     if (!el) return;
-    window.scrollTo({
-      top: el.getBoundingClientRect().top + window.scrollY - 76,
-      behavior: "auto",
-    });
+    const scroll = () => {
+      window.scrollTo({
+        top: el.getBoundingClientRect().top + window.scrollY - 76,
+        behavior: "auto",
+      });
+    };
+    if (el.getAttribute("aria-expanded") === "false") {
+      el.click();
+      requestAnimationFrame(scroll);
+    } else {
+      scroll();
+    }
   }
 
   function openPlayer(p: RosterPlayer) {
@@ -382,7 +407,7 @@ function MyTeamPage() {
               aria-pressed={activeSec === name}
               onClick={() => jumpToSection(name)}
               className={cn(
-                "h-8 rounded-pill px-3 text-[13px] font-medium",
+                "h-8 rounded-pill px-3 text-[13px] font-medium focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-deep",
                 activeSec === name ? "bg-fg text-bg" : "text-faint",
               )}
             >
@@ -394,7 +419,7 @@ function MyTeamPage() {
         <Link
           to="/league/$leagueId/trades"
           params={{ leagueId }}
-          className="inline-flex h-9 shrink-0 items-center rounded-pill bg-fg px-3.5 text-[13px] font-medium text-bg"
+          className="inline-flex h-9 shrink-0 items-center rounded-pill bg-fg px-3.5 text-[13px] font-medium text-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
         >
           ⇄ Trade
         </Link>
@@ -595,7 +620,10 @@ function MyTeamPage() {
             </section>
           ) : null}
 
-          <section className="rounded-xl bg-surface ring-card">
+          <section
+            className="rounded-xl bg-surface ring-card"
+            data-deck-sec={league.data.hosted ? undefined : "Activity"}
+          >
             <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
               <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Your moves</h2>
               <Link

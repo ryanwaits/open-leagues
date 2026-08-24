@@ -131,7 +131,7 @@ function WirePage() {
   const shownRows = isPhone ? rows.slice(0, visible) : pageRows;
   useWarmRosterProfiles(
     leagueId,
-    pageRows.map((p) => p.player_id),
+    (isPhone ? rows.slice(0, 16) : pageRows).map((p) => p.player_id),
   );
 
   // A new scope/pos/search resets the continuous list back to its first page.
@@ -143,11 +143,14 @@ function WirePage() {
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el || !isPhone) return;
-    const io = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting) {
-        setVisible((v) => (v < rows.length ? v + 25 : v));
-      }
-    });
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisible((v) => (v < rows.length ? v + 25 : v));
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
     io.observe(el);
     return () => io.disconnect();
   }, [isPhone, rows.length]);
@@ -202,7 +205,7 @@ function WirePage() {
           type="button"
           aria-label="Filters and search"
           onClick={() => setSheetOpen(true)}
-          className="grid size-9 shrink-0 place-items-center rounded-pill text-muted shadow-[inset_0_0_0_1px_var(--color-line-strong)]"
+          className="grid size-9 shrink-0 place-items-center rounded-pill text-muted shadow-[inset_0_0_0_1px_var(--color-line-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
         >
           <SlidersHorizontal className="size-4" strokeWidth={1.8} />
         </button>
@@ -224,7 +227,7 @@ function WirePage() {
           type="button"
           aria-label="Find a player to claim"
           onClick={() => setSheetOpen(true)}
-          className="grid size-9 shrink-0 place-items-center rounded-pill bg-fg text-base font-medium text-bg"
+          className="grid size-9 shrink-0 place-items-center rounded-pill bg-fg text-base font-medium text-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
         >
           ＋
         </button>
@@ -464,7 +467,7 @@ function Chip({
       type="button"
       onClick={onClick}
       className={cn(
-        "h-9 rounded-sm px-3 font-mono text-xs",
+        "h-9 rounded-sm px-3 font-mono text-xs focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-deep",
         active ? "bg-accent text-accent-fg" : "bg-raised text-muted",
       )}
     >
