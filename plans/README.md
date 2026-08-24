@@ -395,7 +395,7 @@ reconcile). Source tree clean.
 | 066  | Box score desktop — pinned 400px rail (V1) | P1 | M | 065 | DONE `547d467` (not pushed; reviewed/APPROVED 2026-08-24; overflow guard added after measuring; pill-strip bleed fix sanctioned; 1 canvas verified all states) |
 | 067  | Board slim-down — /matchups compares (chart leaves, compact mirror) | P2 | M | 066 | DONE `b5ca8f1`+`114777d` (reviewed/APPROVED 2026-08-24 after 1 reviewer fix — pace chips trimmed from board rows; 0 canvases verified; detail page keeps its 1) |
 | 068  | Context deck: shell slot + Players page (deck, control sheet, continuous list) | P1 | L | — | DONE `0b1a5e7`+`068af75` (2026-08-24, pushed) |
-| 069  | My Team deck — tracking section tabs + trade cap | P1 | M | 068 | TODO |
+| 069  | My Team deck — tracking section tabs + trade cap | P1 | M | 068 | DONE `671cb31` (2026-08-24, pushed) |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
 ## Dependency notes
