@@ -8,7 +8,6 @@ import { LogoMark } from "@/components/logo";
 import { SignedIn, SignedOut, UserButton } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getLeagueBundle, getScores } from "@/lib/data/fns";
-import { motionOk, useScrollHide } from "@/lib/scroll-hide";
 import { useLeagueStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { brand } from "@/skin/brand";
@@ -135,8 +134,10 @@ export function Shell({
       ? leagueTabs(leagueId, Boolean(bundle.data?.hosted))
       : [];
   const showWordmark = !current || !user;
-  const barHidden = useScrollHide();
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: motionOk() ? "smooth" : "auto" });
+  const scrollToTop = () => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+  };
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg text-fg">
@@ -225,12 +226,7 @@ export function Shell({
 
       <InstallDrawer />
 
-      <nav
-        className={cn(
-          "fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/92 backdrop-blur-md transition-transform duration-200 ease-out motion-reduce:transition-none md:hidden",
-          barHidden && "translate-y-full",
-        )}
-      >
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/92 backdrop-blur-md md:hidden">
         {navTabs.length ? (
           <div
             className="mx-auto grid max-w-lg px-2 pb-[env(safe-area-inset-bottom)]"
