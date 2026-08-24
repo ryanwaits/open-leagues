@@ -397,6 +397,10 @@ reconcile). Source tree clean.
 | 068  | Context deck: shell slot + Players page (deck, control sheet, continuous list) | P1 | L | — | DONE `0b1a5e7`+`068af75` (2026-08-24, pushed) |
 | 069  | My Team deck — tracking section tabs + trade cap | P1 | M | 068 | DONE `671cb31` (2026-08-24, pushed) |
 | 070  | Deck hardening — audit follow-ups on 068/069 | P2 | S–M | 069 | DONE `6b9b68d` (2026-08-24, pushed) |
+| 071  | Game page tabs migrate into the deck | P1 | M | 070 | TODO |
+| 072  | Box score slate + mini-score join the deck | P1 | M | 070 | TODO |
+| 073  | Matchups week slate as deck pills | P2 | M | 070 | TODO |
+| 074  | League Table·Recap route deck | P2 | S | 070 | TODO |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
 ## Dependency notes
