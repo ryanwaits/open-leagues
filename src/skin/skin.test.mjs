@@ -276,3 +276,15 @@ test("the board compares; only the box score mounts the line", () => {
   assert.doesNotMatch(matchupBoard, /line=\{statLine\}/);
   assert.match(matchupBoard, /clock=\{false\}/);
 });
+
+test("the wire's context lives in the deck on phones", () => {
+  const shell = readFileSync(join(root, "src/components/shell.tsx"), "utf8");
+  assert.match(shell, /id="deck-slot"/);
+
+  const deck = readFileSync(join(root, "src/components/deck.tsx"), "utf8");
+  assert.match(deck, /createPortal/);
+
+  const wire = readFileSync(join(root, "src/routes/league/$leagueId/wire.tsx"), "utf8");
+  assert.match(wire, /<Deck>/);
+  assert.match(wire, /hidden gap-3 sm:flex/);
+});

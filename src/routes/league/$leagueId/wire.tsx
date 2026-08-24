@@ -1,8 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { type ReactNode, useState } from "react";
+import { SlidersHorizontal } from "lucide-react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
+import { Drawer } from "vaul";
 import { ClaimButton } from "@/components/claim-button";
 import { ClaimDialog } from "@/components/claim-dialog";
+import { Deck } from "@/components/deck";
 import { PlayerCell } from "@/components/player-cell";
 import { TablePager } from "@/components/table-pager";
 import { Badge } from "@/components/ui/badge";
@@ -63,12 +66,29 @@ function parsePage(value: unknown): number {
   return 1;
 }
 
+function useIsPhone() {
+  const [phone, setPhone] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const on = () => setPhone(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return phone;
+}
+
 function WirePage() {
   const { leagueId } = Route.useParams();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const qc = useQueryClient();
   const [q, setQ] = useState("");
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const isPhone = useIsPhone();
+  const [visible, setVisible] = useState(25);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const scope = search.scope ?? "available";
   const pos = search.pos ?? "ALL";
   const league = useQuery({
@@ -108,10 +128,29 @@ function WirePage() {
   const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const page = Math.min(search.page ?? 1, pageCount);
   const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const shownRows = isPhone ? rows.slice(0, visible) : pageRows;
   useWarmRosterProfiles(
     leagueId,
     pageRows.map((p) => p.player_id),
   );
+
+  // A new scope/pos/search resets the continuous list back to its first page.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scope/pos/needle are the deliberate reset triggers even though the body doesn't read them
+  useEffect(() => {
+    setVisible(25);
+  }, [scope, pos, needle]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !isPhone) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) {
+        setVisible((v) => (v < rows.length ? v + 25 : v));
+      }
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [isPhone, rows.length]);
 
   function setSearch(next: Partial<WireSearch>) {
     void navigate({
@@ -158,6 +197,39 @@ function WirePage() {
 
   return (
     <div>
+      <Deck>
+        <button
+          type="button"
+          aria-label="Filters and search"
+          onClick={() => setSheetOpen(true)}
+          className="grid size-9 shrink-0 place-items-center rounded-pill text-muted shadow-[inset_0_0_0_1px_var(--color-line-strong)]"
+        >
+          <SlidersHorizontal className="size-4" strokeWidth={1.8} />
+        </button>
+        <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {POS.map((p) => (
+            <Chip
+              key={p}
+              active={pos === p}
+              onClick={() => {
+                setSearch({ scope, pos: p });
+                window.scrollTo(0, 0);
+              }}
+            >
+              {p}
+            </Chip>
+          ))}
+        </div>
+        <button
+          type="button"
+          aria-label="Find a player to claim"
+          onClick={() => setSheetOpen(true)}
+          className="grid size-9 shrink-0 place-items-center rounded-pill bg-fg text-base font-medium text-bg"
+        >
+          ＋
+        </button>
+      </Deck>
+
       <p className="max-w-xl text-sm text-muted">{wireCopy}</p>
 
       {pendingClaims.length ? (
@@ -190,7 +262,7 @@ function WirePage() {
         </ul>
       ) : null}
 
-      <div className="mt-4 flex flex-col gap-3">
+      <div className="mt-4 hidden gap-3 sm:flex sm:flex-col">
         <Input
           value={q}
           onChange={(e) => {
@@ -216,6 +288,46 @@ function WirePage() {
         </div>
       </div>
 
+      <Drawer.Root open={sheetOpen} onOpenChange={setSheetOpen}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-50 bg-fg/40" />
+          <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 rounded-t-xl bg-surface px-5 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-3 outline-none ring-card">
+            <Drawer.Handle className="mx-auto h-1.5 w-10 rounded-full bg-line-strong" />
+            <Drawer.Title className="sr-only">Filters and search</Drawer.Title>
+            <Drawer.Description className="sr-only">
+              Search players and filter the wire by status.
+            </Drawer.Description>
+
+            <p className="microlabel mt-4">Search</p>
+            <Input
+              value={q}
+              onChange={(e) => {
+                setQ(e.target.value);
+                if ((search.page ?? 1) !== 1) setSearch({ page: 1 });
+              }}
+              placeholder="Search players"
+              className="mt-2"
+            />
+
+            <p className="microlabel mt-5">Status</p>
+            <div className="mt-2 flex flex-wrap gap-1">
+              {SCOPES.map((s) => (
+                <Chip
+                  key={s.id}
+                  active={scope === s.id}
+                  onClick={() => {
+                    setSearch({ scope: s.id });
+                    window.scrollTo(0, 0);
+                  }}
+                >
+                  {s.label}
+                </Chip>
+              ))}
+            </div>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+
       <div className="mt-6 overflow-x-auto rounded-xl bg-surface ring-card">
         <table className="w-full text-left text-sm">
           <thead className="microlabel">
@@ -237,14 +349,14 @@ function WirePage() {
                   </td>
                 </tr>
               ))
-            ) : pageRows.length === 0 ? (
+            ) : shownRows.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-4 py-8 text-sm text-muted">
                   {emptyCopy}
                 </td>
               </tr>
             ) : (
-              pageRows.map((p) => (
+              shownRows.map((p) => (
                 <tr key={p.player_id} className="border-b border-line last:border-0">
                   <td className="px-4 py-2.5">
                     <Link
@@ -300,7 +412,7 @@ function WirePage() {
           </tbody>
         </table>
         {wire.isSuccess && rows.length > 0 ? (
-          <div className="border-t border-line">
+          <div className="hidden border-t border-line sm:block">
             <TablePager
               page={page}
               pageCount={pageCount}
@@ -310,7 +422,13 @@ function WirePage() {
             />
           </div>
         ) : null}
+        {wire.isSuccess && rows.length > 0 ? (
+          <div className="microlabel border-t border-line px-4 py-3 sm:hidden">
+            {rows.length} players · showing {Math.min(visible, rows.length)}
+          </div>
+        ) : null}
       </div>
+      {isPhone ? <div ref={sentinelRef} className="h-px" /> : null}
 
       <ClaimDialog
         open={claim.open}
