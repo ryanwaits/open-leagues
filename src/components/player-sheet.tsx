@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Drawer } from "vaul";
 import {
   type LeagueContext,
@@ -14,6 +14,7 @@ import {
   ProfileThisWeek,
 } from "@/components/player-profile";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsPhone } from "@/lib/breakpoint";
 import {
   findCachedWirePlayer,
   isWirePlayer,
@@ -31,20 +32,6 @@ export type SheetTarget = {
   projection?: number | null;
   book?: ScoringBook | null;
 };
-
-/** True under the phone breakpoint — decides sheet vs. drawer chrome. */
-function useIsPhone() {
-  const [phone, setPhone] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches,
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 639px)");
-    const on = () => setPhone(mq.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
-  return phone;
-}
 
 /**
  * The quick look, for when you are mid-task and do not want to lose the page

@@ -239,8 +239,14 @@ test("player sheets ride vaul, full-height, single state", () => {
     const content = readFileSync(join(root, file), "utf8");
     assert.match(content, /from "vaul"/, `${file} should import from vaul`);
     assert.doesNotMatch(content, /snapPoints/, `${file} should not use detents — one full state`);
-    assert.match(content, /max-width: 639px/, `${file} should gate on the phone breakpoint`);
+    assert.match(
+      content,
+      /@\/lib\/breakpoint/,
+      `${file} should gate on the phone breakpoint via the shared hook`,
+    );
   }
+  const breakpoint = readFileSync(join(root, "src/lib/breakpoint.ts"), "utf8");
+  assert.match(breakpoint, /max-width: 639px/, "the phone boundary lives in one place");
 });
 
 test("the box score speaks in counts, not clocks", () => {

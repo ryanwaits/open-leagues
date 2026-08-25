@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsPhone } from "@/lib/breakpoint";
 import { getLeagueBundle, getWire } from "@/lib/data/fns";
 import { headshotFor, prefetchPlayerProfile, useWarmRosterProfiles } from "@/lib/data/player-view";
 import type { WirePlayer, WireScope } from "@/lib/data/types";
@@ -64,19 +65,6 @@ function parsePage(value: unknown): number {
   if (typeof value === "number" && Number.isFinite(value)) return Math.max(1, Math.floor(value));
   if (typeof value === "string" && /^\d+$/.test(value)) return Math.max(1, Number(value));
   return 1;
-}
-
-function useIsPhone() {
-  const [phone, setPhone] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches,
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 639px)");
-    const on = () => setPhone(mq.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
-  return phone;
 }
 
 function WirePage() {

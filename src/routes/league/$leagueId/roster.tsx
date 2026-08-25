@@ -12,6 +12,7 @@ import { TradeSpineRow } from "@/components/trade-spine";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsPhone } from "@/lib/breakpoint";
 import { fantasyStatKind } from "@/lib/data/calendar";
 import {
   getActivity,
@@ -50,19 +51,6 @@ export const Route = createFileRoute("/league/$leagueId/roster")({
 /** The deck's tabs, in scroll order. Activity fronts for Waivers + Trades + Your moves. */
 const DECK_SECTIONS = ["Lineup", "Bench", "Activity"] as const;
 type DeckSection = (typeof DECK_SECTIONS)[number];
-
-function useIsPhone() {
-  const [phone, setPhone] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches,
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 639px)");
-    const on = () => setPhone(mq.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
-  return phone;
-}
 
 /** No baseline for a bye/out/no-data week — nothing to project against. */
 function baselineOf(

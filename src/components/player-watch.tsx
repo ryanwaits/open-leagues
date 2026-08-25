@@ -6,6 +6,7 @@ import { Avatar } from "@/components/avatar";
 import { ProjectionBlock } from "@/components/projection-block";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsPhone } from "@/lib/breakpoint";
 import { getGameSummary } from "@/lib/data/fns";
 import { shortKickoff } from "@/lib/data/kickoff";
 import { playerPlays, playMentionsPlayer, situationIsRedZone } from "@/lib/data/player-plays";
@@ -56,20 +57,6 @@ export function watchFromLine(
     projection: extra?.projection ?? null,
     book: extra?.book ?? null,
   };
-}
-
-/** True under the phone breakpoint — decides sheet vs. drawer chrome. */
-function useIsPhone() {
-  const [phone, setPhone] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches,
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 639px)");
-    const on = () => setPhone(mq.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
-  return phone;
 }
 
 export function PlayerWatch({
