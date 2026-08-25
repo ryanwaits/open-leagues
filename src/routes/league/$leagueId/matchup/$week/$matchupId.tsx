@@ -381,7 +381,7 @@ function MatchupPage() {
 
       <div ref={sentinelRef} className="h-px" aria-hidden="true" />
       {stuck ? (
-        <div className="sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-20 -mx-4 flex items-center justify-between border-b border-line bg-bg/90 px-4 py-2 backdrop-blur-md hidden md:flex lg:hidden">
+        <div className="sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-20 -mx-4 items-center justify-between border-b border-line bg-bg/90 px-4 py-2 backdrop-blur-md hidden md:flex lg:hidden">
           <span className="font-mono text-sm tabular-nums">
             <span className={miniHomeLeads ? "text-fg" : "text-muted"}>
               {abbr(pair.home.teamName)} {formatPts(miniScores.home, 1)}

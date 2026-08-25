@@ -253,7 +253,7 @@ function WirePage() {
         </ul>
       ) : null}
 
-      <div className="mt-4 hidden gap-3 sm:flex sm:flex-col">
+      <div className="mt-4 hidden gap-3 md:flex md:flex-col">
         <Input
           value={q}
           onChange={(e) => {

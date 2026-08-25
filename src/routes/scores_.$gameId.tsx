@@ -194,7 +194,7 @@ function GamePage() {
           <div ref={sentinelRef} aria-hidden="true" className="h-px" />
           <div
             className={cn(
-              "hidden sm:block sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-20 -mx-4 mt-4 bg-bg/90 px-4 py-2 backdrop-blur-md",
+              "hidden md:block sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-20 -mx-4 mt-4 bg-bg/90 px-4 py-2 backdrop-blur-md",
               stuck && "border-b border-line",
             )}
           >

@@ -226,7 +226,7 @@ function LeagueLayout() {
                     search: (prev) => ({ ...prev, week: w, focus: undefined }),
                   })
                 }
-                className={deckWeek ? "hidden shrink-0 sm:inline-flex" : "shrink-0"}
+                className={deckWeek ? "hidden shrink-0 md:inline-flex" : "shrink-0"}
               />
             ) : null}
           </div>

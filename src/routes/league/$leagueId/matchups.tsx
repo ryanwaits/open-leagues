@@ -311,17 +311,17 @@ function MatchupsPage() {
         </div>
       ) : (
         <div className="space-y-5">
-          {shown.length > 1 ? (
-            <Deck>
-              <button
-                type="button"
-                aria-label="Change week"
-                onClick={() => setWeekOpen(true)}
-                className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-pill bg-surface px-3 text-[13px] font-medium text-fg shadow-[0_0_0_1px_var(--color-line-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
-              >
-                {weekLabel(week, playoffStart)}
-                <ChevronUp className="size-3.5 text-faint" strokeWidth={2.2} />
-              </button>
+          <Deck>
+            <button
+              type="button"
+              aria-label="Change week"
+              onClick={() => setWeekOpen(true)}
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-pill bg-surface px-3 text-[13px] font-medium text-fg shadow-[0_0_0_1px_var(--color-line-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
+            >
+              {weekLabel(week, playoffStart)}
+              <ChevronUp className="size-3.5 text-faint" strokeWidth={2.2} />
+            </button>
+            {shown.length > 1 ? (
               <div
                 ref={setRowRef}
                 className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -353,11 +353,11 @@ function MatchupsPage() {
                   );
                 })}
               </div>
-            </Deck>
-          ) : null}
+            ) : null}
+          </Deck>
 
           {shown.length > 1 ? (
-            <div className="relative hidden sm:block">
+            <div className="relative hidden md:block">
               {edges.left ? (
                 <button
                   type="button"

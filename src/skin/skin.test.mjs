@@ -231,7 +231,7 @@ test("the game page rail is a pinned tablist over snap panes", () => {
   assert.match(gamePage, /sticky top-\[calc\(3\.75rem/);
   assert.doesNotMatch(gamePage, /bg-accent text-accent-fg/);
   assert.match(gamePage, /<Deck>/);
-  assert.match(gamePage, /hidden sm:block/);
+  assert.match(gamePage, /hidden md:block/);
 });
 
 test("player sheets ride vaul, full-height, single state", () => {
@@ -282,9 +282,15 @@ test("the board compares; only the box score mounts the line", () => {
   const board = readFileSync(join(root, "src/routes/league/$leagueId/matchups.tsx"), "utf8");
   // The liveline chart card is the box score's — the board only scans.
   assert.doesNotMatch(board, /MatchupEdge/);
-  // The week slate rides the deck on phones; the card strip is sm+ only.
+  // The week slate rides the deck on phones; the card strip is md+ only.
   assert.match(board, /<Deck>/);
-  assert.match(board, /relative hidden sm:block/);
+  assert.match(board, /relative hidden md:block/);
+  // The Deck mounts unconditionally (week pill always survives), ahead of
+  // the shown.length > 1 gates that guard the slate row and card strip.
+  assert.ok(
+    board.indexOf("<Deck>") < board.indexOf("shown.length > 1"),
+    "Deck should mount before the first shown.length > 1 gate",
+  );
 
   const matchupBoard = readFileSync(join(root, "src/components/matchup-board.tsx"), "utf8");
   // Board rows are one line — no stat line and no live clock in the meta.
@@ -301,7 +307,7 @@ test("the wire's context lives in the deck on phones", () => {
 
   const wire = readFileSync(join(root, "src/routes/league/$leagueId/wire.tsx"), "utf8");
   assert.match(wire, /<Deck>/);
-  assert.match(wire, /hidden gap-3 sm:flex/);
+  assert.match(wire, /hidden gap-3 md:flex/);
   assert.match(wire, /rootMargin/);
 });
 
@@ -335,5 +341,5 @@ test("the week lives at the thumb on deck pages", () => {
   assert.match(standings, /WeekSheet/);
 
   const layout = readFileSync(join(root, "src/routes/league/$leagueId.tsx"), "utf8");
-  assert.match(layout, /hidden shrink-0 sm:inline-flex/);
+  assert.match(layout, /hidden shrink-0 md:inline-flex/);
 });

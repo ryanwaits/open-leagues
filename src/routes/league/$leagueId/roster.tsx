@@ -431,7 +431,7 @@ function MyTeamPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button asChild size="sm" className="hidden sm:inline-flex">
+            <Button asChild size="sm" className="hidden md:inline-flex">
               <Link to="/league/$leagueId/trades" params={{ leagueId }}>
                 Propose a trade
               </Link>
