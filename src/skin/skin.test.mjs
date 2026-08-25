@@ -258,6 +258,10 @@ test("the box score speaks in counts, not clocks", () => {
   // Rows opt out of the repeated red game clock; the roster/lineup rows this
   // prop defaults on for are untouched.
   assert.match(route, /clock=\{false\}/);
+  // The pill strip and the mini-score join the deck on phones; the top strip
+  // and sticky bar step back to the md band.
+  assert.match(route, /<Deck>/);
+  assert.match(route, /hidden md:flex lg:hidden/);
 
   const playerCell = readFileSync(join(root, "src/components/player-cell.tsx"), "utf8");
   assert.match(playerCell, /clock\s*=\s*true/, "clock should default on for every other caller");

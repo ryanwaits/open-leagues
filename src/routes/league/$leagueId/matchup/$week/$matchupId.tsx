@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar } from "@/components/avatar";
+import { Deck } from "@/components/deck";
 import { MatchupEdge } from "@/components/matchup-edge";
 import { PlayerCell } from "@/components/player-cell";
 import { PlayerSheet, type SheetTarget } from "@/components/player-sheet";
@@ -380,7 +381,7 @@ function MatchupPage() {
 
       <div ref={sentinelRef} className="h-px" aria-hidden="true" />
       {stuck ? (
-        <div className="sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-20 -mx-4 flex items-center justify-between border-b border-line bg-bg/90 px-4 py-2 backdrop-blur-md lg:hidden">
+        <div className="sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-20 -mx-4 flex items-center justify-between border-b border-line bg-bg/90 px-4 py-2 backdrop-blur-md hidden md:flex lg:hidden">
           <span className="font-mono text-sm tabular-nums">
             <span className={miniHomeLeads ? "text-fg" : "text-muted"}>
               {abbr(pair.home.teamName)} {formatPts(miniScores.home, 1)}
@@ -398,10 +399,39 @@ function MatchupPage() {
         </div>
       ) : null}
 
+      {slate.length > 1 || stuck ? (
+        <Deck>
+          {stuck ? (
+            <span className="shrink-0 font-mono text-sm tabular-nums">
+              <span className={miniHomeLeads ? "text-fg" : "text-muted"}>
+                {abbr(pair.home.teamName)} {formatPts(miniScores.home, 1)}
+              </span>
+              <span className="text-faint"> – </span>
+              <span className={!miniHomeLeads ? "text-fg" : "text-muted"}>
+                {formatPts(miniScores.away, 1)} {abbr(pair.away?.teamName ?? "Bye")}
+              </span>
+            </span>
+          ) : null}
+          {slate.length > 1 ? (
+            <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {slate.map((p) => (
+                <GamePill
+                  key={p.matchupId}
+                  pair={p}
+                  leagueId={leagueId}
+                  week={week}
+                  active={p.matchupId === pair.matchupId}
+                />
+              ))}
+            </div>
+          ) : null}
+        </Deck>
+      ) : null}
+
       <div className="lg:grid lg:grid-cols-[400px_minmax(0,1fr)] lg:items-start lg:gap-5">
         <div className="lg:sticky lg:top-[calc(3.75rem+env(safe-area-inset-top)+1rem)] lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto scroll-thin">
           {slate.length > 1 ? (
-            <div className="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:mb-4 lg:px-0 [&::-webkit-scrollbar]:hidden">
+            <div className="-mx-4 mb-3 hidden md:flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:mb-4 lg:px-0 [&::-webkit-scrollbar]:hidden">
               {slate.map((p) => (
                 <GamePill
                   key={p.matchupId}
