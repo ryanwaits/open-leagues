@@ -323,3 +323,17 @@ test("the league pages share the table-recap deck", () => {
   assert.match(recap, /<Deck>/);
   assert.match(recap, /aria-current="page"/);
 });
+
+test("the week lives at the thumb on deck pages", () => {
+  const weekSheet = readFileSync(join(root, "src/components/week-sheet.tsx"), "utf8");
+  assert.match(weekSheet, /from "vaul"/);
+
+  const matchups = readFileSync(join(root, "src/routes/league/$leagueId/matchups.tsx"), "utf8");
+  assert.match(matchups, /WeekSheet/);
+
+  const standings = readFileSync(join(root, "src/routes/league/$leagueId/standings.tsx"), "utf8");
+  assert.match(standings, /WeekSheet/);
+
+  const layout = readFileSync(join(root, "src/routes/league/$leagueId.tsx"), "utf8");
+  assert.match(layout, /hidden shrink-0 sm:inline-flex/);
+});

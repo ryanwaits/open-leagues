@@ -36,7 +36,7 @@ export function WeekPicker({
           className,
         )}
       >
-        {label(week, playoffStart)}
+        {weekLabel(week, playoffStart)}
         <ChevronDown
           className="size-3.5 text-faint transition-transform duration-150 group-data-[state=open]:rotate-180"
           strokeWidth={2.2}
@@ -58,7 +58,7 @@ export function WeekPicker({
                 onSelect={() => onPick(w)}
                 className="flex min-h-10 cursor-pointer items-center gap-2.5 rounded-md px-3 py-1.5 text-sm outline-none data-[highlighted]:bg-raised"
               >
-                <span className="flex-1 font-medium">{label(w, playoffStart)}</span>
+                <span className="flex-1 font-medium">{weekLabel(w, playoffStart)}</span>
                 {w === currentWeek ? <span className="microlabel-data">now</span> : null}
                 {on ? (
                   <Check className="size-3.5 shrink-0 text-accent-strong" strokeWidth={3} />
@@ -72,7 +72,7 @@ export function WeekPicker({
   );
 }
 
-function label(week: number, playoffStart: number): string {
+export function weekLabel(week: number, playoffStart: number): string {
   if (week < playoffStart) return `Week ${week}`;
   const round = week - playoffStart + 1;
   if (round === 1) return `Week ${week} · Round 1`;

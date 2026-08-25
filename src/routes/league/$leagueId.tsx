@@ -187,6 +187,9 @@ function LeagueLayout() {
    */
   const WEEKLY = ["/matchups", "/activity", "/recap", "/roster", "/standings"];
   const usesWeek = WEEKLY.some((seg) => pathname.startsWith(`/league/${leagueId}${seg}`));
+  const deckWeek = ["/matchups", "/standings", "/recap"].some((seg) =>
+    pathname.startsWith(`/league/${leagueId}${seg}`),
+  );
   const playoffStart =
     q.data?.ops?.playoffStartWeek ?? q.data?.league.settings.playoff_week_start ?? 15;
   const maxWeek = Math.max(
@@ -223,7 +226,7 @@ function LeagueLayout() {
                     search: (prev) => ({ ...prev, week: w, focus: undefined }),
                   })
                 }
-                className="shrink-0"
+                className={deckWeek ? "hidden shrink-0 sm:inline-flex" : "shrink-0"}
               />
             ) : null}
           </div>

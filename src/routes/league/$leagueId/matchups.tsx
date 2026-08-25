@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LinePanel } from "@/components/book-panel";
 import { Deck } from "@/components/deck";
@@ -9,6 +9,8 @@ import { PlayerSheet, type SheetTarget } from "@/components/player-sheet";
 import { PlayerWatch, type WatchTarget, watchFromLine } from "@/components/player-watch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type TicketTarget, WagerTicket } from "@/components/wager-ticket";
+import { weekLabel } from "@/components/week-picker";
+import { WeekSheet } from "@/components/week-sheet";
 import { fantasyStatKind } from "@/lib/data/calendar";
 import { getLeagueBundle, getMatchups, getWeekProjections, getWeekStats } from "@/lib/data/fns";
 import {
@@ -47,6 +49,7 @@ export const Route = createFileRoute("/league/$leagueId/matchups")({
 function MatchupsPage() {
   const { leagueId } = Route.useParams();
   const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   // The transport lives in the demo toolbar; this page only reads the clock.
   // `phase` (integer) indexes REPLAY_PHASES for labels/game state; `progress`
   // (fractional, same value rounded down when paused) drives the painted
@@ -58,6 +61,7 @@ function MatchupsPage() {
   const [watch, setWatch] = useState<WatchTarget | null>(null);
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
   const [ticket, setTicket] = useState<TicketTarget | null>(null);
+  const [weekOpen, setWeekOpen] = useState(false);
 
   /** Live game means play-by-play; anything else means the profile. */
   function openPlayer(t: WatchTarget | null) {
@@ -84,6 +88,13 @@ function MatchupsPage() {
     refetchInterval: (q) => (phase == null && q.state.data?.scoringLive ? LIVE_POLL_MS : false),
   });
   const week = search.week ?? league.data?.currentWeek ?? 1;
+  const playoffStart =
+    league.data?.ops?.playoffStartWeek ?? league.data?.league.settings.playoff_week_start ?? 15;
+  const maxWeek = Math.max(
+    playoffStart + 2,
+    league.data?.ops?.regularWeeks ?? 14,
+    league.data?.currentWeek ?? 1,
+  );
   const matchups = useQuery({
     queryKey: ["matchups", leagueId, week],
     queryFn: () => getMatchups({ data: { leagueId, week } }),
@@ -302,6 +313,15 @@ function MatchupsPage() {
         <div className="space-y-5">
           {shown.length > 1 ? (
             <Deck>
+              <button
+                type="button"
+                aria-label="Change week"
+                onClick={() => setWeekOpen(true)}
+                className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-pill bg-surface px-3 text-[13px] font-medium text-fg shadow-[0_0_0_1px_var(--color-line-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
+              >
+                {weekLabel(week, playoffStart)}
+                <ChevronUp className="size-3.5 text-faint" strokeWidth={2.2} />
+              </button>
               <div
                 ref={setRowRef}
                 className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -537,6 +557,20 @@ function MatchupsPage() {
       ) : null}
 
       <PlayerSheet target={sheet} leagueId={leagueId} onClose={() => setSheet(null)} />
+
+      <WeekSheet
+        open={weekOpen}
+        onOpenChange={setWeekOpen}
+        week={week}
+        maxWeek={maxWeek}
+        playoffStart={playoffStart}
+        currentWeek={league.data?.currentWeek ?? 1}
+        onPick={(w) =>
+          void navigate({
+            search: (prev) => ({ ...prev, week: w, focus: undefined }),
+          })
+        }
+      />
     </div>
   );
 }

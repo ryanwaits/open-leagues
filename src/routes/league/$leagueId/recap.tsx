@@ -1,9 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronUp } from "lucide-react";
+import { useState } from "react";
 import { Deck } from "@/components/deck";
 import { Stamp } from "@/components/ghost-num";
 import { Skeleton } from "@/components/ui/skeleton";
+import { weekLabel } from "@/components/week-picker";
+import { WeekSheet } from "@/components/week-sheet";
 import { getLeagueBundle } from "@/lib/data/fns";
 import type { DispatchArticle } from "@/lib/league/dispatch";
 import { getDesk } from "@/lib/league/fns";
@@ -20,11 +23,19 @@ function DeskPage() {
   const { leagueId } = Route.useParams();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
+  const [weekOpen, setWeekOpen] = useState(false);
   const league = useQuery({
     queryKey: ["league", leagueId],
     queryFn: () => getLeagueBundle({ data: { leagueId } }),
   });
   const week = search.week ?? league.data?.currentWeek ?? 1;
+  const playoffStart =
+    league.data?.ops?.playoffStartWeek ?? league.data?.league.settings.playoff_week_start ?? 15;
+  const maxWeek = Math.max(
+    playoffStart + 2,
+    league.data?.ops?.regularWeeks ?? 14,
+    league.data?.currentWeek ?? 1,
+  );
   const desk = useQuery({
     queryKey: ["desk", leagueId, week],
     queryFn: () => getDesk({ data: { leagueId, week } }),
@@ -59,6 +70,16 @@ function DeskPage() {
             Recap
           </Link>
         </span>
+        <span className="flex-1" />
+        <button
+          type="button"
+          aria-label="Change week"
+          onClick={() => setWeekOpen(true)}
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-pill bg-surface pl-3.5 pr-2.5 text-sm font-medium text-fg shadow-[0_0_0_1px_var(--color-line-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
+        >
+          {weekLabel(week, playoffStart)}
+          <ChevronUp className="size-3.5 text-faint" strokeWidth={2.2} />
+        </button>
       </Deck>
       <header className="border-b border-line pb-4">
         <p className="microlabel">
@@ -126,6 +147,16 @@ function DeskPage() {
       ) : (
         <p className="mt-8 text-sm text-muted">No desk copy for this week yet.</p>
       )}
+
+      <WeekSheet
+        open={weekOpen}
+        onOpenChange={setWeekOpen}
+        week={week}
+        maxWeek={maxWeek}
+        playoffStart={playoffStart}
+        currentWeek={league.data?.currentWeek ?? 1}
+        onPick={(w) => void navigate({ search: { week: w, story: undefined } })}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ChevronUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Avatar } from "@/components/avatar";
@@ -8,6 +9,8 @@ import { Deck } from "@/components/deck";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { weekLabel } from "@/components/week-picker";
+import { WeekSheet } from "@/components/week-sheet";
 import { fantasyStatKind } from "@/lib/data/calendar";
 import {
   getActivity,
@@ -40,8 +43,10 @@ export const Route = createFileRoute("/league/$leagueId/standings")({
 function LeaguePage() {
   const { leagueId } = Route.useParams();
   const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const qc = useQueryClient();
   const pre = usePreLiveFeed();
+  const [weekOpen, setWeekOpen] = useState(false);
 
   const league = useQuery({
     queryKey: ["league", leagueId],
@@ -50,6 +55,13 @@ function LeaguePage() {
   });
   const week = search.week ?? league.data?.currentWeek ?? 1;
   const season = league.data?.league.season ?? "";
+  const playoffStart =
+    league.data?.ops?.playoffStartWeek ?? league.data?.league.settings.playoff_week_start ?? 15;
+  const maxWeek = Math.max(
+    playoffStart + 2,
+    league.data?.ops?.regularWeeks ?? 14,
+    league.data?.currentWeek ?? 1,
+  );
 
   const matchups = useQuery({
     queryKey: ["matchups", leagueId, week],
@@ -151,6 +163,16 @@ function LeaguePage() {
             Recap
           </Link>
         </span>
+        <span className="flex-1" />
+        <button
+          type="button"
+          aria-label="Change week"
+          onClick={() => setWeekOpen(true)}
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-pill bg-surface pl-3.5 pr-2.5 text-sm font-medium text-fg shadow-[0_0_0_1px_var(--color-line-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
+        >
+          {weekLabel(week, playoffStart)}
+          <ChevronUp className="size-3.5 text-faint" strokeWidth={2.2} />
+        </button>
       </Deck>
       <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr] lg:items-start">
         <div className="flex min-w-0 flex-col gap-5">
@@ -516,6 +538,20 @@ function LeaguePage() {
           </section>
         </div>
       </div>
+
+      <WeekSheet
+        open={weekOpen}
+        onOpenChange={setWeekOpen}
+        week={week}
+        maxWeek={maxWeek}
+        playoffStart={playoffStart}
+        currentWeek={league.data.currentWeek}
+        onPick={(w) =>
+          void navigate({
+            search: (prev) => ({ ...prev, week: w, focus: undefined }),
+          })
+        }
+      />
     </>
   );
 }
