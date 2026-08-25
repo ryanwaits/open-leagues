@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LinePanel } from "@/components/book-panel";
+import { Deck } from "@/components/deck";
 import { MatchupBoard } from "@/components/matchup-board";
 import { PlayerSheet, type SheetTarget } from "@/components/player-sheet";
 import { PlayerWatch, type WatchTarget, watchFromLine } from "@/components/player-watch";
@@ -215,6 +216,28 @@ function MatchupsPage() {
     setPicked((selected + delta + shown.length) % shown.length);
   }
 
+  // The deck pill row keeps the active game visible as picks change. Deck
+  // portals its children in on a second render (it waits for the deck-slot
+  // element), so a plain effect on mount can fire before the row exists —
+  // the callback ref catches that first paint too.
+  const rowRef = useRef<HTMLDivElement | null>(null);
+  const centerActivePill = useCallback(() => {
+    rowRef.current
+      ?.querySelector('[aria-current="true"]')
+      ?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, []);
+  const setRowRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      rowRef.current = el;
+      if (el) centerActivePill();
+    },
+    [centerActivePill],
+  );
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-center the active pill whenever the selected matchup changes
+  useEffect(() => {
+    centerActivePill();
+  }, [selected, centerActivePill]);
+
   // The strip scrolls rather than paginating, so a fourteen-team league is a
   // swipe instead of fourteen clicks. Arrows only appear when there is
   // somewhere to go.
@@ -278,7 +301,43 @@ function MatchupsPage() {
       ) : (
         <div className="space-y-5">
           {shown.length > 1 ? (
-            <div className="relative">
+            <Deck>
+              <div
+                ref={setRowRef}
+                className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
+                {shown.map((p, i) => {
+                  const on = i === selected;
+                  const s = pairPreviewScores(p);
+                  const live = pairingIsLive(p);
+                  return (
+                    <button
+                      key={p.matchupId}
+                      type="button"
+                      aria-current={on ? "true" : undefined}
+                      onClick={() => {
+                        setPicked(i);
+                        window.scrollTo(0, 0);
+                      }}
+                      className={cn(
+                        "flex h-[30px] shrink-0 items-center gap-1.5 rounded-pill px-2.5 font-mono text-[11px] whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep",
+                        on
+                          ? "bg-fg text-bg"
+                          : "text-muted shadow-[inset_0_0_0_1px_var(--color-line-strong)]",
+                      )}
+                    >
+                      {live && !on ? <span className="size-1.5 rounded-full bg-live" /> : null}
+                      {abbr(p.home.teamName)} {formatPts(s.home, 0)} ·{" "}
+                      {abbr(p.away?.teamName ?? "Bye")} {formatPts(s.away, 0)}
+                    </button>
+                  );
+                })}
+              </div>
+            </Deck>
+          ) : null}
+
+          {shown.length > 1 ? (
+            <div className="relative hidden sm:block">
               {edges.left ? (
                 <button
                   type="button"
@@ -480,4 +539,9 @@ function MatchupsPage() {
       <PlayerSheet target={sheet} leagueId={leagueId} onClose={() => setSheet(null)} />
     </div>
   );
+}
+
+/** First-3-letters mark for the deck pills — enough to tell teams apart at 30px. */
+function abbr(name: string): string {
+  return name.trim().slice(0, 3).toUpperCase();
 }

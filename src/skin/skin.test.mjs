@@ -276,6 +276,9 @@ test("the board compares; only the box score mounts the line", () => {
   const board = readFileSync(join(root, "src/routes/league/$leagueId/matchups.tsx"), "utf8");
   // The liveline chart card is the box score's — the board only scans.
   assert.doesNotMatch(board, /MatchupEdge/);
+  // The week slate rides the deck on phones; the card strip is sm+ only.
+  assert.match(board, /<Deck>/);
+  assert.match(board, /relative hidden sm:block/);
 
   const matchupBoard = readFileSync(join(root, "src/components/matchup-board.tsx"), "utf8");
   // Board rows are one line — no stat line and no live clock in the meta.
