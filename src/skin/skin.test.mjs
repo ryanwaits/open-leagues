@@ -230,6 +230,8 @@ test("the game page rail is a pinned tablist over snap panes", () => {
   assert.match(gamePage, /touch-pan-y/);
   assert.match(gamePage, /sticky top-\[calc\(3\.75rem/);
   assert.doesNotMatch(gamePage, /bg-accent text-accent-fg/);
+  assert.match(gamePage, /<Deck>/);
+  assert.match(gamePage, /hidden sm:block/);
 });
 
 test("player sheets ride vaul, full-height, single state", () => {

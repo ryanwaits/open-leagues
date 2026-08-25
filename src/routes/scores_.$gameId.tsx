@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 import { Avatar } from "@/components/avatar";
+import { Deck } from "@/components/deck";
 import { PlayerPeek } from "@/components/player-peek";
 import { Shell } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
@@ -154,10 +155,46 @@ function GamePage() {
           <Back />
           <ScoreHead g={g} live={live} />
 
+          <Deck>
+            <div
+              role="tablist"
+              aria-label="Game views"
+              onKeyDown={onTablistKeys}
+              className="flex shrink-0 items-center gap-0.5 rounded-pill bg-raised p-0.5"
+            >
+              {TABS.map(([id, label], i) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === id}
+                  tabIndex={tab === id ? 0 : -1}
+                  onClick={() => pickTab(i)}
+                  className={cn(
+                    "h-8 rounded-pill px-3.5 text-sm font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-deep",
+                    tab === id ? "bg-fg text-bg" : "text-faint hover:text-muted",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {tab === "plays" && g.drives.length ? (
+              <div className="flex shrink-0 gap-1">
+                <FilterChip on={activeFilter === "all"} onClick={() => setFilter("all")}>
+                  All
+                </FilterChip>
+                <FilterChip on={activeFilter === "scoring"} onClick={() => setFilter("scoring")}>
+                  Scoring
+                </FilterChip>
+              </div>
+            ) : null}
+          </Deck>
+
           <div ref={sentinelRef} aria-hidden="true" className="h-px" />
           <div
             className={cn(
-              "sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-20 -mx-4 mt-4 bg-bg/90 px-4 py-2 backdrop-blur-md",
+              "hidden sm:block sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-20 -mx-4 mt-4 bg-bg/90 px-4 py-2 backdrop-blur-md",
               stuck && "border-b border-line",
             )}
           >
