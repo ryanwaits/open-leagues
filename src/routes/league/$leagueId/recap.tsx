@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { Deck } from "@/components/deck";
 import { Stamp } from "@/components/ghost-num";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLeagueBundle } from "@/lib/data/fns";
@@ -38,6 +39,27 @@ function DeskPage() {
 
   return (
     <div>
+      <Deck>
+        <span className="flex items-center gap-0.5 rounded-pill bg-raised p-0.5">
+          <Link
+            to="/league/$leagueId/standings"
+            params={{ leagueId }}
+            search={{ week }}
+            className="inline-flex h-8 items-center rounded-pill px-3 text-[13px] font-medium text-faint focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-deep"
+          >
+            Table
+          </Link>
+          <Link
+            to="/league/$leagueId/recap"
+            params={{ leagueId }}
+            search={{ week, story: undefined }}
+            aria-current="page"
+            className="inline-flex h-8 items-center rounded-pill bg-fg px-3 text-[13px] font-medium text-bg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-deep"
+          >
+            Recap
+          </Link>
+        </span>
+      </Deck>
       <header className="border-b border-line pb-4">
         <p className="microlabel">
           The desk · {league.data?.league.name ?? "League"} · {league.data?.league.season}

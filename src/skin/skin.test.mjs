@@ -308,3 +308,12 @@ test("my team's sections answer to the deck", () => {
   const lineupBoard = readFileSync(join(root, "src/components/lineup-board.tsx"), "utf8");
   assert.match(lineupBoard, /data-deck-sec="Bench"/);
 });
+
+test("the league pages share the table-recap deck", () => {
+  const standings = readFileSync(join(root, "src/routes/league/$leagueId/standings.tsx"), "utf8");
+  assert.match(standings, /<Deck>/);
+
+  const recap = readFileSync(join(root, "src/routes/league/$leagueId/recap.tsx"), "utf8");
+  assert.match(recap, /<Deck>/);
+  assert.match(recap, /aria-current="page"/);
+});

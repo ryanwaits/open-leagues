@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Avatar } from "@/components/avatar";
 import { PurseMeter } from "@/components/book-panel";
+import { Deck } from "@/components/deck";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -129,365 +130,393 @@ function LeaguePage() {
   const open = (trades.data ?? []).filter((t) => t.status === "proposed");
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr] lg:items-start">
-      <div className="flex min-w-0 flex-col gap-5">
-        <section className="rounded-xl bg-surface ring-card">
-          <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-            <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Standings</h2>
-            {playoff > 0 ? <span className="microlabel-data">Top {playoff} make it</span> : null}
-          </header>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[460px] text-sm">
-              <thead className="microlabel-data">
-                <tr className="border-b border-line">
-                  <th className="px-4 py-3 text-left font-medium" />
-                  <th className="px-2 py-3 text-left font-medium">Team</th>
-                  <th className="px-3 py-3 text-right font-medium">W–L</th>
-                  <th className="px-3 py-3 text-right font-medium">PF</th>
-                  <th className="px-4 py-3 text-right font-medium">PA</th>
-                </tr>
-              </thead>
-              <tbody>
-                {league.data.standings.map((row, i) => {
-                  const rank = i + 1;
-                  const inPlayoffs = playoff > 0 && rank <= playoff;
-                  return (
-                    <tr
-                      key={row.rosterId}
-                      className={cn(
-                        "border-b border-line last:border-0",
-                        // The cut is structure, so it gets a rule rather than a colour.
-                        playoff > 0 && rank === playoff && "border-b-2 border-b-line-strong",
-                        row.rosterId === mine && "bg-raised",
-                      )}
-                    >
-                      <td className="px-4 py-3">
-                        <span
-                          className={cn(
-                            "grid size-6 place-items-center rounded-pill font-mono text-[10px]",
-                            inPlayoffs ? "bg-accent font-semibold text-accent-fg" : "text-faint",
-                          )}
-                        >
-                          {rank}
-                        </span>
-                      </td>
-                      <td className="px-2 py-3">
-                        <Link
-                          to="/league/$leagueId/team/$rosterId"
-                          params={{ leagueId, rosterId: String(row.rosterId) }}
-                          className="flex items-center gap-2.5"
-                        >
-                          <Avatar src={row.avatar} name={row.teamName} className="size-7" tint />
-                          <span className="min-w-0">
-                            <span className="block truncate font-medium">{row.teamName}</span>
-                            <span className="block truncate font-mono text-[10px] text-faint">
-                              {row.manager}
-                            </span>
-                          </span>
-                        </Link>
-                      </td>
-                      <td className="px-3 py-3 text-right font-mono font-medium tabular-nums">
-                        {fmtRecord(row.wins, row.losses, row.ties)}
-                      </td>
-                      <td className="px-3 py-3 text-right font-mono tabular-nums">
-                        {formatPts(row.pf, 1)}
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono tabular-nums text-muted">
-                        {formatPts(row.pa, 1)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section className="rounded-xl bg-surface ring-card">
-          <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-            <h2 className="font-display text-lg font-medium tracking-[-0.02em]">
-              Week {week} slate
-            </h2>
-            <Link
-              to="/league/$leagueId/matchups"
-              params={{ leagueId }}
-              search={{ week }}
-              className="microlabel-data text-accent-strong"
-            >
-              Open matchup
-            </Link>
-          </header>
-          {matchups.data == null &&
-          (matchups.isPending || matchups.isLoading || !matchups.isFetched) ? (
-            <div className="space-y-2 p-5">
-              <Skeleton className="h-8" />
-              <Skeleton className="h-8" />
-            </div>
-          ) : (
-            <ul>
-              {slate.map((pair) => {
-                const scores = pairPreviewScores(pair);
-                const homePts = scores.home;
-                const awayPts = scores.away;
-                const homeLeads = !pair.away || homePts >= awayPts;
-                const decided = scores.live && (homePts > 0 || awayPts > 0);
-                const involvesMe = pair.home.rosterId === mine || pair.away?.rosterId === mine;
-                return (
-                  <li key={pair.matchupId}>
-                    <Link
-                      to="/league/$leagueId/matchup/$week/$matchupId"
-                      params={{ leagueId, week: String(week), matchupId: String(pair.matchupId) }}
-                      className={cn(
-                        "flex items-center gap-3 border-b border-line px-5 py-3 last:border-0 hover:bg-raised",
-                        involvesMe && "bg-raised/60",
-                      )}
-                    >
-                      <span className="min-w-0 flex-1 truncate text-sm">
-                        <span className={homeLeads && decided ? "font-semibold" : "text-muted"}>
-                          {pair.home.teamName}
-                        </span>
-                      </span>
-                      <span className="shrink-0 font-mono text-sm tabular-nums">
-                        <span className={homeLeads && decided ? "font-semibold" : "text-muted"}>
-                          {formatPts(homePts, 1)}
-                        </span>
-                        <span className="mx-1.5 text-faint">–</span>
-                        <span className={!homeLeads && decided ? "font-semibold" : "text-muted"}>
-                          {formatPts(awayPts, 1)}
-                        </span>
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-right text-sm">
-                        <span className={!homeLeads && decided ? "font-semibold" : "text-muted"}>
-                          {pair.away?.teamName ?? "Bye"}
-                        </span>
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-
-        <section className="rounded-xl bg-surface ring-card">
-          <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-            <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Moves</h2>
-            <Link
-              to="/league/$leagueId/activity"
-              params={{ leagueId }}
-              search={{ week: undefined }}
-              className="microlabel-data text-accent-strong"
-            >
-              All weeks
-            </Link>
-          </header>
-          {(activity.data ?? []).length === 0 ? (
-            <p className="px-5 pb-5 text-sm text-muted">Nothing has moved this week.</p>
-          ) : (
-            <ul>
-              {(activity.data ?? []).slice(0, 8).map((item) => (
-                <li
-                  key={item.id}
-                  className="flex items-start gap-3 border-b border-line px-5 py-3 last:border-0"
-                >
-                  <Badge tone="muted">{item.type}</Badge>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold">
-                      {item.teamNames.join(", ") || "Someone"}
-                    </span>
-                    <span className="block text-[13px] text-muted">
-                      {[
-                        item.adds.length ? `in ${item.adds.map((a) => a.name).join(", ")}` : null,
-                        item.drops.length
-                          ? `out ${item.drops.map((d) => d.name).join(", ")}`
-                          : null,
-                        item.bid ? `$${item.bid}` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
-
-      <div className="flex min-w-0 flex-col gap-5">
-        {recap.data ? (
+    <>
+      <Deck>
+        <span className="flex items-center gap-0.5 rounded-pill bg-raised p-0.5">
+          <Link
+            to="/league/$leagueId/standings"
+            params={{ leagueId }}
+            search={{ week }}
+            aria-current="page"
+            className="inline-flex h-8 items-center rounded-pill bg-fg px-3 text-[13px] font-medium text-bg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-deep"
+          >
+            Table
+          </Link>
           <Link
             to="/league/$leagueId/recap"
             params={{ leagueId }}
             search={{ week, story: undefined }}
-            className="block rounded-xl bg-surface px-5 py-5 ring-card transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 ring-card-h"
+            className="inline-flex h-8 items-center rounded-pill px-3 text-[13px] font-medium text-faint focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-deep"
           >
-            <p className="microlabel">{recap.data.kicker}</p>
-            <p className="mt-1.5 font-display text-xl font-bold leading-snug tracking-[-0.03em]">
-              <span className="hl">{recap.data.headline}</span>
-            </p>
-            <p className="mt-2.5 text-sm text-muted">{recap.data.dek}</p>
+            Recap
           </Link>
-        ) : null}
-
-        {league.data.hosted ? (
+        </span>
+      </Deck>
+      <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr] lg:items-start">
+        <div className="flex min-w-0 flex-col gap-5">
           <section className="rounded-xl bg-surface ring-card">
             <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-              <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Open trades</h2>
+              <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Standings</h2>
+              {playoff > 0 ? <span className="microlabel-data">Top {playoff} make it</span> : null}
+            </header>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[460px] text-sm">
+                <thead className="microlabel-data">
+                  <tr className="border-b border-line">
+                    <th className="px-4 py-3 text-left font-medium" />
+                    <th className="px-2 py-3 text-left font-medium">Team</th>
+                    <th className="px-3 py-3 text-right font-medium">W–L</th>
+                    <th className="px-3 py-3 text-right font-medium">PF</th>
+                    <th className="px-4 py-3 text-right font-medium">PA</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {league.data.standings.map((row, i) => {
+                    const rank = i + 1;
+                    const inPlayoffs = playoff > 0 && rank <= playoff;
+                    return (
+                      <tr
+                        key={row.rosterId}
+                        className={cn(
+                          "border-b border-line last:border-0",
+                          // The cut is structure, so it gets a rule rather than a colour.
+                          playoff > 0 && rank === playoff && "border-b-2 border-b-line-strong",
+                          row.rosterId === mine && "bg-raised",
+                        )}
+                      >
+                        <td className="px-4 py-3">
+                          <span
+                            className={cn(
+                              "grid size-6 place-items-center rounded-pill font-mono text-[10px]",
+                              inPlayoffs ? "bg-accent font-semibold text-accent-fg" : "text-faint",
+                            )}
+                          >
+                            {rank}
+                          </span>
+                        </td>
+                        <td className="px-2 py-3">
+                          <Link
+                            to="/league/$leagueId/team/$rosterId"
+                            params={{ leagueId, rosterId: String(row.rosterId) }}
+                            className="flex items-center gap-2.5"
+                          >
+                            <Avatar src={row.avatar} name={row.teamName} className="size-7" tint />
+                            <span className="min-w-0">
+                              <span className="block truncate font-medium">{row.teamName}</span>
+                              <span className="block truncate font-mono text-[10px] text-faint">
+                                {row.manager}
+                              </span>
+                            </span>
+                          </Link>
+                        </td>
+                        <td className="px-3 py-3 text-right font-mono font-medium tabular-nums">
+                          {fmtRecord(row.wins, row.losses, row.ties)}
+                        </td>
+                        <td className="px-3 py-3 text-right font-mono tabular-nums">
+                          {formatPts(row.pf, 1)}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono tabular-nums text-muted">
+                          {formatPts(row.pa, 1)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="rounded-xl bg-surface ring-card">
+            <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
+              <h2 className="font-display text-lg font-medium tracking-[-0.02em]">
+                Week {week} slate
+              </h2>
               <Link
-                to="/league/$leagueId/trades"
+                to="/league/$leagueId/matchups"
                 params={{ leagueId }}
+                search={{ week }}
                 className="microlabel-data text-accent-strong"
               >
-                Trade desk
+                Open matchup
               </Link>
             </header>
-            {open.length === 0 ? (
-              <p className="px-5 pb-5 text-sm text-muted">Nothing on the table.</p>
+            {matchups.data == null &&
+            (matchups.isPending || matchups.isLoading || !matchups.isFetched) ? (
+              <div className="space-y-2 p-5">
+                <Skeleton className="h-8" />
+                <Skeleton className="h-8" />
+              </div>
             ) : (
               <ul>
-                {open.slice(0, 4).map((t) => {
-                  const waitingOnMe =
-                    mine != null && t.sides.some((s) => s.rosterId === mine && !s.accepted);
+                {slate.map((pair) => {
+                  const scores = pairPreviewScores(pair);
+                  const homePts = scores.home;
+                  const awayPts = scores.away;
+                  const homeLeads = !pair.away || homePts >= awayPts;
+                  const decided = scores.live && (homePts > 0 || awayPts > 0);
+                  const involvesMe = pair.home.rosterId === mine || pair.away?.rosterId === mine;
                   return (
-                    <li
-                      key={t.id}
-                      className="flex items-center gap-3 border-b border-line px-5 py-3 last:border-0"
-                    >
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium">
-                          {t.sides.map((s) => s.teamName).join(" ↔ ")}
+                    <li key={pair.matchupId}>
+                      <Link
+                        to="/league/$leagueId/matchup/$week/$matchupId"
+                        params={{ leagueId, week: String(week), matchupId: String(pair.matchupId) }}
+                        className={cn(
+                          "flex items-center gap-3 border-b border-line px-5 py-3 last:border-0 hover:bg-raised",
+                          involvesMe && "bg-raised/60",
+                        )}
+                      >
+                        <span className="min-w-0 flex-1 truncate text-sm">
+                          <span className={homeLeads && decided ? "font-semibold" : "text-muted"}>
+                            {pair.home.teamName}
+                          </span>
                         </span>
-                        <span className="block microlabel-data">
-                          {waitingOnMe ? "waiting on you" : "awaiting them"}
+                        <span className="shrink-0 font-mono text-sm tabular-nums">
+                          <span className={homeLeads && decided ? "font-semibold" : "text-muted"}>
+                            {formatPts(homePts, 1)}
+                          </span>
+                          <span className="mx-1.5 text-faint">–</span>
+                          <span className={!homeLeads && decided ? "font-semibold" : "text-muted"}>
+                            {formatPts(awayPts, 1)}
+                          </span>
                         </span>
-                      </span>
-                      {waitingOnMe ? <Badge tone="loss">You</Badge> : null}
+                        <span className="min-w-0 flex-1 truncate text-right text-sm">
+                          <span className={!homeLeads && decided ? "font-semibold" : "text-muted"}>
+                            {pair.away?.teamName ?? "Bye"}
+                          </span>
+                        </span>
+                      </Link>
                     </li>
                   );
                 })}
               </ul>
             )}
           </section>
-        ) : null}
 
-        {book.data?.enabled ? (
           <section className="rounded-xl bg-surface ring-card">
             <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-              <h2 className="font-display text-lg font-medium tracking-[-0.02em]">The book</h2>
-              <span className="microlabel-data">
-                {book.data.locked ? "closed" : `week ${book.data.week}`}
-              </span>
+              <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Moves</h2>
+              <Link
+                to="/league/$leagueId/activity"
+                params={{ leagueId }}
+                search={{ week: undefined }}
+                className="microlabel-data text-accent-strong"
+              >
+                All weeks
+              </Link>
             </header>
-            <PurseMeter book={book.data} />
-            <div className="px-5 py-3">
-              <p className="font-mono text-lg font-bold tabular-nums">${book.data.pool.balance}</p>
-              <p className="text-xs text-faint">
-                In the pool, against ${book.data.pool.committed} committed. Funded by losing stakes.
-              </p>
-            </div>
-            {book.data.positions.length ? (
-              <ul className="border-t border-line">
-                {book.data.positions.slice(0, 6).map((p) => (
-                  <li
-                    key={p.id}
-                    className="flex items-center gap-3 border-b border-line px-5 py-2.5 last:border-0"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">
-                        {p.sideName} {p.kind === "spread" ? fmtLine(p.line) : "to win"}
-                      </span>
-                      <span className="block truncate font-mono text-[10px] text-faint">
-                        {p.mine ? "yours" : p.ownerName} · week {p.week}
-                      </span>
-                    </span>
-                    <span className="font-mono text-sm font-semibold tabular-nums">${p.stake}</span>
-                    {p.mine && p.status === "placed" && !book.data.locked ? (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        data-testid={`wager-pull-${p.id}`}
-                        disabled={pull.isPending}
-                        onClick={() => pull.mutate({ wagerId: p.id, stake: p.stake })}
-                      >
-                        Pull
-                      </Button>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
+            {(activity.data ?? []).length === 0 ? (
+              <p className="px-5 pb-5 text-sm text-muted">Nothing has moved this week.</p>
             ) : (
-              <p className="border-t border-line px-5 py-3 text-sm text-muted">
-                {book.data.locked ? "Nothing was on this week." : "Nothing on the board yet."}
-              </p>
-            )}
-            {book.data.settled.length ? (
-              <ul className="border-t border-line">
-                {book.data.settled.slice(0, 4).map((p) => (
+              <ul>
+                {(activity.data ?? []).slice(0, 8).map((item) => (
                   <li
-                    key={p.id}
-                    className="flex items-center gap-3 border-b border-line px-5 py-2.5 last:border-0"
+                    key={item.id}
+                    className="flex items-start gap-3 border-b border-line px-5 py-3 last:border-0"
                   >
+                    <Badge tone="muted">{item.type}</Badge>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm">
-                        {p.sideName} {p.kind === "spread" ? fmtLine(p.line) : "to win"}
+                      <span className="block text-sm font-semibold">
+                        {item.teamNames.join(", ") || "Someone"}
                       </span>
-                      <span className="block truncate font-mono text-[10px] text-faint">
-                        {p.mine ? "yours" : p.ownerName} · week {p.week} · {p.status}
+                      <span className="block text-[13px] text-muted">
+                        {[
+                          item.adds.length ? `in ${item.adds.map((a) => a.name).join(", ")}` : null,
+                          item.drops.length
+                            ? `out ${item.drops.map((d) => d.name).join(", ")}`
+                            : null,
+                          item.bid ? `$${item.bid}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
                       </span>
-                    </span>
-                    <span
-                      className={cn(
-                        "font-mono text-sm font-semibold tabular-nums",
-                        p.status === "won" && "text-accent-strong",
-                        p.status === "lost" && "text-loss",
-                      )}
-                    >
-                      {p.status === "won"
-                        ? `+$${p.payout ?? 0}`
-                        : p.status === "lost"
-                          ? `−$${p.stake}`
-                          : "—"}
                     </span>
                   </li>
                 ))}
               </ul>
-            ) : null}
+            )}
           </section>
-        ) : null}
+        </div>
 
-        <section className="rounded-xl bg-surface ring-card">
-          <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
-            <h2 className="font-display text-lg font-medium tracking-[-0.02em]">House rules</h2>
-            <span className="microlabel-data">Read only</span>
-          </header>
-          <dl>
-            <Rule k="Scoring" v={league.data.scoringLabel} />
-            <Rule k="Format" v={league.data.formatLabel} />
-            {ops ? (
-              <>
-                <Rule
-                  k="Waivers"
-                  v={ops.waiverType === "faab" ? `FAAB $${ops.faabBudget}` : "Rolling order"}
-                />
-                <Rule k="Trade deadline" v={`Week ${ops.tradeDeadlineWeek}`} />
-                <Rule k="Playoffs" v={`Top ${playoff} · wk ${ops.playoffStartWeek}`} />
-              </>
-            ) : null}
-          </dl>
-          {league.data.lineup ? <LineupRule lineup={league.data.lineup} /> : null}
-          <div className="border-t border-line px-5 py-3">
+        <div className="flex min-w-0 flex-col gap-5">
+          {recap.data ? (
             <Link
-              to="/league/$leagueId/settings"
+              to="/league/$leagueId/recap"
               params={{ leagueId }}
-              className="microlabel-data text-accent-strong"
+              search={{ week, story: undefined }}
+              className="block rounded-xl bg-surface px-5 py-5 ring-card transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 ring-card-h"
             >
-              Open league setup
+              <p className="microlabel">{recap.data.kicker}</p>
+              <p className="mt-1.5 font-display text-xl font-bold leading-snug tracking-[-0.03em]">
+                <span className="hl">{recap.data.headline}</span>
+              </p>
+              <p className="mt-2.5 text-sm text-muted">{recap.data.dek}</p>
             </Link>
-          </div>
-        </section>
+          ) : null}
+
+          {league.data.hosted ? (
+            <section className="rounded-xl bg-surface ring-card">
+              <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
+                <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Open trades</h2>
+                <Link
+                  to="/league/$leagueId/trades"
+                  params={{ leagueId }}
+                  className="microlabel-data text-accent-strong"
+                >
+                  Trade desk
+                </Link>
+              </header>
+              {open.length === 0 ? (
+                <p className="px-5 pb-5 text-sm text-muted">Nothing on the table.</p>
+              ) : (
+                <ul>
+                  {open.slice(0, 4).map((t) => {
+                    const waitingOnMe =
+                      mine != null && t.sides.some((s) => s.rosterId === mine && !s.accepted);
+                    return (
+                      <li
+                        key={t.id}
+                        className="flex items-center gap-3 border-b border-line px-5 py-3 last:border-0"
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium">
+                            {t.sides.map((s) => s.teamName).join(" ↔ ")}
+                          </span>
+                          <span className="block microlabel-data">
+                            {waitingOnMe ? "waiting on you" : "awaiting them"}
+                          </span>
+                        </span>
+                        {waitingOnMe ? <Badge tone="loss">You</Badge> : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+          ) : null}
+
+          {book.data?.enabled ? (
+            <section className="rounded-xl bg-surface ring-card">
+              <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
+                <h2 className="font-display text-lg font-medium tracking-[-0.02em]">The book</h2>
+                <span className="microlabel-data">
+                  {book.data.locked ? "closed" : `week ${book.data.week}`}
+                </span>
+              </header>
+              <PurseMeter book={book.data} />
+              <div className="px-5 py-3">
+                <p className="font-mono text-lg font-bold tabular-nums">
+                  ${book.data.pool.balance}
+                </p>
+                <p className="text-xs text-faint">
+                  In the pool, against ${book.data.pool.committed} committed. Funded by losing
+                  stakes.
+                </p>
+              </div>
+              {book.data.positions.length ? (
+                <ul className="border-t border-line">
+                  {book.data.positions.slice(0, 6).map((p) => (
+                    <li
+                      key={p.id}
+                      className="flex items-center gap-3 border-b border-line px-5 py-2.5 last:border-0"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">
+                          {p.sideName} {p.kind === "spread" ? fmtLine(p.line) : "to win"}
+                        </span>
+                        <span className="block truncate font-mono text-[10px] text-faint">
+                          {p.mine ? "yours" : p.ownerName} · week {p.week}
+                        </span>
+                      </span>
+                      <span className="font-mono text-sm font-semibold tabular-nums">
+                        ${p.stake}
+                      </span>
+                      {p.mine && p.status === "placed" && !book.data.locked ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          data-testid={`wager-pull-${p.id}`}
+                          disabled={pull.isPending}
+                          onClick={() => pull.mutate({ wagerId: p.id, stake: p.stake })}
+                        >
+                          Pull
+                        </Button>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="border-t border-line px-5 py-3 text-sm text-muted">
+                  {book.data.locked ? "Nothing was on this week." : "Nothing on the board yet."}
+                </p>
+              )}
+              {book.data.settled.length ? (
+                <ul className="border-t border-line">
+                  {book.data.settled.slice(0, 4).map((p) => (
+                    <li
+                      key={p.id}
+                      className="flex items-center gap-3 border-b border-line px-5 py-2.5 last:border-0"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm">
+                          {p.sideName} {p.kind === "spread" ? fmtLine(p.line) : "to win"}
+                        </span>
+                        <span className="block truncate font-mono text-[10px] text-faint">
+                          {p.mine ? "yours" : p.ownerName} · week {p.week} · {p.status}
+                        </span>
+                      </span>
+                      <span
+                        className={cn(
+                          "font-mono text-sm font-semibold tabular-nums",
+                          p.status === "won" && "text-accent-strong",
+                          p.status === "lost" && "text-loss",
+                        )}
+                      >
+                        {p.status === "won"
+                          ? `+$${p.payout ?? 0}`
+                          : p.status === "lost"
+                            ? `−$${p.stake}`
+                            : "—"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </section>
+          ) : null}
+
+          <section className="rounded-xl bg-surface ring-card">
+            <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
+              <h2 className="font-display text-lg font-medium tracking-[-0.02em]">House rules</h2>
+              <span className="microlabel-data">Read only</span>
+            </header>
+            <dl>
+              <Rule k="Scoring" v={league.data.scoringLabel} />
+              <Rule k="Format" v={league.data.formatLabel} />
+              {ops ? (
+                <>
+                  <Rule
+                    k="Waivers"
+                    v={ops.waiverType === "faab" ? `FAAB $${ops.faabBudget}` : "Rolling order"}
+                  />
+                  <Rule k="Trade deadline" v={`Week ${ops.tradeDeadlineWeek}`} />
+                  <Rule k="Playoffs" v={`Top ${playoff} · wk ${ops.playoffStartWeek}`} />
+                </>
+              ) : null}
+            </dl>
+            {league.data.lineup ? <LineupRule lineup={league.data.lineup} /> : null}
+            <div className="border-t border-line px-5 py-3">
+              <Link
+                to="/league/$leagueId/settings"
+                params={{ leagueId }}
+                className="microlabel-data text-accent-strong"
+              >
+                Open league setup
+              </Link>
+            </div>
+          </section>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
