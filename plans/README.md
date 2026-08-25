@@ -401,6 +401,8 @@ reconcile). Source tree clean.
 | 072  | Box score slate + mini-score join the deck | P1 | M | 070 | DONE `7ded760` (2026-08-24, pushed) |
 | 073  | Matchups week slate as deck pills | P2 | M | 070 | DONE `c9885cd` (2026-08-24, pushed) |
 | 074  | League Table·Recap route deck | P2 | S | 070 | DONE `f98ccf2` (2026-08-24, pushed) |
+| 075  | Extract useIsPhone to src/lib | P3 | S | — | TODO |
+| 076  | Week pill + sheet on the deck pages | P2 | M | 075 | TODO |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
 ## Dependency notes
