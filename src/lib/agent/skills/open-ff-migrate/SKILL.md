@@ -26,8 +26,9 @@ is a post-import step the commish types in settings.
 
 | Source | Connect | File fallback |
 |---|---|---|
-| **Sleeper** | League id → `previewImport` then `importLeague` (`confirm: true`) on MCP | Paste/PDF rebuild on PWA `/import` |
-| **ESPN** | Public league id on PWA `/import`; if private, SWID+espnS2 **once** (not saved) | Same `/import` rebuild paste |
+| **Sleeper** | League id → `previewImport` then `importLeague` (`confirm: true`) on MCP | Paste/PDF rebuild on MCP or PWA `/import` |
+| **ESPN** | League id + season → `previewEspn` then `importEspn` (`confirm: true`) on MCP; private leagues need SWID+espnS2 **once** (never saved, never echoed) | Same rebuild path, below |
+| **Rebuild (paste/PDF/known record)** | `previewRebuild` then `importRebuild` (`confirm: true`) on MCP | Same, via PWA `/import` if MCP isn't available |
 | **Yahoo** | OAuth **not shipped** (YDN app not approved) | Paste standings/rosters on `/import` |
 | **NFL.com** | Do **not** scrape. Hop: espn.com/importnfl → our ESPN import | Or paste on `/import` |
 
@@ -37,12 +38,18 @@ is a post-import step the commish types in settings.
 3. After the human says yes, call `importLeague` with
    `confirm: true`. Never commit without that flag. Default
    includeHistory is false.
-4. **ESPN / rebuild / Yahoo paste / NFL hop:** those commit verbs are
-   not on the MCP socket. Tell them to use the PWA `/import` page
-   (`previewEspn` / `importEspn` / `previewRebuild` / `importRebuild`
-   run there). Never ask them to paste cookies into chat; never echo
-   cookies. Never fetch `fantasy.nfl.com` HTML.
-5. Optional invite allowlist: `addAllowlistEmail` is PWA settings
+4. **ESPN:** call `previewEspn` with the league id + season (swid/espnS2
+   only if the league is private — ask once, never store it, never echo it
+   back in any message). Show the preview; after they say yes, call
+   `importEspn` with `confirm: true`.
+5. **Paste/PDF rebuild:** call `previewRebuild` with whatever they can give
+   you (paste, a known-record summary, or a base64 PDF). Show the preview;
+   after they say yes, call `importRebuild` with `confirm: true`.
+6. **Yahoo / NFL.com:** still commit-only on the PWA `/import` page — Yahoo
+   has no OAuth app approved, and NFL.com is a hop through the ESPN import,
+   not a direct MCP path. Point them there. Never ask them to paste cookies
+   into chat; never echo cookies. Never fetch `fantasy.nfl.com` HTML.
+7. Optional invite allowlist: `addAllowlistEmail` is PWA settings
    only — not MCP. Point them at league settings. **No emails from
    Sleeper/ESPN/Yahoo APIs.**
 

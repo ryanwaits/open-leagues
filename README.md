@@ -3,6 +3,72 @@
 A self-hosted fantasy football league desk. Sign in, create a league, invite
 friends to **this** origin. One deploy can host many leagues.
 
+## What this is
+
+open-ff is a headless fantasy football operator, not just another league
+app. Postgres is the source of truth, FAAB is conserved (nobody can invent
+free money), and every scoring, trade, waiver, and draft decision runs
+through one engine — not a UI. Migrate a league in from Sleeper or ESPN, or
+rebuild one from a paste/PDF of a historical record, and from then on this
+is the source of truth; the old host is done.
+
+What runs on top of that engine isn't fixed. The PWA in this repo is
+"client zero," not the product — it ships in three visual skins today
+(Ledger, Box Score, Console), proof the same data doesn't dictate one look.
+More concretely: an MCP server (stdio for your own box, HTTP with a
+personal bearer token for a friend's Claude/Codex/Grok) exposes the league
+as callable primitives — 57 of the 76 documented verbs are wired as of this
+writing, covering the day-to-day manager loop end to end:
+
+```
+context = getAgentContext(leagueId)        # seat, purse, standings, recent events
+team    = getTeam(leagueId, context.rosterId, week)
+# decide, using getProjections / getWire / getWeekProjections ...
+sitPlayer(leagueId, benchedPlayerId)
+startPlayer(leagueId, startingPlayerId)
+```
+
+Read your team, read the book, set your lineup, work the waiver wire, vote
+on a trade, place a wager, migrate a league in — all without a browser. See
+[Agent hosts (local)](#agent-hosts-local) below for how to connect one.
+
+## Agent hosts (local)
+
+Point Codex / Claude / Grok at the same catalog over MCP stdio (hosted Postgres only — bun cannot boot PGLite):
+
+```sh
+export DATABASE_URL=postgres://…
+export OPENFF_USER=<your user id>
+codex mcp add openff --command bun --args scripts/mcp.mjs
+# Claude: claude mcp add openff -- bun scripts/mcp.mjs
+# Grok:   grok mcp add openff -- bun scripts/mcp.mjs
+```
+
+`OPENFF_USER` is the Better Auth `user.id` (copy from the `user` table / local seed until settings shows it).
+
+## Agent hosts (hosted)
+
+Same `AGENT_CORE` catalog over Streamable HTTP in **JSON response mode** (request/response; no SSE — Vercel-friendly) with a personal `off_` token (mint in the app; 041):
+
+```sh
+export OPENFF_TOKEN=off_…
+codex mcp add openff --url https://HOST/api/mcp --bearer-token-env-var OPENFF_TOKEN
+```
+
+Claude Connectors / ChatGPT custom connector: paste `https://HOST/api/mcp`, leave Client ID & Secret blank, authorize with the bearer token. Grok: `--transport http` against the same URL (bearer via env). Cookie sessions are not accepted — `Authorization: Bearer off_…` only.
+
+## Agent skills
+
+Playbooks for migrate / lineup / book / week live under
+`src/lib/agent/skills/` (and are mirrored in `.grok/skills/` for this repo).
+Copy or symlink into a host skills dir:
+
+```sh
+# Codex:  cp -R src/lib/agent/skills/* ~/.codex/skills/
+# Claude: cp -R src/lib/agent/skills/* ~/.claude/skills/
+# Grok:   already in .grok/skills/ of this repo; else ~/.grok/skills/
+```
+
 ## Put it on the internet
 
 You need Docker. You do **not** need Bun on the host.
@@ -206,43 +272,6 @@ Put the pair in `.env` as `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`. Optional
 
 ```sh
 bun test src/lib/push
-```
-
-## Agent hosts (local)
-
-Point Codex / Claude / Grok at the same catalog over MCP stdio (hosted Postgres only — bun cannot boot PGLite):
-
-```sh
-export DATABASE_URL=postgres://…
-export OPENFF_USER=<your user id>
-codex mcp add openff --command bun --args scripts/mcp.mjs
-# Claude: claude mcp add openff -- bun scripts/mcp.mjs
-# Grok:   grok mcp add openff -- bun scripts/mcp.mjs
-```
-
-`OPENFF_USER` is the Better Auth `user.id` (copy from the `user` table / local seed until settings shows it).
-
-## Agent hosts (hosted)
-
-Same `AGENT_CORE` catalog over Streamable HTTP in **JSON response mode** (request/response; no SSE — Vercel-friendly) with a personal `off_` token (mint in the app; 041):
-
-```sh
-export OPENFF_TOKEN=off_…
-codex mcp add openff --url https://HOST/api/mcp --bearer-token-env-var OPENFF_TOKEN
-```
-
-Claude Connectors / ChatGPT custom connector: paste `https://HOST/api/mcp`, leave Client ID & Secret blank, authorize with the bearer token. Grok: `--transport http` against the same URL (bearer via env). Cookie sessions are not accepted — `Authorization: Bearer off_…` only.
-
-## Agent skills
-
-Playbooks for migrate / lineup / book / week live under
-`src/lib/agent/skills/` (and are mirrored in `.grok/skills/` for this repo).
-Copy or symlink into a host skills dir:
-
-```sh
-# Codex:  cp -R src/lib/agent/skills/* ~/.codex/skills/
-# Claude: cp -R src/lib/agent/skills/* ~/.claude/skills/
-# Grok:   already in .grok/skills/ of this repo; else ~/.grok/skills/
 ```
 
 ## Check
