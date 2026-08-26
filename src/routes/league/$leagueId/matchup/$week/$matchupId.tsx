@@ -767,7 +767,7 @@ function ScoreRow({
           <span className="flex min-w-0 items-center gap-1.5">
             <span
               className={cn(
-                "truncate text-sm sm:text-base",
+                "ent truncate text-sm sm:text-base",
                 winner ? "font-semibold text-fg" : leading ? "text-fg" : "text-muted",
               )}
             >

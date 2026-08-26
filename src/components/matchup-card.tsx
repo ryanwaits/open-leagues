@@ -188,7 +188,7 @@ function SideRow({
       <span className="min-w-0 flex-1">
         <span
           className={cn(
-            "block truncate text-sm tracking-[-0.01em]",
+            "ent block truncate text-sm tracking-[-0.01em]",
             me ? "font-semibold" : "font-medium text-muted",
           )}
         >

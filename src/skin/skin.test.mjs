@@ -372,6 +372,11 @@ test("console voice recipes exist and are hooked in representative components", 
     );
   }
   assert.match(readFileSync(join(root, "src/components/player-cell.tsx"), "utf8"), /"ent /);
+  assert.match(
+    readFileSync(join(root, "src/routes/league/$leagueId/matchup/$week/$matchupId.tsx"), "utf8"),
+    /"ent /,
+  );
+  assert.match(readFileSync(join(root, "src/components/matchup-card.tsx"), "utf8"), /"ent /);
   assert.match(readFileSync(join(root, "src/components/ui/input.tsx"), "utf8"), /"field /);
   assert.match(readFileSync(join(root, "src/components/ui/badge.tsx"), "utf8"), /badge-default/);
 });
