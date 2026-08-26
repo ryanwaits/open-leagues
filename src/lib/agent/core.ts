@@ -53,4 +53,12 @@ export const AGENT_CORE: ReadonlySet<string> = new Set([
   "getTradablePicks",
   "getSchedule",
   "exportLeague",
+  // verb completion (082)
+  "queueRemove",
+  "queueReorder",
+  "setAutodraft",
+  "addDrop",
+  "cancelClaim",
+  "cancelTradeFn",
+  "claimRoster",
 ]);

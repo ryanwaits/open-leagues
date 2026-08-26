@@ -92,3 +92,28 @@ test("81's 26 new ids are reachable — not Unknown tool", async () => {
 test("exportLeague requires a signed-in user, like listMyLeagues", async () => {
   await assert.rejects(() => dispatch("exportLeague", null, { leagueId: "lg_x" }), /signed-in/);
 });
+
+test("082's 7 verb-completion ids reject cleanly without a user", async () => {
+  for (const [id, args] of [
+    ["queueRemove", { leagueId: "lg_x", playerId: "p1" }],
+    ["queueReorder", { leagueId: "lg_x", playerIds: ["p1", "p2"] }],
+    ["setAutodraft", { leagueId: "lg_x", on: true }],
+    ["addDrop", { leagueId: "lg_x", addId: "p1", dropId: null }],
+    ["cancelClaim", { leagueId: "lg_x", claimId: "c1" }],
+    ["cancelTradeFn", { leagueId: "lg_x", tradeId: "t1" }],
+    ["claimRoster", { leagueId: "lg_x", rosterId: 1 }],
+  ]) {
+    await assert.rejects(() => dispatch(id, null, args), /OPENFF_USER|signed-in/, id);
+  }
+});
+
+test("setAutodraft requires a boolean `on`", async () => {
+  await assert.rejects(
+    () => dispatch("setAutodraft", "user_x", { leagueId: "lg_x", on: "yes" }),
+    /boolean/,
+  );
+});
+
+test("queueReorder requires playerIds to be an array", async () => {
+  await assert.rejects(() => dispatch("queueReorder", "user_x", { leagueId: "lg_x" }), /playerIds/);
+});

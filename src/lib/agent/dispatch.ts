@@ -554,6 +554,65 @@ export async function dispatch(
       const eng = await import("@/lib/league/engine.server");
       return asJson(await eng.exportLeague(userId, str(args.leagueId, "leagueId")));
     }
+    case "queueRemove": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      const { queueRemove } = await import("@/lib/league/engine.server");
+      await queueRemove(userId, str(args.leagueId, "leagueId"), str(args.playerId, "playerId"));
+      return { ok: true };
+    }
+    case "queueReorder": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!Array.isArray(args.playerIds)) throw new Error("playerIds is required");
+      const playerIds = args.playerIds.map((v) => String(v));
+      const { queueReorder } = await import("@/lib/league/engine.server");
+      await queueReorder(userId, str(args.leagueId, "leagueId"), playerIds);
+      return { ok: true };
+    }
+    case "setAutodraft": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (typeof args.on !== "boolean") throw new Error("on must be boolean");
+      const { setAutodraft } = await import("@/lib/league/engine.server");
+      await setAutodraft(userId, str(args.leagueId, "leagueId"), args.on);
+      return { ok: true };
+    }
+    case "addDrop": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      const { addDrop } = await import("@/lib/league/engine.server");
+      const dropId = args.dropId == null ? null : str(args.dropId, "dropId");
+      return asJson(
+        await addDrop(
+          userId,
+          str(args.leagueId, "leagueId"),
+          str(args.addId, "addId"),
+          dropId,
+          optNum(args.bid) ?? 0,
+        ),
+      );
+    }
+    case "cancelClaim": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      const { cancelClaim } = await import("@/lib/league/ops.server");
+      await cancelClaim(userId, str(args.leagueId, "leagueId"), str(args.claimId, "claimId"));
+      return { ok: true };
+    }
+    case "cancelTradeFn": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      const { cancelTrade } = await import("@/lib/league/ops.server");
+      await cancelTrade(userId, str(args.leagueId, "leagueId"), str(args.tradeId, "tradeId"));
+      return { ok: true };
+    }
+    case "claimRoster": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      const { claimRoster } = await import("@/lib/league/engine.server");
+      const code = args.code == null ? null : str(args.code, "code");
+      await claimRoster(
+        userId,
+        str(args.leagueId, "leagueId"),
+        num(args.rosterId, "rosterId"),
+        code,
+      );
+      return { ok: true };
+    }
     default:
       throw new Error(`Unknown tool: ${id}`);
   }
