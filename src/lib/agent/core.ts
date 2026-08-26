@@ -61,4 +61,9 @@ export const AGENT_CORE: ReadonlySet<string> = new Set([
   "cancelClaim",
   "cancelTradeFn",
   "claimRoster",
+  // migrate completion (083)
+  "previewEspn",
+  "importEspn",
+  "previewRebuild",
+  "importRebuild",
 ]);

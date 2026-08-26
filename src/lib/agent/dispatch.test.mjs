@@ -117,3 +117,32 @@ test("setAutodraft requires a boolean `on`", async () => {
 test("queueReorder requires playerIds to be an array", async () => {
   await assert.rejects(() => dispatch("queueReorder", "user_x", { leagueId: "lg_x" }), /playerIds/);
 });
+
+test("083's 4 migrate-completion ids reject cleanly without a user", async () => {
+  for (const [id, args] of [
+    ["previewEspn", { leagueId: "e1", season: "2025" }],
+    ["importEspn", { leagueId: "e1", season: "2025", confirm: true }],
+    ["previewRebuild", { name: "L", season: "2025", scoring: "ppr" }],
+    ["importRebuild", { name: "L", season: "2025", scoring: "ppr", confirm: true }],
+  ]) {
+    await assert.rejects(() => dispatch(id, null, args), /OPENFF_USER|signed-in/, id);
+  }
+});
+
+test("importEspn / importRebuild require confirm: true", async () => {
+  await assert.rejects(
+    () => dispatch("importEspn", "user_x", { leagueId: "e1", season: "2025" }),
+    /confirm/,
+  );
+  await assert.rejects(
+    () => dispatch("importRebuild", "user_x", { name: "L", season: "2025", scoring: "ppr" }),
+    /confirm/,
+  );
+});
+
+test("previewRebuild / importRebuild reject a bad scoring value", async () => {
+  await assert.rejects(
+    () => dispatch("previewRebuild", "user_x", { name: "L", season: "2025", scoring: "bogus" }),
+    /scoring/,
+  );
+});

@@ -64,6 +64,40 @@ function playerRows(v: unknown, name: string): PlayerRow[] {
   });
 }
 
+type RebuildTeamRow = {
+  teamName: string;
+  manager: string;
+  wins: number | null;
+  losses: number | null;
+  ties: number | null;
+  pf: number | null;
+  pa: number | null;
+  names: string[];
+};
+
+function rebuildTeamRows(v: unknown, name: string): RebuildTeamRow[] | undefined {
+  if (v == null) return undefined;
+  if (!Array.isArray(v)) throw new Error(`${name} must be an array`);
+  return v.map((row, i) => {
+    if (typeof row !== "object" || row === null) {
+      throw new Error(`${name}[${i}] must be an object`);
+    }
+    const r = row as Record<string, unknown>;
+    if (typeof r.teamName !== "string") throw new Error(`${name}[${i}].teamName is required`);
+    if (typeof r.manager !== "string") throw new Error(`${name}[${i}].manager is required`);
+    return {
+      teamName: r.teamName,
+      manager: r.manager,
+      wins: typeof r.wins === "number" ? r.wins : null,
+      losses: typeof r.losses === "number" ? r.losses : null,
+      ties: typeof r.ties === "number" ? r.ties : null,
+      pf: typeof r.pf === "number" ? r.pf : null,
+      pa: typeof r.pa === "number" ? r.pa : null,
+      names: strArray(r.names, `${name}[${i}].names`),
+    };
+  });
+}
+
 /**
  * Call a core catalog id against the hosted-league engine.
  * `userId` must come from the host (OPENFF_USER / token) — never from model args.
@@ -612,6 +646,81 @@ export async function dispatch(
         code,
       );
       return { ok: true };
+    }
+    case "previewEspn": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      const { previewEspnImport } = await import("@/lib/league/engine.server");
+      return asJson(
+        await previewEspnImport({
+          leagueId: str(args.leagueId, "leagueId"),
+          season: str(args.season, "season"),
+          swid: optStr(args.swid),
+          espnS2: optStr(args.espnS2),
+        }),
+      );
+    }
+    case "importEspn": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (args.confirm !== true) throw new Error("importEspn requires confirm: true");
+      const { importEspnLeague } = await import("@/lib/league/engine.server");
+      const claim =
+        args.claimRosterId == null || args.claimRosterId === ""
+          ? null
+          : num(args.claimRosterId, "claimRosterId");
+      return asJson(
+        await importEspnLeague({
+          userId,
+          leagueId: str(args.leagueId, "leagueId"),
+          season: str(args.season, "season"),
+          claimRosterId: claim,
+          swid: optStr(args.swid),
+          espnS2: optStr(args.espnS2),
+        }),
+      );
+    }
+    case "previewRebuild": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      const scoring = args.scoring;
+      if (scoring !== "ppr" && scoring !== "half" && scoring !== "std") {
+        throw new Error("scoring must be ppr, half, or std");
+      }
+      const { previewRebuild } = await import("@/lib/league/engine.server");
+      return asJson(
+        await previewRebuild({
+          paste: optStr(args.paste),
+          known: optStr(args.known),
+          pdfBase64: optStr(args.pdfBase64),
+          teams: rebuildTeamRows(args.teams, "teams"),
+          name: str(args.name, "name"),
+          season: str(args.season, "season"),
+          scoring,
+        }),
+      );
+    }
+    case "importRebuild": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (args.confirm !== true) throw new Error("importRebuild requires confirm: true");
+      const scoring = args.scoring;
+      if (scoring !== "ppr" && scoring !== "half" && scoring !== "std") {
+        throw new Error("scoring must be ppr, half, or std");
+      }
+      const { importRebuild } = await import("@/lib/league/engine.server");
+      const claim =
+        args.claimRosterId == null || args.claimRosterId === ""
+          ? null
+          : num(args.claimRosterId, "claimRosterId");
+      return asJson(
+        await importRebuild({
+          userId,
+          paste: optStr(args.paste),
+          known: optStr(args.known),
+          teams: rebuildTeamRows(args.teams, "teams"),
+          name: str(args.name, "name"),
+          season: str(args.season, "season"),
+          scoring,
+          claimRosterId: claim,
+        }),
+      );
     }
     default:
       throw new Error(`Unknown tool: ${id}`);
