@@ -138,7 +138,7 @@ export function MatchupBoard({
         </div>
       </div>
 
-      <ul>
+      <ul className="zebra">
         {rows.map((r, i) => (
           <li
             key={`${r.slot}-${r.a.playerId ?? "e"}`}
@@ -211,7 +211,7 @@ function BandSide({
         <Link
           to="/league/$leagueId/team/$rosterId"
           params={{ leagueId, rosterId: String(side.rosterId) }}
-          className="truncate rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
+          className="ent truncate rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-deep"
         >
           {side.teamName}
         </Link>

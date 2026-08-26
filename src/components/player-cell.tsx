@@ -135,7 +135,7 @@ export function PlayerCell({
         >
           <span
             className={cn(
-              "truncate text-sm font-medium text-fg",
+              "ent truncate text-sm font-medium text-fg",
               dense && "text-[13px] sm:text-sm",
             )}
           >

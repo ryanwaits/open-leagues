@@ -183,7 +183,7 @@ function LeaguePage() {
             </header>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[460px] text-sm">
-                <thead className="microlabel-data">
+                <thead className="band-head microlabel-data">
                   <tr className="border-b border-line">
                     <th className="px-4 py-3 text-left font-medium" />
                     <th className="px-2 py-3 text-left font-medium">Team</th>
@@ -192,7 +192,7 @@ function LeaguePage() {
                     <th className="px-4 py-3 text-right font-medium">PA</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="zebra">
                   {league.data.standings.map((row, i) => {
                     const rank = i + 1;
                     const inPlayoffs = playoff > 0 && rank <= playoff;
@@ -224,7 +224,7 @@ function LeaguePage() {
                           >
                             <Avatar src={row.avatar} name={row.teamName} className="size-7" tint />
                             <span className="min-w-0">
-                              <span className="block truncate font-medium">{row.teamName}</span>
+                              <span className="ent block truncate font-medium">{row.teamName}</span>
                               <span className="block truncate font-mono text-[10px] text-faint">
                                 {row.manager}
                               </span>

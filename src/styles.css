@@ -344,6 +344,19 @@
     box-shadow: var(--shadow-border-hover);
   }
 
+  /* Unscoped defaults for Input/Badge, so a skin override (below) can win
+     via normal same-layer specificity instead of losing to a co-located
+     Tailwind utility in @layer utilities. See plan 079's "why the first
+     attempt blocked" for why this indirection is required. */
+  .field {
+    border-radius: var(--r-md);
+    box-shadow: 0 0 0 1px var(--hairline-strong);
+  }
+  .badge-default {
+    background-color: color-mix(in oklab, var(--ink) 6%, transparent);
+    color: var(--ink-2);
+  }
+
   [data-skin="boxscore"] .microlabel {
     font-family: var(--font-stack-sans);
     font-style: italic;
@@ -378,6 +391,33 @@
   [data-skin="boxscore"] .push:disabled {
     transform: none;
     box-shadow: none;
+  }
+
+  /* Console voice. The recipe classes (.ent, .zebra, .band-head, .field,
+     .badge-default) are inert everywhere else — Console is the only skin
+     that styles them. Tokens only; no literals. */
+  [data-skin="console"] .ent {
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    text-decoration-color: color-mix(in oklab, var(--ink) 45%, transparent);
+  }
+  [data-skin="console"] .zebra > *:nth-child(even) {
+    background-color: var(--band);
+  }
+  [data-skin="console"] .band-head {
+    background-color: var(--band);
+  }
+  [data-skin="console"] .field:not(:focus-visible) {
+    border-radius: var(--r-lg);
+    box-shadow:
+      0 0 0 1px var(--hairline),
+      0 0 0 5px var(--paper-sunken);
+  }
+  [data-skin="console"] .badge-default {
+    background-color: var(--paper-raised);
+    box-shadow: inset 0 0 0 1px var(--hairline);
+    color: var(--ink);
   }
 
   /* Flourishes: invisible outside boxscore. */

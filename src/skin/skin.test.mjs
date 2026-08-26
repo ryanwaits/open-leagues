@@ -362,6 +362,30 @@ test("the league pages share the table-recap deck", () => {
   assert.match(recap, /aria-current="page"/);
 });
 
+test("console voice recipes exist and are hooked in representative components", () => {
+  const styles = readFileSync(join(root, "src/styles.css"), "utf8");
+  for (const sel of [".ent", ".zebra", ".band-head", ".field", ".badge-default"]) {
+    assert.match(
+      styles,
+      new RegExp(`\\[data-skin="console"\\][^{]*\\${sel}`),
+      `styles.css should scope ${sel} to the console skin`,
+    );
+  }
+  assert.match(readFileSync(join(root, "src/components/player-cell.tsx"), "utf8"), /"ent /);
+  assert.match(readFileSync(join(root, "src/components/ui/input.tsx"), "utf8"), /"field /);
+  assert.match(readFileSync(join(root, "src/components/ui/badge.tsx"), "utf8"), /badge-default/);
+});
+
+test("no component names a skin — recipe classes only", () => {
+  const tsxFiles = findTsxFiles(join(root, "src"));
+  const leaks = tsxFiles.filter((f) => /data-skin="console"/.test(readFileSync(f, "utf8")));
+  assert.deepEqual(
+    leaks,
+    [],
+    "components must stay skin-agnostic; style via recipes in styles.css",
+  );
+});
+
 test("the week lives at the thumb on deck pages", () => {
   const weekSheet = readFileSync(join(root, "src/components/week-sheet.tsx"), "utf8");
   assert.match(weekSheet, /from "vaul"/);
