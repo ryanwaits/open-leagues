@@ -1,0 +1,104 @@
+/* Console — white console ground, hairline structure, one data-blue accent,
+   system grotesque. Loaded after tokens.css so it outranks the accent ramp
+   at equal specificity. Structural signatures (underlined links, zebra,
+   the h2h shell) are component work — plans 079+. */
+[data-skin="console"] {
+  --paper: #fcfcfd;
+  --paper-raised: #ffffff;
+  --paper-sunken: #f2f2f4;
+  --band: #f7f7f8;
+  --ink: #1c1c1f;
+  --ink-2: #6e6e76;
+  --ink-3: #a2a2aa;
+  --hairline: #e6e6ea;
+  --hairline-strong: #d8d8de;
+  --brand: #4a72f5;
+  --brand-deep: #3b5fd9;
+  --brand-strong: #2f4bb8;
+  --brand-ink: #f5f7ff;
+  --highlight: #c9d4fb;
+  --alarm: #d64b2a;
+  --caution: #b26a00;
+  --lift: 0 0 0 0 rgb(0 0 0 / 0);
+  --lift-hover: 0 0 0 0 rgb(0 0 0 / 0);
+  --press-cast: rgb(59 95 217 / 0.3);
+  --r-xs: 8px;
+  --r-sm: 10px;
+  --r-md: 12px;
+  --r-lg: 14px;
+  --r-xl: 16px;
+  --r-pill: 999px;
+  --font-stack-display:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-stack-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-stack-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-skin="console"]:not([data-theme="light"]) {
+    --paper: #131316;
+    --paper-raised: #1b1b1f;
+    --paper-sunken: #232328;
+    --band: #202024;
+    --ink: #ececef;
+    --ink-2: #9d9da6;
+    --ink-3: #6b6b74;
+    --hairline: #2a2a30;
+    --hairline-strong: #38383f;
+    --brand: #7c96ff;
+    --brand-deep: #5b78e8;
+    --brand-strong: #93a8ff;
+    --brand-ink: #10173a;
+    --highlight: #2c3a6e;
+    --alarm: #ef6b4f;
+    --caution: #e3a33b;
+    --lift: 0 0 0 0 rgb(0 0 0 / 0);
+    --lift-hover: 0 0 0 0 rgb(0 0 0 / 0);
+    --press-cast: rgb(0 0 0 / 0.5);
+    --r-xs: 8px;
+    --r-sm: 10px;
+    --r-md: 12px;
+    --r-lg: 14px;
+    --r-xl: 16px;
+    --r-pill: 999px;
+    --font-stack-display:
+      -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+    --font-stack-sans:
+      -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+    --font-stack-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  }
+}
+
+[data-skin="console"][data-theme="dark"] {
+  --paper: #131316;
+  --paper-raised: #1b1b1f;
+  --paper-sunken: #232328;
+  --band: #202024;
+  --ink: #ececef;
+  --ink-2: #9d9da6;
+  --ink-3: #6b6b74;
+  --hairline: #2a2a30;
+  --hairline-strong: #38383f;
+  --brand: #7c96ff;
+  --brand-deep: #5b78e8;
+  --brand-strong: #93a8ff;
+  --brand-ink: #10173a;
+  --highlight: #2c3a6e;
+  --alarm: #ef6b4f;
+  --caution: #e3a33b;
+  --lift: 0 0 0 0 rgb(0 0 0 / 0);
+  --lift-hover: 0 0 0 0 rgb(0 0 0 / 0);
+  --press-cast: rgb(0 0 0 / 0.5);
+  --r-xs: 8px;
+  --r-sm: 10px;
+  --r-md: 12px;
+  --r-lg: 14px;
+  --r-xl: 16px;
+  --r-pill: 999px;
+  --font-stack-display:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-stack-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-stack-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}

@@ -70,6 +70,38 @@ test("boxscore skin defines the full token contract", () => {
   }
 });
 
+test("console skin defines the full token contract in all three blocks", () => {
+  const console_ = readFileSync(join(root, "src/skin/skins/console.css"), "utf8");
+  for (const name of [
+    "paper",
+    "paper-raised",
+    "paper-sunken",
+    "band",
+    "ink",
+    "ink-2",
+    "ink-3",
+    "hairline",
+    "hairline-strong",
+    "brand",
+    "brand-deep",
+    "brand-strong",
+    "brand-ink",
+    "highlight",
+    "alarm",
+    "caution",
+    "lift",
+    "press-cast",
+    "r-pill",
+    "font-stack-sans",
+  ]) {
+    assert.match(console_, new RegExp(`--${name}:`), `console.css should define --${name}`);
+  }
+  const blocks = console_.match(/\[data-skin="console"\]/g) ?? [];
+  assert.ok(blocks.length >= 3, "expected the light, media-dark, and stamped-dark blocks");
+  const registered = readFileSync(join(root, "src/lib/theme.ts"), "utf8");
+  assert.match(registered, /"console"/);
+});
+
 test("theme.ts stores the skin under ledger-skin and stamps data-skin pre-paint", () => {
   const theme = readFileSync(join(root, "src/lib/theme.ts"), "utf8");
   assert.match(theme, /SKIN_KEY\s*=\s*"ledger-skin"/);

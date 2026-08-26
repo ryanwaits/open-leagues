@@ -62,6 +62,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 const THEME_COLOR = {
   ledger: { light: "#fafaf8", dark: "#0d0d0d" },
   boxscore: { light: "#fbfaf6", dark: "#141519" },
+  console: { light: "#fcfcfd", dark: "#131316" },
 } as const;
 
 function RootDocument() {

@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "./skin/tokens.css";
 @import "./skin/skins/boxscore.css";
+@import "./skin/skins/console.css";
 
 /* Tailwind's stock `dark:` keys off prefers-color-scheme, which ignores an
    explicit user override. Point it at the attribute the app actually stamps.

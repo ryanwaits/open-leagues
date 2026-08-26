@@ -5,7 +5,7 @@ export type Resolved = "light" | "dark";
 
 export const THEME_KEY = "ledger-theme";
 
-export type SkinPref = "ledger" | "boxscore";
+export type SkinPref = "ledger" | "boxscore" | "console";
 export const SKIN_KEY = "ledger-skin"; // the ONE key; no other spelling
 
 /**
@@ -17,7 +17,7 @@ export const NO_FLASH_SCRIPT = `(function(){try{var p=localStorage.getItem(${JSO
   THEME_KEY,
 )});if(p!=="light"&&p!=="dark"){p=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.setAttribute("data-theme",p);var s=localStorage.getItem(${JSON.stringify(
   SKIN_KEY,
-)});if(s==="boxscore")document.documentElement.setAttribute("data-skin",s)}catch(e){}})()`;
+)});if(s==="boxscore"||s==="console")document.documentElement.setAttribute("data-skin",s)}catch(e){}})()`;
 
 function isPref(v: unknown): v is ThemePref {
   return v === "light" || v === "dark" || v === "system";
@@ -98,7 +98,7 @@ export function useTheme() {
 }
 
 function isSkinPref(v: unknown): v is SkinPref {
-  return v === "boxscore";
+  return v === "boxscore" || v === "console";
 }
 
 export function readSkin(): SkinPref {

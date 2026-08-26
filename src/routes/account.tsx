@@ -51,6 +51,7 @@ function AccountPage() {
 const SKIN_OPTIONS: { value: SkinPref; label: string }[] = [
   { value: "ledger", label: "Ledger" },
   { value: "boxscore", label: "Box Score" },
+  { value: "console", label: "Console" },
 ];
 
 /** Per-user runtime skin picker. Same store/attribute convention as
