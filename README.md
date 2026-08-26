@@ -32,6 +32,27 @@ Read your team, read the book, set your lineup, work the waiver wire, vote
 on a trade, place a wager, migrate a league in — all without a browser. See
 [Agent hosts (local)](#agent-hosts-local) below for how to connect one.
 
+## Quickstart
+
+```sh
+git clone https://github.com/YOUR_ORG/open-ff.git
+cd open-ff
+docker compose up -d
+```
+
+Open `http://YOUR_HOST:8080` → `/login` → `/new` → invite friends to this
+origin. That's a running league — see
+[Put it on the internet](#put-it-on-the-internet) for env vars and the
+Vercel alternative.
+
+Already have a league on Sleeper or ESPN, or just a screenshot/paste of an
+old season? See [Migrating your league](#migrating-your-league).
+
+Want to run this with Claude, Codex, or Grok instead of (or alongside) the
+web app? Any signed-in member mints their own token from `/account` — see
+[Agent hosts (local)](#agent-hosts-local) or
+[Agent hosts (hosted)](#agent-hosts-hosted).
+
 ## Agent hosts (local)
 
 Point Codex / Claude / Grok at the same catalog over MCP stdio (hosted Postgres only — bun cannot boot PGLite):
@@ -165,26 +186,57 @@ WantedBy=timers.target
 If `CRON_SECRET` is unset, the tick route is public — do not do that on a
 public host unless you rely only on the in-process clock behind a firewall.
 
-## Players and imports
-
-Sleeper is the player/week pipe (outbound HTTPS). No member needs a
-Sleeper account. ESPN cookies are import-only; they are not used at
-runtime after import.
+## Migrating your league
 
 Every source becomes one canonical import pack, then commits into the
-ledger. Connect is one-way extract — we do not keep polling the old host.
-File/paste rebuild is always the fallback when connect fails.
+ledger once. Connect is one-way: we extract, we don't keep polling the old
+host, and after commit **this is the source of truth** — sit/start, FAAB,
+trades, and the book all happen here from then on. Sleeper stays the
+player/week data pipe either way (outbound HTTPS only; no member needs a
+Sleeper account). ESPN cookies are import-only and are never used again
+after the import completes.
+
+**From Sleeper** — no login needed, just the league id:
+
+1. `/new` → **Import** → **Sleeper** tab → paste the league id.
+2. Review the preview (teams, scoring, rosters) and confirm.
+3. Optionally include one prior season's history.
+
+(Same two steps over MCP or an agent skill: `previewImport`, then
+`importLeague` with `confirm: true`.)
+
+**From ESPN** — public leagues need only the league id/URL and season:
+
+1. `/new` → **Import** → **ESPN** tab → league id or URL, season.
+2. Private league? Either paste SWID + `espn_s2` (one-time, never stored,
+   never reused after import), or flip the league public for one minute
+   first — a recap paste is simpler still if you only need the names.
+3. Review the preview and confirm.
+
+(Same over MCP: `previewEspn`, then `importEspn` with `confirm: true`.)
+
+**From anywhere else** (Yahoo, NFL.com, a spreadsheet, a screenshot, or
+just "I remember who won") — the **Draft** tab reconstructs a season from
+whatever you can paste or upload:
+
+1. `/new` → **Import** → **Draft** tab → paste an ESPN draft recap, team
+   blocks, a CSV, a known-record summary, or upload a PDF (a print-to-PDF
+   that's actually an image won't parse — paste the text instead).
+2. Review the preview and confirm.
+
+(Same over MCP: `previewRebuild`, then `importRebuild` with
+`confirm: true`.)
+
+Manager emails are never pulled from any of these APIs — the invite
+allowlist is typed in post-import, by the commissioner, in league settings.
 
 | Source | Connect | File | Teams | Settings | Rosters | This-season weeks | Prior seasons |
 |---|---|---|---|---|---|---|---|
-| Sleeper | league id, no auth | rebuild paste | yes | scoring + slots + playoff week | yes | yes (`matchups/1..last`) | optional one `previous_league_id` via `includeHistory` (default off) |
-| ESPN | public **or** SWID+espnS2 one-shot, not saved | rebuild paste | yes | scoring items + slots | yes (ESPN→Sleeper ids) | yes (`mMatchupScore`) | one year picker only |
-| Rebuild | — | paste, PDF, known recap | yes | scoring **preset** (ppr/half/std) | name-matched | snap W-L/PF if in the paste | no |
-| Yahoo | OAuth not shipped | paste via rebuild | via paste | via paste | via paste | no | no |
-| NFL.com | hop: espn.com/importnfl → ESPN import (no HTML scrape) | paste via rebuild | via ESPN/paste | via ESPN/paste | via ESPN/paste | via ESPN | no |
-
-Manager emails are never pulled from these APIs — allowlist is typed
-post-import by the commissioner.
+| Sleeper | league id, no auth | Draft-tab paste | yes | scoring + slots + playoff week | yes | yes (`matchups/1..last`) | optional one `previous_league_id` via `includeHistory` (default off) |
+| ESPN | public **or** SWID+espn_s2 one-shot, not saved | Draft-tab paste | yes | scoring items + slots | yes (ESPN→Sleeper ids) | yes (`mMatchupScore`) | one year picker only |
+| Draft (paste/PDF/known record) | — | paste, PDF, known recap | yes | scoring **preset** (ppr/half/std) | name-matched | snap W-L/PF if in the paste | no |
+| Yahoo | OAuth not shipped | Draft-tab paste | via paste | via paste | via paste | no | no |
+| NFL.com | hop: espn.com/importnfl → ESPN import (no HTML scrape) | Draft-tab paste | via ESPN/paste | via ESPN/paste | via ESPN/paste | via ESPN | no |
 
 ## Book
 
