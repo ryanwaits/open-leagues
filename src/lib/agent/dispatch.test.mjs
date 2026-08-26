@@ -42,3 +42,53 @@ test("mutating without userId refused", async () => {
 test("importLeague without confirm refused", async () => {
   await assert.rejects(() => dispatch("importLeague", "user_x", { sleeperId: "123" }), /confirm/);
 });
+
+test("81's 26 new ids are reachable — not Unknown tool", async () => {
+  // Args are intentionally missing required fields — this proves the
+  // switch case exists and reaches argument validation, without touching
+  // the database. getPulse/getSources take no args and would actually run
+  // (network/DB calls), so they're checked by membership only, below.
+  const needsArgs = [
+    "getGameSummary",
+    "getWeekStats",
+    "findSleeperUser",
+    "getByeWeeks",
+    "getProjections",
+    "getOutlooks",
+    "getPlayerProfile",
+    "getLeaders",
+    "getPlayerSearch",
+    "getLeagueBundle",
+    "getTicks",
+    "getActivity",
+    "getRecap",
+    "getWeekProjections",
+    "previewInvite",
+    "getDesk",
+    "getMockPool",
+    "getClaims",
+    "getTrades",
+    "getTradablePicks",
+    "getSchedule",
+  ];
+  for (const id of needsArgs) {
+    await assert.rejects(
+      () => dispatch(id, "user_x", {}),
+      (err) => {
+        assert.doesNotMatch(err.message, /Unknown tool/, id);
+        return true;
+      },
+    );
+  }
+  // getPulse/getSources take no args at all, and getScores/getLiveWire's
+  // args (week/season/seasonType/kind) are all optional — none of these
+  // four reject on {}, so they're checked by membership only, not by
+  // rejection (calling them for real would make a live network request).
+  for (const id of ["getPulse", "getSources", "getScores", "getLiveWire"]) {
+    assert.ok(AGENT_CORE.has(id), id);
+  }
+});
+
+test("exportLeague requires a signed-in user, like listMyLeagues", async () => {
+  await assert.rejects(() => dispatch("exportLeague", null, { leagueId: "lg_x" }), /signed-in/);
+});
