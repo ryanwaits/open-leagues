@@ -404,6 +404,13 @@ reconcile). Source tree clean.
 | 075  | Extract useIsPhone to src/lib | P3 | S | — | DONE `aed1652` (2026-08-24, pushed) |
 | 076  | Week pill + sheet on the deck pages | P2 | M | 075 | DONE `a5b4d7f` (2026-08-24, pushed) |
 | 077  | Deck handoff at md + week pill outside the slate gate | P1 | S–M | 076 | DONE `74d6b6f` (2026-08-24, pushed) |
+| 078  | "Console" — third runtime skin, tokens + registration | P1 | S–M | — | DONE `3a1674b` (2026-08-26, not pushed; reviewed/APPROVED same session; token-layer only, Ledger byte-identical verified in browser; structural signatures deferred to 079+) |
+| 079  | Console voice recipes — ent links, zebra, band heads, field well, badges | P1 | M | 078 | DONE `2969bf2` (2026-08-26, not pushed; 3rd dispatch, reviewed/APPROVED same session; attempts 1–2 correctly self-stopped on a Tailwind v4 cascade-layer collision — `@layer utilities` classes on `Input`/`Badge` silently beat `@layer components` recipe overrides on the same property, fixed via unscoped `.field`/`.badge-default` base rules mirroring `.ring-card` + stripping the competing utilities (`rounded-md`/`shadow-[...]`, `bg-fg/6`/`text-muted`); every property in all 5 recipes re-verified live via `getComputedStyle` across all 3 skins × both themes before landing; Ledger/Box Score byte-identical) |
+| 080  | Console voice, part 2 — ent on the two remaining score-card team names | P2 | S | 079 | DONE `7899535` (2026-08-26, not pushed; reviewed/APPROVED same session; additive-only per design decision — full side-by-side "duel" redesign deliberately deferred as it would reopen the locked Box Score stacked-row layout (065–067); `.ent` hooked on ScoreRow + SideRow team-name spans only; Ledger/Box Score verified inert) |
+| 081  | Agent catalog: wire 26 safe read-only primitives onto MCP | P1 | L | — | DONE `57cd28c` (2026-08-26, not pushed; reviewed/APPROVED same session; `AGENT_CORE` now 46/76 ids; two sanctioned deviations — getScores/getLiveWire moved to membership-only tests since their args are fully optional (no rejection to assert), and two small typed array-coercion helpers (`strArray`/`playerRows`) added to dispatch.ts instead of unsafe casts) |
+| 082  | Agent catalog: round out queue/waiver/trade verb completion (7 ids) | P1 | M | 081 | DONE `d165f0c` (2026-08-26, not pushed; reviewed/APPROVED same session; `AGENT_CORE` now 53/76 ids; no deviations, matched plan verbatim) |
+| 083  | Agent catalog: complete migrate story — ESPN + rebuild import (4 ids) | P2 | M | 082 | DONE `b04b795` (2026-08-26, not pushed; 2nd dispatch, reviewed/APPROVED same session; 1st attempt correctly self-stopped on a real inaccuracy in the plan's importRebuild signature citation (pdfBase64 is optional on the real function, plan wrongly said it wasn't) — plan corrected, re-dispatched, landed clean; `AGENT_CORE` now 57/76 ids (75%); swid/espnS2 confirmed never logged; stale sentence in open-ff-migrate SKILL.md flagged for a follow-up docs plan) |
+| 084  | Reposition README as headless operator + fix stale migrate-skill claim | P1 | M | 081, 082, 083 | DONE `a4a4915` (2026-08-26, not pushed; reviewed/APPROVED same session; new "What this is" section + Agent hosts/skills relocated up front; migrate SKILL.md's stale "not on the MCP socket" claim fixed for ESPN/rebuild; `.grok/skills/open-ff-migrate` confirmed a symlink, not a separate mirror — no drift risk there ever) |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
 ## Dependency notes
@@ -685,6 +692,36 @@ unbrand, per-league icons, SW/push this slice).
 Planned leftovers: **032**. Direction:
 **047, 048**. Headless engine **038–044 DONE**. Do not re-audit as
 unnamed findings.
+
+**Console direction (078–080 DONE), 2026-08-26 scoping pass — considered and shelved:**
+
+- **Matchup-page stat strip** (team-total × 2 cells, per the Console prototype's
+  desktop `.k-stats`): rejected as scoped. The prototype's `.k-duel` (phone) and
+  `.k-stats` (desktop) are mutually-exclusive responsive variants of the *same*
+  head-to-head info; the app's `Scoreboard`/`ScoreRow` already serves both
+  breakpoints as one component. Adding a desktop-only stat strip alongside it
+  would show each team's name/score twice. Not worth doing as a small addition —
+  see the duel-shell item below for the real fix.
+- **Book-page stat strip** (bank/pool/closes, per the prototype's book `.k-stats`):
+  rejected as scoped. "Closes" needs a lock-countdown timestamp that does not
+  exist on `BookBundle` (`src/lib/league/book.server.ts`) today — real backend
+  work, not a UI plan. `PurseMeter` (`src/components/book-panel.tsx`) already
+  covers free/at-risk/budget on the standings page; a 2-cell partial match
+  wasn't judged worth a plan on its own.
+- **Nav treatment**: not rejected, just not needed — `src/components/shell.tsx`'s
+  desktop header already has the switcher-pill-left / tabs-middle /
+  Scores+avatar-right shape the Console mock calls for, built on the app's
+  generic tokens (`bg-bg`, `border-line`, …), which already resolve per-skin.
+  No plan required.
+- **Book price pills + spread strip** (`LinePanel`/`WagerTicket` Console voice):
+  still a live, unexplored candidate — not rejected, just not scoped yet.
+- **The head-to-head "duel" shell** (avatars flanking a centered score pair +
+  win-probability bar, replacing `ScoreRow`'s stacked layout): the one genuine
+  buildable layout difference identified — requires restructuring `ScoreRow`/
+  `Scoreboard` JSX once (shared by all 3 skins), not a CSS-only change.
+  Deliberately shelved at the operator's call, 2026-08-26 — Console ships as a
+  token + recipe-class skin for now. Revisit when wanted; do not silently fold
+  it into a future skin plan without calling it out as the bigger lift it is.
 
 Still unplanned, still real, still not this backlog:
 
