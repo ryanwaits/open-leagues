@@ -414,7 +414,13 @@ reconcile). Source tree clean.
 | 085  | Add a Quickstart + turn the import table into a real migration guide | P1 | M | 084 | DONE `d2746f6` (2026-08-26, not pushed; reviewed/APPROVED same session; new Quickstart section links run/migrate/connect-an-agent; "Players and imports" reworked into "Migrating your league" — narrated per-source steps using the actual `/import` UI labels (Sleeper/ESPN/**Draft** tabs, `espn_s2` field name) confirmed by direct read of import.tsx, table kept as reference underneath) |
 | 086  | Rename product identity open-ff → open-leagues (safe surface only) | P1 | L | — | DONE `68e95a2` (2026-08-26, not pushed; reviewed/APPROVED same session; package.json, `OPENFF_*`→`OPENLEAGUES_*`, MCP server identity, 4 skill dirs + symlinks + test, docker-compose volume, README/docs identity text with the real clone URL, all mechanical/verified; deliberately does not touch `ff_*` DB tables or `off_` token prefix — separate, more carefully gated plan 088; 4 residuals (a2hs keys, login copy, backup filename) correctly deferred to 087, SKILL.md body prose deferred further) |
 | 087  | Rename residuals plan 086 correctly left out of scope | P3 | S | 086 | DONE `b0ebdbe` (2026-08-26, not pushed; reviewed/APPROVED same session; login page copy, 3 a2hs localStorage keys, backup filename all now say open-leagues; SKILL.md body prose + ff_*/off_ DB layer deliberately still deferred) |
+| 088  | Short showcase README + docs/ split with real screenshots | P1 | L | 086, 087 | DONE `e56a25f` (2026-08-26, not pushed; reviewed/APPROVED same session; README 338→127 lines, hero + 3 real leagues.waits.dev screenshots (3-skin standings strip, box score, account skin picker), deep reference material split into docs/self-host.md, docs/notifications.md, docs/google-sign-in.md, docs/development.md; all moved content verified byte-identical to plan text via diff; images verified unmodified from originals) |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
+
+Note: the `ff_*`/`off_` database-layer rename (referenced as "plan 088" in
+some earlier plan text, written before 087 claimed that slot) is renumbered
+to **089** once it's actually authored — still unscoped, still needs its
+own careful, separately-gated plan.
 
 ## Dependency notes
 
