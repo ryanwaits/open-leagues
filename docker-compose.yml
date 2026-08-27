@@ -4,10 +4,10 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - openff-data:/data
+      - open-leagues-data:/data
     environment:
       PGLITE_DATA_DIR: /data/pglite
-      OPENFF_SELF_TICK: "1"
+      OPENLEAGUES_SELF_TICK: "1"
       # Public origin of this box (no trailing slash). Change when reverse-proxied.
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:8080}
       # Blank → entrypoint generates one for this process.
@@ -17,4 +17,4 @@ services:
       # Do not set DATABASE_URL — durable PGLite on the volume is enough.
 
 volumes:
-  openff-data:
+  open-leagues-data:

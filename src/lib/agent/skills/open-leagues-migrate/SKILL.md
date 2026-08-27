@@ -1,5 +1,5 @@
 ---
-name: open-ff-migrate
+name: open-leagues-migrate
 description: >
   Migrate a fantasy league into open-ff. Use when importing from Sleeper,
   ESPN, Yahoo, NFL.com, or a paste/PDF rebuild, or when the user says

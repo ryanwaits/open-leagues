@@ -1,5 +1,5 @@
 ---
-name: open-ff-week
+name: open-leagues-week
 description: >
   Read-only weekly digest for one league: record, matchup, bye/injury
   flags, one waiver idea. Use when the user says "week preview",

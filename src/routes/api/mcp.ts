@@ -47,7 +47,10 @@ const inputSchema = {
 
 function buildServer(userId: string): Server {
   const coreTools = AGENT_TOOLS.filter((t) => AGENT_CORE.has(t.id));
-  const server = new Server({ name: "openff", version: "0.1.0" }, { capabilities: { tools: {} } });
+  const server = new Server(
+    { name: "open-leagues", version: "0.1.0" },
+    { capabilities: { tools: {} } },
+  );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: coreTools.map((t) => ({

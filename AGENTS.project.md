@@ -1,6 +1,6 @@
-# open-ff — project notes for agents
+# open-leagues — project notes for agents
 
-Product name is **open-ff**. License is MIT. This is a self-hosted fantasy
+Product name is **open-leagues**. License is MIT. This is a self-hosted fantasy
 football league desk. One deploy hosts many leagues.
 
 ## Where things live

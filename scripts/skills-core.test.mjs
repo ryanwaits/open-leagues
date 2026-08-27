@@ -22,7 +22,7 @@ function skillFiles() {
     .map((d) => join(skillsDir, d.name, "SKILL.md"));
 }
 
-/** camelCase ids in backticks (tool-shaped); skips `open-ff-week`, paths, etc. */
+/** camelCase ids in backticks (tool-shaped); skips `open-leagues-week`, paths, etc. */
 function toolShapedBackticks(md) {
   const ids = [];
   for (const m of md.matchAll(/`([A-Za-z][A-Za-z0-9]*)`/g)) {
@@ -32,9 +32,14 @@ function toolShapedBackticks(md) {
   return ids;
 }
 
-test("four open-ff skills exist", () => {
+test("four open-leagues skills exist", () => {
   const names = readdirSync(skillsDir).sort();
-  assert.deepEqual(names, ["open-ff-book", "open-ff-lineup", "open-ff-migrate", "open-ff-week"]);
+  assert.deepEqual(names, [
+    "open-leagues-book",
+    "open-leagues-lineup",
+    "open-leagues-migrate",
+    "open-leagues-week",
+  ]);
 });
 
 test("skill backtick tool ids ⊆ AGENT_CORE ∪ PWA_ONLY", () => {
@@ -58,8 +63,8 @@ test("each skill has getAgentContext; none mention tickAllLeagues", () => {
 });
 
 test("migrate requires confirm: true; week does not mention sitPlayer", () => {
-  const migrate = readFileSync(join(skillsDir, "open-ff-migrate/SKILL.md"), "utf8");
-  const week = readFileSync(join(skillsDir, "open-ff-week/SKILL.md"), "utf8");
+  const migrate = readFileSync(join(skillsDir, "open-leagues-migrate/SKILL.md"), "utf8");
+  const week = readFileSync(join(skillsDir, "open-leagues-week/SKILL.md"), "utf8");
   assert.match(migrate, /confirm:\s*true/);
   assert.doesNotMatch(week, /sitPlayer/);
 });

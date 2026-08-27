@@ -1,11 +1,11 @@
-# open-ff
+# open-leagues
 
 A self-hosted fantasy football league desk. Sign in, create a league, invite
 friends to **this** origin. One deploy can host many leagues.
 
 ## What this is
 
-open-ff is a headless fantasy football operator, not just another league
+open-leagues is a headless fantasy football operator, not just another league
 app. Postgres is the source of truth, FAAB is conserved (nobody can invent
 free money), and every scoring, trade, waiver, and draft decision runs
 through one engine — not a UI. Migrate a league in from Sleeper or ESPN, or
@@ -35,8 +35,8 @@ on a trade, place a wager, migrate a league in — all without a browser. See
 ## Quickstart
 
 ```sh
-git clone https://github.com/YOUR_ORG/open-ff.git
-cd open-ff
+git clone https://github.com/ryanwaits/open-leagues.git
+cd open-leagues
 docker compose up -d
 ```
 
@@ -59,21 +59,21 @@ Point Codex / Claude / Grok at the same catalog over MCP stdio (hosted Postgres 
 
 ```sh
 export DATABASE_URL=postgres://…
-export OPENFF_USER=<your user id>
-codex mcp add openff --command bun --args scripts/mcp.mjs
-# Claude: claude mcp add openff -- bun scripts/mcp.mjs
-# Grok:   grok mcp add openff -- bun scripts/mcp.mjs
+export OPENLEAGUES_USER=<your user id>
+codex mcp add open-leagues --command bun --args scripts/mcp.mjs
+# Claude: claude mcp add open-leagues -- bun scripts/mcp.mjs
+# Grok:   grok mcp add open-leagues -- bun scripts/mcp.mjs
 ```
 
-`OPENFF_USER` is the Better Auth `user.id` (copy from the `user` table / local seed until settings shows it).
+`OPENLEAGUES_USER` is the Better Auth `user.id` (copy from the `user` table / local seed until settings shows it).
 
 ## Agent hosts (hosted)
 
 Same `AGENT_CORE` catalog over Streamable HTTP in **JSON response mode** (request/response; no SSE — Vercel-friendly) with a personal `off_` token (mint in the app; 041):
 
 ```sh
-export OPENFF_TOKEN=off_…
-codex mcp add openff --url https://HOST/api/mcp --bearer-token-env-var OPENFF_TOKEN
+export OPENLEAGUES_TOKEN=off_…
+codex mcp add open-leagues --url https://HOST/api/mcp --bearer-token-env-var OPENLEAGUES_TOKEN
 ```
 
 Claude Connectors / ChatGPT custom connector: paste `https://HOST/api/mcp`, leave Client ID & Secret blank, authorize with the bearer token. Grok: `--transport http` against the same URL (bearer via env). Cookie sessions are not accepted — `Authorization: Bearer off_…` only.
@@ -95,8 +95,8 @@ Copy or symlink into a host skills dir:
 You need Docker. You do **not** need Bun on the host.
 
 ```sh
-git clone https://github.com/YOUR_ORG/open-ff.git
-cd open-ff
+git clone https://github.com/ryanwaits/open-leagues.git
+cd open-leagues
 cp .env.example .env   # optional — compose fills a session secret if blank
 docker compose up -d
 ```
@@ -111,9 +111,9 @@ Open `http://YOUR_HOST:8080` → `/login` → `/new` → invite friends.
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Optional. This app's own Google OAuth client (not the Grok broker). Both required. See [Google sign-in](#google-sign-in). |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | Optional. Web Push. Both key vars required or the toggle stays hidden. See [Notifications](#notifications-web-push). |
 
-Compose sets `OPENFF_SELF_TICK=1` so the league clock runs inside the
+Compose sets `OPENLEAGUES_SELF_TICK=1` so the league clock runs inside the
 container every 2 minutes — no crontab. League data lives on the
-`openff-data` volume (`PGLITE_DATA_DIR=/data/pglite`). Do **not** set
+`open-leagues-data` volume (`PGLITE_DATA_DIR=/data/pglite`). Do **not** set
 `DATABASE_URL` unless you want external Postgres.
 
 After a season (or before you wipe a box), open **Settings → Download
@@ -129,7 +129,7 @@ Required env on the project: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`,
 `CRON_SECRET`, and `DATABASE_URL` (Neon or any Postgres — Vercel has no
 durable disk). Optional: `GOOGLE_CLIENT_*`, `VAPID_*` (same as Docker).
 Cron is free via `vercel.json` (`/api/league/tick` hourly).
-Do **not** set `OPENFF_SELF_TICK` there. Then `bun run db:migrate` runs as
+Do **not** set `OPENLEAGUES_SELF_TICK` there. Then `bun run db:migrate` runs as
 part of `bun run build`.
 
 ## Local without Docker
@@ -159,7 +159,7 @@ The league clock is `GET` (or `POST`) `/api/league/tick`. When
 `CRON_SECRET` is set, the request must send that value as
 `Authorization: Bearer …` or `?secret=`.
 
-Long-lived `bun run dev` can set `OPENFF_SELF_TICK=1` for an in-process
+Long-lived `bun run dev` can set `OPENLEAGUES_SELF_TICK=1` for an in-process
 interval (same as Docker). Otherwise wire a cron or systemd timer:
 
 ```cron
@@ -167,15 +167,15 @@ interval (same as Docker). Otherwise wire a cron or systemd timer:
 ```
 
 ```ini
-# /etc/systemd/system/open-ff-tick.service
+# /etc/systemd/system/open-leagues-tick.service
 [Service]
 Type=oneshot
-EnvironmentFile=/etc/open-ff.env
+EnvironmentFile=/etc/open-leagues.env
 ExecStart=/usr/bin/curl -fsS -H "Authorization: Bearer ${CRON_SECRET}" https://YOUR_HOST/api/league/tick
 ```
 
 ```ini
-# /etc/systemd/system/open-ff-tick.timer
+# /etc/systemd/system/open-leagues-tick.timer
 [Timer]
 OnCalendar=*:0/2
 Persistent=true
@@ -318,7 +318,7 @@ Put the pair in `.env` as `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`. Optional
    | Trade | Another manager proposes a deal that includes you | "A trade is waiting" → `/trades` |
    | Waiver | Commish **Process waivers** (or tick) on a pending claim of yours | won / lost → `/roster` |
 
-6. Dry run (no FCM/APNs): `OPENFF_PUSH_DRY=1` on the server. Same events log
+6. Dry run (no FCM/APNs): `OPENLEAGUES_PUSH_DRY=1` on the server. Same events log
    `would send` instead of hitting the network.
 7. Opt out one league: other leagues on this phone stay subscribed.
 

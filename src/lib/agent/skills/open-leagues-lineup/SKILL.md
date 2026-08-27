@@ -1,5 +1,5 @@
 ---
-name: open-ff-lineup
+name: open-leagues-lineup
 description: >
   Set a fantasy lineup: sit and start players. Use when the user says
   "set lineup", "who should I start", "sit", "bench", "start this

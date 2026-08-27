@@ -21,14 +21,14 @@ function vapidConfigured(): boolean {
 }
 
 function vapidSubject(): string {
-  return process.env.VAPID_SUBJECT?.trim() || "mailto:open-ff@localhost";
+  return process.env.VAPID_SUBJECT?.trim() || "mailto:open-leagues@localhost";
 }
 
 /**
  * Notify the owner of a roster. No-op without VAPID keys, an unowned seat, or
  * zero subscriptions. Never throws — draft / trade / waiver writes stay intact.
  *
- * OPENFF_PUSH_DRY=1 prints "would send" and skips the network.
+ * OPENLEAGUES_PUSH_DRY=1 prints "would send" and skips the network.
  */
 export async function notifyRoster(
   leagueId: string,
@@ -58,7 +58,7 @@ export async function notifyRoster(
 }
 
 async function sendToSubs(leagueId: string, rows: SubRow[], payload: PushPayload): Promise<void> {
-  if (process.env.OPENFF_PUSH_DRY === "1") {
+  if (process.env.OPENLEAGUES_PUSH_DRY === "1") {
     // dry-run: a local subscribe round-trip without hitting FCM/APNs
     console.info("would send", payload.kind, payload.title, payload.url, rows.length);
     return;

@@ -1374,11 +1374,11 @@ const clockRef = globalThis as typeof globalThis & {
 };
 
 /**
- * In-process league clock. Only when OPENFF_SELF_TICK=1 (Docker / long-lived
+ * In-process league clock. Only when OPENLEAGUES_SELF_TICK=1 (Docker / long-lived
  * host). Vercel keeps vercel.json cron — do not set that env there.
  */
 export function startLeagueClock(): void {
-  if (process.env.OPENFF_SELF_TICK !== "1") return;
+  if (process.env.OPENLEAGUES_SELF_TICK !== "1") return;
   if (clockRef.__ledgerClock__) return;
   clockRef.__ledgerClock__ = setInterval(() => {
     void tickAllLeagues().catch(() => undefined);

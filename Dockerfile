@@ -1,5 +1,5 @@
 # Production: standalone Nitro server built in-image (`bun .output/server/index.mjs`).
-# Household/dev path still available via OPENFF_DEV=1 (long-lived `bun run dev`).
+# Household/dev path still available via OPENLEAGUES_DEV=1 (long-lived `bun run dev`).
 FROM oven/bun:1.3.10-alpine
 
 WORKDIR /app
@@ -29,7 +29,7 @@ RUN cp node_modules/@electric-sql/pglite/dist/pglite.data \
 ENV NODE_ENV=production
 
 ENV PGLITE_DATA_DIR=/data/pglite \
-    OPENFF_SELF_TICK=1 \
+    OPENLEAGUES_SELF_TICK=1 \
     PORT=8080 \
     BETTER_AUTH_URL=http://localhost:8080
 

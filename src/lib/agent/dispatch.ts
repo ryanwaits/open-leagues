@@ -100,7 +100,7 @@ function rebuildTeamRows(v: unknown, name: string): RebuildTeamRow[] | undefined
 
 /**
  * Call a core catalog id against the hosted-league engine.
- * `userId` must come from the host (OPENFF_USER / token) — never from model args.
+ * `userId` must come from the host (OPENLEAGUES_USER / token) — never from model args.
  */
 export async function dispatch(
   id: string,
@@ -116,7 +116,7 @@ export async function dispatch(
 
   const meta = AGENT_TOOLS.find((t) => t.id === id);
   if (meta?.mutating) {
-    if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+    if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
   }
 
   const uid = userId ?? null;
@@ -127,7 +127,7 @@ export async function dispatch(
       return asJson(await loadAgentContext(str(args.leagueId, "leagueId"), uid));
     }
     case "listMyLeagues": {
-      if (!userId) throw new Error("listMyLeagues requires a signed-in user (OPENFF_USER)");
+      if (!userId) throw new Error("listMyLeagues requires a signed-in user (OPENLEAGUES_USER)");
       const { listMyLeagues } = await import("@/lib/league/engine.server");
       return asJson(await listMyLeagues(userId));
     }
@@ -202,13 +202,13 @@ export async function dispatch(
       return asJson(await loadLeagueFacts(str(args.leagueId, "leagueId"), num(args.week, "week")));
     }
     case "sitPlayer": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       const { sitPlayer } = await import("@/lib/league/engine.server");
       await sitPlayer(userId, str(args.leagueId, "leagueId"), str(args.playerId, "playerId"));
       return { ok: true };
     }
     case "startPlayer": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       const { startPlayer } = await import("@/lib/league/engine.server");
       await startPlayer(
         userId,
@@ -220,13 +220,13 @@ export async function dispatch(
       return { ok: true };
     }
     case "dropPlayer": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       const { dropPlayer } = await import("@/lib/league/engine.server");
       await dropPlayer(userId, str(args.leagueId, "leagueId"), str(args.playerId, "playerId"));
       return { ok: true };
     }
     case "placeWager": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       const { placeWager } = await import("@/lib/league/wagers.server");
       const kind = args.kind;
       if (kind !== "spread" && kind !== "moneyline") {
@@ -245,25 +245,25 @@ export async function dispatch(
       );
     }
     case "pullWager": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       const { pullWager } = await import("@/lib/league/wagers.server");
       await pullWager(userId, str(args.leagueId, "leagueId"), str(args.wagerId, "wagerId"));
       return { ok: true };
     }
     case "makePick": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       const { makePick } = await import("@/lib/league/engine.server");
       await makePick(userId, str(args.leagueId, "leagueId"), str(args.playerId, "playerId"));
       return { ok: true };
     }
     case "queueAdd": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       const { queueAdd } = await import("@/lib/league/engine.server");
       await queueAdd(userId, str(args.leagueId, "leagueId"), str(args.playerId, "playerId"));
       return { ok: true };
     }
     case "voteTrade": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       const { voteTrade } = await import("@/lib/league/ops.server");
       if (typeof args.accept !== "boolean") throw new Error("accept must be boolean");
       await voteTrade(
@@ -280,7 +280,7 @@ export async function dispatch(
       return asJson(await previewSleeperImport(str(args.sleeperId, "sleeperId"), includeHistory));
     }
     case "importLeague": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       if (args.confirm !== true) {
         throw new Error("importLeague requires confirm: true");
       }
@@ -584,18 +584,18 @@ export async function dispatch(
       return asJson(await eng.loadSchedule(leagueId, uid));
     }
     case "exportLeague": {
-      if (!userId) throw new Error("exportLeague requires a signed-in user (OPENFF_USER)");
+      if (!userId) throw new Error("exportLeague requires a signed-in user (OPENLEAGUES_USER)");
       const eng = await import("@/lib/league/engine.server");
       return asJson(await eng.exportLeague(userId, str(args.leagueId, "leagueId")));
     }
     case "queueRemove": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       const { queueRemove } = await import("@/lib/league/engine.server");
       await queueRemove(userId, str(args.leagueId, "leagueId"), str(args.playerId, "playerId"));
       return { ok: true };
     }
     case "queueReorder": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       if (!Array.isArray(args.playerIds)) throw new Error("playerIds is required");
       const playerIds = args.playerIds.map((v) => String(v));
       const { queueReorder } = await import("@/lib/league/engine.server");
@@ -603,14 +603,14 @@ export async function dispatch(
       return { ok: true };
     }
     case "setAutodraft": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       if (typeof args.on !== "boolean") throw new Error("on must be boolean");
       const { setAutodraft } = await import("@/lib/league/engine.server");
       await setAutodraft(userId, str(args.leagueId, "leagueId"), args.on);
       return { ok: true };
     }
     case "addDrop": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       const { addDrop } = await import("@/lib/league/engine.server");
       const dropId = args.dropId == null ? null : str(args.dropId, "dropId");
       return asJson(
@@ -624,19 +624,19 @@ export async function dispatch(
       );
     }
     case "cancelClaim": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       const { cancelClaim } = await import("@/lib/league/ops.server");
       await cancelClaim(userId, str(args.leagueId, "leagueId"), str(args.claimId, "claimId"));
       return { ok: true };
     }
     case "cancelTradeFn": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       const { cancelTrade } = await import("@/lib/league/ops.server");
       await cancelTrade(userId, str(args.leagueId, "leagueId"), str(args.tradeId, "tradeId"));
       return { ok: true };
     }
     case "claimRoster": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       const { claimRoster } = await import("@/lib/league/engine.server");
       const code = args.code == null ? null : str(args.code, "code");
       await claimRoster(
@@ -648,7 +648,7 @@ export async function dispatch(
       return { ok: true };
     }
     case "previewEspn": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       const { previewEspnImport } = await import("@/lib/league/engine.server");
       return asJson(
         await previewEspnImport({
@@ -660,7 +660,7 @@ export async function dispatch(
       );
     }
     case "importEspn": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       if (args.confirm !== true) throw new Error("importEspn requires confirm: true");
       const { importEspnLeague } = await import("@/lib/league/engine.server");
       const claim =
@@ -679,7 +679,7 @@ export async function dispatch(
       );
     }
     case "previewRebuild": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       const scoring = args.scoring;
       if (scoring !== "ppr" && scoring !== "half" && scoring !== "std") {
         throw new Error("scoring must be ppr, half, or std");
@@ -698,7 +698,7 @@ export async function dispatch(
       );
     }
     case "importRebuild": {
-      if (!userId) throw new Error(`${id} requires a signed-in user (OPENFF_USER)`);
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       if (args.confirm !== true) throw new Error("importRebuild requires confirm: true");
       const scoring = args.scoring;
       if (scoring !== "ppr" && scoring !== "half" && scoring !== "std") {

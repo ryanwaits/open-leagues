@@ -29,7 +29,7 @@ fi
 # Apply SQL migrations when a hosted Postgres is configured (no-op on PGLite).
 bun scripts/migrate.mjs
 
-if [ "${OPENFF_DEV:-0}" = "1" ]; then
+if [ "${OPENLEAGUES_DEV:-0}" = "1" ]; then
   exec bun run dev
 fi
 exec bun .output/server/index.mjs

@@ -1,5 +1,5 @@
 ---
-name: open-ff-book
+name: open-leagues-book
 description: >
   Read the matchup book and place or pull FAAB wagers. Use when the
   user says "book", "bet", "wager", "spread", "moneyline", "pull my

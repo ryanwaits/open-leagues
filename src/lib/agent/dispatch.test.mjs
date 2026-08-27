@@ -27,15 +27,15 @@ test("tick / tickAllLeagues refused", async () => {
 test("mutating without userId refused", async () => {
   await assert.rejects(
     () => dispatch("sitPlayer", null, { leagueId: "lg_x", playerId: "p1" }),
-    /OPENFF_USER|signed-in/,
+    /OPENLEAGUES_USER|signed-in/,
   );
   await assert.rejects(
     () => dispatch("placeWager", undefined, { leagueId: "lg_x" }),
-    /OPENFF_USER|signed-in/,
+    /OPENLEAGUES_USER|signed-in/,
   );
   await assert.rejects(
     () => dispatch("importLeague", null, { sleeperId: "123", confirm: true }),
-    /OPENFF_USER|signed-in/,
+    /OPENLEAGUES_USER|signed-in/,
   );
 });
 
@@ -103,7 +103,7 @@ test("082's 7 verb-completion ids reject cleanly without a user", async () => {
     ["cancelTradeFn", { leagueId: "lg_x", tradeId: "t1" }],
     ["claimRoster", { leagueId: "lg_x", rosterId: 1 }],
   ]) {
-    await assert.rejects(() => dispatch(id, null, args), /OPENFF_USER|signed-in/, id);
+    await assert.rejects(() => dispatch(id, null, args), /OPENLEAGUES_USER|signed-in/, id);
   }
 });
 
@@ -125,7 +125,7 @@ test("083's 4 migrate-completion ids reject cleanly without a user", async () =>
     ["previewRebuild", { name: "L", season: "2025", scoring: "ppr" }],
     ["importRebuild", { name: "L", season: "2025", scoring: "ppr", confirm: true }],
   ]) {
-    await assert.rejects(() => dispatch(id, null, args), /OPENFF_USER|signed-in/, id);
+    await assert.rejects(() => dispatch(id, null, args), /OPENLEAGUES_USER|signed-in/, id);
   }
 });
 

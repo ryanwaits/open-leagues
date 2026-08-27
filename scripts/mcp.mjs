@@ -3,10 +3,10 @@
  * MCP stdio server for AGENT_CORE tools.
  *
  *   export DATABASE_URL=postgres://…
- *   export OPENFF_USER=<Better Auth user.id>
+ *   export OPENLEAGUES_USER=<Better Auth user.id>
  *   bun scripts/mcp.mjs
  *
- * Hosts: codex/claude/grok `mcp add openff --command bun --args scripts/mcp.mjs`
+ * Hosts: codex/claude/grok `mcp add open-leagues --command bun --args scripts/mcp.mjs`
  *
  * Calls the same engine modules as the PWA (not createServerFn). Hosted-league
  * Postgres only — bun cannot boot the PGLite fallback (no import.meta.glob).
@@ -18,15 +18,16 @@ import { AGENT_TOOLS } from "../src/lib/agent/catalog.ts";
 import { AGENT_CORE } from "../src/lib/agent/core.ts";
 import { dispatch } from "../src/lib/agent/dispatch.ts";
 
-const userId = process.env.OPENFF_USER;
+const userId = process.env.OPENLEAGUES_USER;
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!userId || !databaseUrl) {
-  const missing = [!userId ? "OPENFF_USER" : null, !databaseUrl ? "DATABASE_URL" : null].filter(
-    Boolean,
-  );
+  const missing = [
+    !userId ? "OPENLEAGUES_USER" : null,
+    !databaseUrl ? "DATABASE_URL" : null,
+  ].filter(Boolean);
   console.error(
-    `openff mcp: missing ${missing.join(" and ")}. Set both env vars (Postgres + Better Auth user.id).`,
+    `open-leagues mcp: missing ${missing.join(" and ")}. Set both env vars (Postgres + Better Auth user.id).`,
   );
   process.exit(1);
 }
@@ -40,7 +41,10 @@ const inputSchema = {
   additionalProperties: true,
 };
 
-const server = new Server({ name: "openff", version: "0.1.0" }, { capabilities: { tools: {} } });
+const server = new Server(
+  { name: "open-leagues", version: "0.1.0" },
+  { capabilities: { tools: {} } },
+);
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: coreTools.map((t) => ({
@@ -57,7 +61,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       ? /** @type {Record<string, unknown>} */ (request.params.arguments)
       : {};
   try {
-    // userId from OPENFF_USER only — never from tool arguments
+    // userId from OPENLEAGUES_USER only — never from tool arguments
     const result = await dispatch(name, userId, args);
     return {
       content: [{ type: "text", text: JSON.stringify(result, null, 2) }],

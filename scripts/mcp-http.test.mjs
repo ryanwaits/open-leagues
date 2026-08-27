@@ -15,8 +15,8 @@ test("mcp HTTP route authenticates via lookupToken or requireUserId", () => {
   assert.match(src, /status:\s*401/, "401 path missing");
 });
 
-test("mcp HTTP route does not use OPENFF_USER", () => {
-  assert.doesNotMatch(src, /\bOPENFF_USER\b/);
+test("mcp HTTP route does not use OPENLEAGUES_USER", () => {
+  assert.doesNotMatch(src, /\bOPENLEAGUES_USER\b/);
 });
 
 test("mcp HTTP route does not import tickAllLeagues", () => {
