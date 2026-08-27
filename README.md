@@ -97,7 +97,7 @@ gate. Point Codex / Claude / Grok at the league over MCP:
 # local (your own box, hosted Postgres only — bun cannot boot PGLite)
 export DATABASE_URL=postgres://…
 export OPENLEAGUES_USER=<your user id>
-codex mcp add open-leagues --command bun --args scripts/mcp.mjs
+codex mcp add open-leagues -- bun scripts/mcp.mjs
 
 # hosted (a friend's Codex/Claude/Grok, over HTTP with a personal token)
 export OPENLEAGUES_TOKEN=ol_…
@@ -107,6 +107,8 @@ codex mcp add open-leagues --url https://HOST/api/mcp --bearer-token-env-var OPE
 Claude Connectors / ChatGPT custom connector: paste `https://HOST/api/mcp`,
 leave Client ID & Secret blank, authorize with the bearer token. Cookie
 sessions are never accepted on this route — bearer token only.
+
+Walkthrough with real output: [Connecting Codex to a league](docs/codex-demo.md).
 
 Four playbooks (migrate, lineup, book, week) live under
 `src/lib/agent/skills/` — copy or symlink into a host skills dir
@@ -121,6 +123,8 @@ Four playbooks (migrate, lineup, book, week) live under
 - [Notifications (Web Push)](docs/notifications.md)
 - [Google sign-in](docs/google-sign-in.md)
 - [Development](docs/development.md) — test/lint/typecheck, the book's QA script
+- [Connecting Codex to a league](docs/codex-demo.md) — a real MCP session,
+  end to end, with a working example
 
 ## License
 
