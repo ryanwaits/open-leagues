@@ -60,7 +60,7 @@ export async function loadAgentContext(
     }>`
       select id, name, status, current_week, commish_id,
              betting_on, wager_cap, exposure_cap, wagers_locked_week, faab_budget
-      from ff_leagues where id = ${leagueId}
+      from ol_leagues where id = ${leagueId}
     `
   )[0];
   if (!league) throw new Error("League not found");
@@ -72,7 +72,7 @@ export async function loadAgentContext(
   if (userId) {
     const row = (
       await sql<{ roster_id: number; team_name: string; faab_remaining: number | null }>`
-        select roster_id, team_name, faab_remaining from ff_rosters
+        select roster_id, team_name, faab_remaining from ol_rosters
         where league_id = ${leagueId} and owner_id = ${userId}
         limit 1
       `

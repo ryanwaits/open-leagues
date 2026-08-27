@@ -3,7 +3,7 @@ import { getSql } from "@/lib/db";
 import { readEvents, type StoredEvent } from "./events.server";
 
 /**
- * Standing facts about a league, rolled up from ff_events and ff_week_results.
+ * Standing facts about a league, rolled up from ol_events and ol_week_results.
  *
  * The desk cannot be handed four months of raw events, and a bare aggregate
  * ("h2h: 4-0") still needs interpreting. So each fact carries both the numbers
@@ -74,7 +74,7 @@ function recordText(wins: number, losses: number, ties: number): string {
 /**
  * Roll the ledger and week results into standing facts for the desk.
  *
- * Score-based facts only use locked `ff_week_results` rows. Missing history
+ * Score-based facts only use locked `ol_week_results` rows. Missing history
  * yields an empty list — never reconstructed scores from the current roster.
  */
 export async function loadLeagueFacts(leagueId: string, throughWeek: number): Promise<LeagueFacts> {
@@ -83,21 +83,21 @@ export async function loadLeagueFacts(leagueId: string, throughWeek: number): Pr
 
   const [rosters, matchups, results, spots] = await Promise.all([
     sql<RosterRow>`
-      select roster_id, team_name from ff_rosters
+      select roster_id, team_name from ol_rosters
       where league_id = ${leagueId}
       order by roster_id
     `,
     sql<MatchupRow>`
-      select week, home_roster, away_roster from ff_matchups
+      select week, home_roster, away_roster from ol_matchups
       where league_id = ${leagueId} and week <= ${weekCap}
       order by week, home_roster
     `,
     sql<ResultRow>`
-      select week, roster_id, points, starters_json from ff_week_results
+      select week, roster_id, points, starters_json from ol_week_results
       where league_id = ${leagueId} and week <= ${weekCap}
     `,
     sql<SpotRow>`
-      select roster_id, player_id, slot from ff_spots
+      select roster_id, player_id, slot from ol_spots
       where league_id = ${leagueId}
     `,
   ]);

@@ -77,7 +77,7 @@ export async function quoteOne(
 ): Promise<Quote | null> {
   const sql = await getSql();
   const season = String(
-    (await sql<{ season: string }>`select season from ff_leagues where id = ${leagueId}`)[0]
+    (await sql<{ season: string }>`select season from ol_leagues where id = ${leagueId}`)[0]
       ?.season ?? "",
   );
   const eng = await import("./engine.server");
@@ -130,7 +130,7 @@ export async function loadBook(
       wagers_locked_week: number;
       faab_budget: number | null;
     }>`select current_week, betting_on, wager_cap, exposure_cap, wagers_locked_week, faab_budget
-       from ff_leagues where id = ${leagueId}`
+       from ol_leagues where id = ${leagueId}`
   )[0];
 
   const week = weekIn ?? league?.current_week ?? 1;
@@ -148,7 +148,7 @@ export async function loadBook(
   if (!league || !league.betting_on) return empty;
 
   const rosters = await sql<{ roster_id: number; team_name: string; owner_id: string | null }>`
-    select roster_id, team_name, owner_id from ff_rosters where league_id = ${leagueId}
+    select roster_id, team_name, owner_id from ol_rosters where league_id = ${leagueId}
   `;
   const nameOf = new Map(rosters.map((r) => [r.roster_id, r.team_name]));
   const mine = userId ? (rosters.find((r) => r.owner_id === userId)?.roster_id ?? null) : null;
@@ -160,7 +160,7 @@ export async function loadBook(
     const eng = await import("./engine.server");
     const pairs = await eng.loadMatchups(leagueId, week);
     const season = String(
-      (await sql<{ season: string }>`select season from ff_leagues where id = ${leagueId}`)[0]
+      (await sql<{ season: string }>`select season from ol_leagues where id = ${leagueId}`)[0]
         ?.season ?? "",
     );
 
@@ -225,7 +225,7 @@ export async function loadBook(
     payout: number | null;
   }>`
     select id, week, matchup_id, kind, roster_id, side_roster, line, payout_mult, stake, status, payout
-    from ff_wagers where league_id = ${leagueId}
+    from ol_wagers where league_id = ${leagueId}
     order by created_at desc
     limit 200
   `;

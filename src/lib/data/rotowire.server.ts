@@ -9,7 +9,7 @@ import type { PlayerNote } from "./types";
  * *what* changed; this only supplies *why*, when it lands.
  *
  * Links end in the RotoWire player id (`…/mike-evans-9253`). That id is
- * `rotowire_id` on the Sleeper map, persisted on ff_player_status.
+ * `rotowire_id` on the Sleeper map, persisted on ol_player_status.
  */
 
 const FEED = "https://www.rotowire.com/rss/news.php?sport=NFL";
@@ -26,7 +26,7 @@ async function ensureSchema(): Promise<void> {
   if (globalRef.__rwNotesReady__) return;
   const sql = await getSql();
   await sql.query(`
-    create table if not exists ff_player_notes (
+    create table if not exists ol_player_notes (
       id text primary key,
       rotowire_id text not null,
       player_id text,
@@ -39,7 +39,7 @@ async function ensureSchema(): Promise<void> {
     )
   `);
   await sql.query(
-    `create index if not exists ff_player_notes_player_idx on ff_player_notes (player_id, dated_at desc)`,
+    `create index if not exists ol_player_notes_player_idx on ol_player_notes (player_id, dated_at desc)`,
   );
   globalRef.__rwNotesReady__ = true;
 }
@@ -81,7 +81,7 @@ async function poll(): Promise<number> {
   const sql = await getSql();
   const rwIds = [...new Set(items.map((i) => i.rotowireId))];
   const owners = await sql<{ player_id: string; rotowire_id: string }>`
-    select player_id, rotowire_id from ff_player_status
+    select player_id, rotowire_id from ol_player_status
     where rotowire_id = any(${rwIds})
   `;
   const playerByRw = new Map(owners.map((r) => [r.rotowire_id, r.player_id]));
@@ -90,14 +90,14 @@ async function poll(): Promise<number> {
   for (const item of items) {
     const playerId = playerByRw.get(item.rotowireId) ?? null;
     await sql`
-      insert into ff_player_notes (
+      insert into ol_player_notes (
         id, rotowire_id, player_id, headline, body, dated_at, source, link
       ) values (
         ${item.id}, ${item.rotowireId}, ${playerId}, ${item.headline},
         ${item.body}, ${item.date}, ${"RotoWire"}, ${item.link}
       )
       on conflict (id) do update set
-        player_id = coalesce(excluded.player_id, ff_player_notes.player_id),
+        player_id = coalesce(excluded.player_id, ol_player_notes.player_id),
         headline = excluded.headline,
         body = excluded.body
     `;
@@ -122,7 +122,7 @@ export async function notesForPlayers(playerIds: string[]): Promise<Record<strin
       link: string | null;
     }>`
       select id, player_id, headline, body, dated_at, source, link
-      from ff_player_notes
+      from ol_player_notes
       where player_id = any(${playerIds})
       order by dated_at desc
     `;

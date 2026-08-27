@@ -2,7 +2,7 @@ import { getSql } from "@/lib/db";
 import { sampleMatchup } from "@/lib/live/matchup-series";
 
 /**
- * `ff_ticks`: an append-only row per matchup per minute on game days,
+ * `ol_ticks`: an append-only row per matchup per minute on game days,
  * written on read (`getMatchups`, whenever any client polls matchups while
  * scoring is live) and from the hourly tick. Modeled on `events.server.ts`
  * — append-only, never read by any mechanic, never throws.
@@ -19,7 +19,7 @@ export async function ensureTickSchema(): Promise<void> {
   if (ready) return;
   const sql = await getSql();
   await sql.query(
-    `create table if not exists ff_ticks (
+    `create table if not exists ol_ticks (
       league_id text not null,
       week int not null,
       matchup_id int not null,
@@ -32,7 +32,7 @@ export async function ensureTickSchema(): Promise<void> {
       spread real not null)`,
   );
   await sql.query(
-    `create index if not exists ff_ticks_matchup_at on ff_ticks (league_id, week, matchup_id, at)`,
+    `create index if not exists ol_ticks_matchup_at on ol_ticks (league_id, week, matchup_id, at)`,
   );
   ready = true;
 }
@@ -72,7 +72,7 @@ export async function recordTicks(
     const sql = await getSql();
     const row = (
       await sql<{ season: string; current_week: number }>`
-        select season, current_week from ff_leagues where id = ${leagueId}
+        select season, current_week from ol_leagues where id = ${leagueId}
       `
     )[0];
     if (!row) return 0;
@@ -107,7 +107,7 @@ export async function recordTicks(
       if (sample.youProj === 0 && sample.themProj === 0) continue;
       const spread = spreadFrom(sample.youProj, sample.themProj);
       await sql`
-        insert into ff_ticks
+        insert into ol_ticks
           (league_id, week, matchup_id, home_pts, away_pts, home_proj, away_proj, home_pct, spread)
         values (
           ${leagueId}, ${week}, ${pair.matchupId},
@@ -131,7 +131,7 @@ export async function recordTicksForAll(): Promise<number> {
   try {
     const sql = await getSql();
     const rows = await sql<{ id: string; current_week: number }>`
-      select id, current_week from ff_leagues
+      select id, current_week from ol_leagues
       where locked = 0 and status not in (${"pre_draft"}, ${"drafting"})
     `;
     let total = 0;
@@ -173,7 +173,7 @@ export async function readTicks(
     spread: number;
   }>`
     select at, home_pts, away_pts, home_proj, away_proj, home_pct, spread
-    from ff_ticks
+    from ol_ticks
     where league_id = ${leagueId} and week = ${week} and matchup_id = ${matchupId}
     order by at desc
     limit ${limit}

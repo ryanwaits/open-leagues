@@ -1,6 +1,6 @@
 /**
  * Hosted MCP over Streamable HTTP (JSON response mode — no SSE).
- * Auth: Authorization Bearer off_… via lookupToken. Never cookie sessions.
+ * Auth: Authorization Bearer ol_… via lookupToken. Never cookie sessions.
  */
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
@@ -29,11 +29,11 @@ function unauthorized(): Response {
   return Response.json({ error: "unauthorized" }, { status: 401, headers: CORS });
 }
 
-/** Resolve Bearer off_… → userId, or 401. Cookie sessions are not accepted. */
+/** Resolve Bearer ol_… → userId, or 401. Cookie sessions are not accepted. */
 async function authorizeBearer(request: Request): Promise<string | Response> {
   const header = request.headers.get("authorization") ?? "";
   const raw = header.startsWith("Bearer ") ? header.slice("Bearer ".length).trim() : "";
-  if (!raw.startsWith("off_")) return unauthorized();
+  if (!raw.startsWith("ol_")) return unauthorized();
   const userId = await lookupToken(raw);
   if (!userId) return unauthorized();
   return userId;

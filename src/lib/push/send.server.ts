@@ -40,14 +40,14 @@ export async function notifyRoster(
     const sql = await getSql();
     const seat = (
       await sql<{ owner_id: string | null }>`
-        select owner_id from ff_rosters
+        select owner_id from ol_rosters
         where league_id = ${leagueId} and roster_id = ${rosterId}
         limit 1
       `
     )[0];
     if (!seat?.owner_id) return;
     const rows = await sql<SubRow>`
-      select endpoint, p256dh, auth from ff_push_subs
+      select endpoint, p256dh, auth from ol_push_subs
       where user_id = ${seat.owner_id} and league_id = ${leagueId}
     `;
     if (!rows.length) return;
@@ -86,7 +86,7 @@ async function sendToSubs(leagueId: string, rows: SubRow[], payload: PushPayload
       const status = (err as { statusCode?: number } | null)?.statusCode;
       if (status === 404 || status === 410) {
         await sql`
-          delete from ff_push_subs
+          delete from ol_push_subs
           where endpoint = ${row.endpoint} and league_id = ${leagueId}
         `;
       }

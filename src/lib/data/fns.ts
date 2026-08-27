@@ -132,7 +132,7 @@ export const getMatchups = createServerFn({ method: "GET" })
       await eng.assertLeagueViewer(data.leagueId, context.userId);
       const pairs = await eng.loadMatchups(data.leagueId, data.week);
       // Fire-and-forget, throttled inside: any client polling matchups
-      // while scoring is live keeps ff_ticks warm without this request
+      // while scoring is live keeps ol_ticks warm without this request
       // waiting on the write.
       void import("@/lib/league/ticks.server")
         .then((t) => t.recordTicks(data.leagueId, data.week))
@@ -289,7 +289,7 @@ export const getWeekProjections = createServerFn({ method: "GET" })
       const [pairs, spots] = await Promise.all([
         eng.loadMatchups(data.leagueId, data.week),
         (await getSql())<{ player_id: string }>`
-          select distinct player_id from ff_spots where league_id = ${data.leagueId}
+          select distinct player_id from ol_spots where league_id = ${data.leagueId}
         `,
       ]);
       for (const pair of pairs) {

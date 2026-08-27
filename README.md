@@ -100,7 +100,7 @@ export OPENLEAGUES_USER=<your user id>
 codex mcp add open-leagues --command bun --args scripts/mcp.mjs
 
 # hosted (a friend's Codex/Claude/Grok, over HTTP with a personal token)
-export OPENLEAGUES_TOKEN=off_…
+export OPENLEAGUES_TOKEN=ol_…
 codex mcp add open-leagues --url https://HOST/api/mcp --bearer-token-env-var OPENLEAGUES_TOKEN
 ```
 

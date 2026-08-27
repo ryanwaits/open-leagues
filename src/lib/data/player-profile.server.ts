@@ -253,7 +253,7 @@ async function onWaivers(leagueId: string, playerId: string): Promise<boolean> {
         last_waiver_week: number | null;
         current_week: number;
       }>`
-        select waiver_type, last_waiver_week, current_week from ff_leagues where id = ${leagueId}
+        select waiver_type, last_waiver_week, current_week from ol_leagues where id = ${leagueId}
       `
     )[0];
     if (!row) return false;
@@ -285,8 +285,8 @@ async function ownerOf(
     const row = (
       await sql<{ roster_id: number; team_name: string | null }>`
         select s.roster_id, r.team_name
-        from ff_spots s
-        left join ff_rosters r
+        from ol_spots s
+        left join ol_rosters r
           on r.league_id = s.league_id and r.roster_id = s.roster_id
         where s.league_id = ${leagueId} and s.player_id = ${playerId}
         limit 1

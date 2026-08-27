@@ -57,10 +57,10 @@ function extractAgentToken(
   bearerToken: string | undefined,
   authorization: string | null,
 ): string | null {
-  if (bearerToken?.startsWith("off_")) return bearerToken;
+  if (bearerToken?.startsWith("ol_")) return bearerToken;
   if (!authorization) return null;
-  if (authorization.startsWith("Bearer off_")) return authorization.slice(7);
-  if (authorization.startsWith("off_")) return authorization;
+  if (authorization.startsWith("Bearer ol_")) return authorization.slice(7);
+  if (authorization.startsWith("ol_")) return authorization;
   return null;
 }
 
@@ -69,7 +69,7 @@ export async function getSessionUser(bearerToken?: string): Promise<VerifiedUser
   const request = getRequest();
   if (!request) return null;
 
-  // Personal agent tokens (off_…) — do not pass into Better Auth getSession.
+  // Personal agent tokens (ol_…) — do not pass into Better Auth getSession.
   const agentRaw = extractAgentToken(bearerToken, request.headers.get("Authorization"));
   if (agentRaw) {
     const { lookupToken } = await import("./tokens.server");

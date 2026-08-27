@@ -23,7 +23,7 @@ async function ensureSchema(): Promise<void> {
   if (ready) return;
   const sql = await getSql();
   await sql.query(
-    `create table if not exists ff_projections (
+    `create table if not exists ol_projections (
       season text not null,
       week int not null,
       player_id text not null,
@@ -32,7 +32,7 @@ async function ensureSchema(): Promise<void> {
       primary key (season, week, player_id))`,
   );
   await sql.query(
-    `create table if not exists ff_refresh_log (
+    `create table if not exists ol_refresh_log (
       key text primary key,
       at timestamptz not null default now(),
       note text)`,
@@ -46,7 +46,7 @@ function refreshKey(season: string, week: number): string {
 
 async function lastRunAt(key: string): Promise<number | null> {
   const sql = await getSql();
-  const row = (await sql<{ at: string }>`select at from ff_refresh_log where key = ${key}`)[0];
+  const row = (await sql<{ at: string }>`select at from ol_refresh_log where key = ${key}`)[0];
   return row ? new Date(row.at).getTime() : null;
 }
 
@@ -89,7 +89,7 @@ export async function refreshProjections(
       if (!playerId) continue;
 
       await sql`
-        insert into ff_projections (season, week, player_id, stats_json, updated_at)
+        insert into ol_projections (season, week, player_id, stats_json, updated_at)
         values (${season}, ${week}, ${playerId}, ${JSON.stringify(row.stats)}, now())
         on conflict (season, week, player_id) do update set
           stats_json = excluded.stats_json,
@@ -100,7 +100,7 @@ export async function refreshProjections(
   }
 
   await sql`
-    insert into ff_refresh_log (key, at, note)
+    insert into ol_refresh_log (key, at, note)
     values (${key}, now(), ${`${stored} stored`})
     on conflict (key) do update set at = now(), note = excluded.note
   `;
@@ -125,7 +125,7 @@ export async function projectionsFor(
     const sql = await getSql();
     const rows = await sql<{ player_id: string; stats_json: string }>`
       select player_id, stats_json
-      from ff_projections
+      from ol_projections
       where season = ${season} and week = ${week}
         and player_id = any(${playerIds})
     `;

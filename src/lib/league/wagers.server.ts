@@ -60,7 +60,7 @@ export async function ensureWagerSchema(): Promise<void> {
   if (ready) return;
   const sql = await getSql();
   const stmts = [
-    `create table if not exists ff_wagers (
+    `create table if not exists ol_wagers (
       id text primary key,
       league_id text not null,
       week int not null,
@@ -75,17 +75,17 @@ export async function ensureWagerSchema(): Promise<void> {
       payout int,
       created_at timestamptz not null default now(),
       settled_at timestamptz)`,
-    `alter table ff_wagers add column if not exists payout_mult real not null default 1`,
-    `create index if not exists ff_wagers_league_week on ff_wagers (league_id, week)`,
-    `create table if not exists ff_pool (
+    `alter table ol_wagers add column if not exists payout_mult real not null default 1`,
+    `create index if not exists ol_wagers_league_week on ol_wagers (league_id, week)`,
+    `create table if not exists ol_pool (
       league_id text primary key,
       balance int not null default 0,
       seeded int not null default 0)`,
-    `alter table ff_leagues add column if not exists betting_on int not null default 0`,
-    `alter table ff_leagues add column if not exists pool_seed int not null default 200`,
-    `alter table ff_leagues add column if not exists wager_cap int not null default 25`,
-    `alter table ff_leagues add column if not exists exposure_cap int not null default 60`,
-    `alter table ff_leagues add column if not exists wagers_locked_week int not null default 0`,
+    `alter table ol_leagues add column if not exists betting_on int not null default 0`,
+    `alter table ol_leagues add column if not exists pool_seed int not null default 200`,
+    `alter table ol_leagues add column if not exists wager_cap int not null default 25`,
+    `alter table ol_leagues add column if not exists exposure_cap int not null default 60`,
+    `alter table ol_leagues add column if not exists wagers_locked_week int not null default 0`,
   ];
   for (const s of stmts) await sql.query(s);
   ready = true;
@@ -105,7 +105,7 @@ type LeagueBook = {
 async function bookLeague(leagueId: string): Promise<LeagueBook> {
   await ensureWagerSchema();
   const sql = await getSql();
-  const row = (await sql<LeagueBook>`select * from ff_leagues where id = ${leagueId}`)[0];
+  const row = (await sql<LeagueBook>`select * from ol_leagues where id = ${leagueId}`)[0];
   if (!row) throw new Error("No such league.");
   return row;
 }
@@ -123,7 +123,7 @@ export async function seedPool(leagueId: string, amount: number): Promise<void> 
   await ensureWagerSchema();
   const sql = await getSql();
   await sql`
-    insert into ff_pool (league_id, balance, seeded)
+    insert into ol_pool (league_id, balance, seeded)
     values (${leagueId}, ${amount}, ${amount})
     on conflict (league_id) do nothing
   `;
@@ -135,7 +135,7 @@ export async function poolBalance(leagueId: string): Promise<{ balance: number; 
   const sql = await getSql();
   const row = (
     await sql<{ balance: number; seeded: number }>`
-      select balance, seeded from ff_pool where league_id = ${leagueId}
+      select balance, seeded from ol_pool where league_id = ${leagueId}
     `
   )[0];
   return row ?? { balance: 0, seeded: 0 };
@@ -143,7 +143,7 @@ export async function poolBalance(leagueId: string): Promise<{ balance: number; 
 
 async function movePool(leagueId: string, delta: number): Promise<void> {
   const sql = await getSql();
-  await sql`update ff_pool set balance = balance + ${delta} where league_id = ${leagueId}`;
+  await sql`update ol_pool set balance = balance + ${delta} where league_id = ${leagueId}`;
 }
 
 /* ----------------------------------------------------------------- quote -- */
@@ -206,7 +206,7 @@ export async function placeWager(input: PlaceInput): Promise<{ id: string }> {
   const sql = await getSql();
   const mine = (
     await sql<{ roster_id: number; faab_remaining: number | null }>`
-      select roster_id, faab_remaining from ff_rosters
+      select roster_id, faab_remaining from ol_rosters
       where league_id = ${input.leagueId} and owner_id = ${input.userId}
     `
   )[0];
@@ -219,7 +219,7 @@ export async function placeWager(input: PlaceInput): Promise<{ id: string }> {
 
   const pair = (
     await sql<{ home_roster: number; away_roster: number }>`
-      select home_roster, away_roster from ff_matchups
+      select home_roster, away_roster from ol_matchups
       where league_id = ${input.leagueId} and week = ${league.current_week}
         and matchup_id = ${input.matchupId}
     `
@@ -269,7 +269,7 @@ export async function placeWager(input: PlaceInput): Promise<{ id: string }> {
 
   const id = wid();
   await sql`
-    insert into ff_wagers
+    insert into ol_wagers
       (id, league_id, week, matchup_id, kind, roster_id, side_roster, line, payout_mult, stake, status)
     values (
       ${id}, ${input.leagueId}, ${league.current_week}, ${input.matchupId}, ${input.kind},
@@ -293,19 +293,19 @@ export async function pullWager(userId: string, leagueId: string, wagerId: strin
   const sql = await getSql();
   const mine = (
     await sql<{ roster_id: number }>`
-      select roster_id from ff_rosters where league_id = ${leagueId} and owner_id = ${userId}
+      select roster_id from ol_rosters where league_id = ${leagueId} and owner_id = ${userId}
     `
   )[0];
   if (!mine) throw new Error("You don't have a seat.");
   const row = (
     await sql<{ roster_id: number; status: string; week: number }>`
-      select roster_id, status, week from ff_wagers where id = ${wagerId} and league_id = ${leagueId}
+      select roster_id, status, week from ol_wagers where id = ${wagerId} and league_id = ${leagueId}
     `
   )[0];
   if (!row || row.status !== "placed") throw new Error("That wager is gone.");
   if (row.roster_id !== mine.roster_id) throw new Error("Not your wager.");
   if (league.wagers_locked_week >= row.week) throw new Error("The book is closed for that week.");
-  await sql`update ff_wagers set status = ${"pulled"}, settled_at = now() where id = ${wagerId}`;
+  await sql`update ol_wagers set status = ${"pulled"}, settled_at = now() where id = ${wagerId}`;
   await recordEvent({
     leagueId,
     week: row.week,
@@ -334,8 +334,8 @@ export async function spendable(
   if (purse == null) {
     const row = (
       await sql<{ faab_remaining: number | null; faab_budget: number | null }>`
-        select r.faab_remaining, l.faab_budget from ff_rosters r
-        join ff_leagues l on l.id = r.league_id
+        select r.faab_remaining, l.faab_budget from ol_rosters r
+        join ol_leagues l on l.id = r.league_id
         where r.league_id = ${leagueId} and r.roster_id = ${rosterId}
       `
     )[0];
@@ -351,7 +351,7 @@ export async function atRisk(leagueId: string, rosterId: number): Promise<number
     const sql = await getSql();
     const row = (
       await sql<{ n: number }>`
-        select coalesce(sum(stake), 0)::int as n from ff_wagers
+        select coalesce(sum(stake), 0)::int as n from ol_wagers
         where league_id = ${leagueId} and roster_id = ${rosterId} and status = ${"placed"}
       `
     )[0];
@@ -374,7 +374,7 @@ export async function lockWeek(leagueId: string, week: number): Promise<void> {
   await ensureWagerSchema();
   const sql = await getSql();
   await sql`
-    update ff_leagues set wagers_locked_week = ${week}
+    update ol_leagues set wagers_locked_week = ${week}
     where id = ${leagueId} and wagers_locked_week < ${week}
   `;
 }
@@ -407,13 +407,13 @@ export async function settleWeek(
     stake: number;
   }>`
     select id, matchup_id, kind, roster_id, side_roster, line, payout_mult, stake
-    from ff_wagers
+    from ol_wagers
     where league_id = ${leagueId} and week = ${week} and status = ${"placed"}
   `;
   if (wagers.length === 0) return { settled: 0, paid: 0, scaled: false };
 
-  // ff_matchups carries the pairing, never the score — points are written to
-  // ff_week_results when the week is finalised. That is what settles a wager,
+  // ol_matchups carries the pairing, never the score — points are written to
+  // ol_week_results when the week is finalised. That is what settles a wager,
   // because it is the same number the standings were computed from.
   const games = await sql<{
     matchup_id: number;
@@ -421,10 +421,10 @@ export async function settleWeek(
     away_roster: number | null;
   }>`
     select matchup_id, home_roster, away_roster
-    from ff_matchups where league_id = ${leagueId} and week = ${week}
+    from ol_matchups where league_id = ${leagueId} and week = ${week}
   `;
   const results = await sql<{ roster_id: number; points: number }>`
-    select roster_id, points from ff_week_results
+    select roster_id, points from ol_week_results
     where league_id = ${leagueId} and week = ${week}
   `;
   const pts = new Map(results.map((r) => [r.roster_id, r.points]));
@@ -463,24 +463,24 @@ export async function settleWeek(
   // was already short (claim then lose used to mint the gap).
   for (const w of losers) {
     const rows = await sql<{ faab_remaining: number | null }>`
-      select faab_remaining from ff_rosters
+      select faab_remaining from ol_rosters
       where league_id = ${leagueId} and roster_id = ${w.roster_id}
     `;
     const { remaining, poolCredit } = applyLoss(rows[0]?.faab_remaining ?? 0, w.stake);
     await sql`
-      update ff_rosters set faab_remaining = ${remaining}
+      update ol_rosters set faab_remaining = ${remaining}
       where league_id = ${leagueId} and roster_id = ${w.roster_id}
     `;
     await movePool(leagueId, poolCredit);
     await sql`
-      update ff_wagers set status = ${"lost"}, payout = ${0}, settled_at = now()
+      update ol_wagers set status = ${"lost"}, payout = ${0}, settled_at = now()
       where id = ${w.id} and status = ${"placed"}
     `;
   }
 
   for (const w of pushes) {
     await sql`
-      update ff_wagers set status = ${"push"}, payout = ${0}, settled_at = now()
+      update ol_wagers set status = ${"push"}, payout = ${0}, settled_at = now()
       where id = ${w.id}
     `;
   }
@@ -498,14 +498,14 @@ export async function settleWeek(
     const payout = Math.floor(due(w) * ratio);
     if (payout > 0) {
       await sql`
-        update ff_rosters set faab_remaining = coalesce(faab_remaining, 0) + ${payout}
+        update ol_rosters set faab_remaining = coalesce(faab_remaining, 0) + ${payout}
         where league_id = ${leagueId} and roster_id = ${w.roster_id}
       `;
       await movePool(leagueId, -payout);
       paid += payout;
     }
     await sql`
-      update ff_wagers set status = ${"won"}, payout = ${payout}, settled_at = now()
+      update ol_wagers set status = ${"won"}, payout = ${payout}, settled_at = now()
       where id = ${w.id}
     `;
   }

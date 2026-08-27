@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { getSql } from "@/lib/db";
 
-const RAW_PREFIX = "off_";
+const RAW_PREFIX = "ol_";
 
 let tableReady = false;
 
@@ -10,7 +10,7 @@ export function hashToken(raw: string): string {
   return createHash("sha256").update(raw).digest("hex");
 }
 
-/** Display prefix shown after mint (e.g. off_a1b2c3d4). */
+/** Display prefix shown after mint (e.g. ol_a1b2c3d4). */
 export function displayPrefix(raw: string): string {
   return raw.slice(0, 12);
 }
@@ -18,7 +18,7 @@ export function displayPrefix(raw: string): string {
 async function ensureTable(): Promise<void> {
   if (tableReady) return;
   const sql = await getSql();
-  await sql.query(`create table if not exists ff_agent_tokens (
+  await sql.query(`create table if not exists ol_agent_tokens (
   id text primary key,
   user_id text not null,
   name text not null default 'codex',
@@ -28,7 +28,7 @@ async function ensureTable(): Promise<void> {
   revoked_at timestamptz
 )`);
   await sql.query(
-    `create index if not exists ff_agent_tokens_hash on ff_agent_tokens (hash) where revoked_at is null`,
+    `create index if not exists ol_agent_tokens_hash on ol_agent_tokens (hash) where revoked_at is null`,
   );
   tableReady = true;
 }
@@ -45,7 +45,7 @@ export async function mintToken(
   const hash = hashToken(token);
   const label = name.trim() || "codex";
   await sql`
-    insert into ff_agent_tokens (id, user_id, name, prefix, hash)
+    insert into ol_agent_tokens (id, user_id, name, prefix, hash)
     values (${id}, ${userId}, ${label}, ${prefix}, ${hash})
   `;
   return { id, token, prefix };
@@ -59,7 +59,7 @@ export async function lookupToken(raw: string): Promise<string | null> {
   const hash = hashToken(raw);
   const row = (
     await sql`
-      select user_id from ff_agent_tokens
+      select user_id from ol_agent_tokens
       where hash = ${hash} and revoked_at is null
       limit 1
     `
@@ -71,7 +71,7 @@ export async function revokeToken(userId: string, id: string): Promise<void> {
   await ensureTable();
   const sql = await getSql();
   await sql`
-    update ff_agent_tokens
+    update ol_agent_tokens
     set revoked_at = now()
     where id = ${id} and user_id = ${userId} and revoked_at is null
   `;
@@ -84,7 +84,7 @@ export async function listTokens(
   const sql = await getSql();
   const rows = await sql`
     select id, name, prefix, created_at
-    from ff_agent_tokens
+    from ol_agent_tokens
     where user_id = ${userId} and revoked_at is null
     order by created_at desc
   `;

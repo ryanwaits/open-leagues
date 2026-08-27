@@ -3,7 +3,7 @@ import { getSql } from "@/lib/db";
 /**
  * The league's memory.
  *
- * `ff_moves`, `ff_claims` and `ff_trades` all record transactions, but they
+ * `ol_moves`, `ol_claims` and `ol_trades` all record transactions, but they
  * record them *for the mechanic* — enough to process a waiver or settle a
  * trade, and no more. A waiver row knows the winning bid; it does not know the
  * bid was a panic buy the day after that manager's starting back went down.
@@ -68,7 +68,7 @@ export async function ensureEventSchema(): Promise<void> {
   if (ready) return;
   const sql = await getSql();
   await sql.query(
-    `create table if not exists ff_events (
+    `create table if not exists ol_events (
       id text primary key,
       league_id text not null,
       week int not null,
@@ -81,7 +81,7 @@ export async function ensureEventSchema(): Promise<void> {
       at timestamptz not null default now())`,
   );
   await sql.query(
-    `create index if not exists ff_events_league_at on ff_events (league_id, at desc)`,
+    `create index if not exists ol_events_league_at on ol_events (league_id, at desc)`,
   );
   ready = true;
 }
@@ -105,7 +105,7 @@ export async function recordEvent(event: LeagueEvent): Promise<void> {
     await ensureEventSchema();
     const sql = await getSql();
     await sql`
-      insert into ff_events
+      insert into ol_events
         (id, league_id, week, kind, actor_roster, subject_roster, player_id, amount, payload_json)
       values (
         ${eid()}, ${event.leagueId}, ${event.week}, ${event.kind},
@@ -162,7 +162,7 @@ export async function readEvents(
     payload_json: string;
     at: string;
   }>`
-    select * from ff_events
+    select * from ol_events
     where league_id = ${leagueId} and week >= ${since}
     order by at desc
     limit ${limit}

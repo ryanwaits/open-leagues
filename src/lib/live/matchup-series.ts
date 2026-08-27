@@ -1,6 +1,6 @@
 /**
  * Pure sample math for the matchup finals chart — turning a `MatchupPair`
- * (or a row of stored `ff_ticks`) into the same `MatchupSample` shape,
+ * (or a row of stored `ol_ticks`) into the same `MatchupSample` shape,
  * signed from a viewer's side, that `useMatchupSeries` draws through
  * `<LiveLine>`. No React, no network: this is the part every test and
  * every caller (the client hook, `ticks.server.ts`) can share so the chart,

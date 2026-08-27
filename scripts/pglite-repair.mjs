@@ -40,7 +40,7 @@ function findResetwal() {
 async function verify(dir) {
   const pg = new PGlite({ dataDir: dir });
   await pg.waitReady;
-  const leagues = await pg.query("select id, name from ff_leagues").catch(() => ({ rows: [] }));
+  const leagues = await pg.query("select id, name from ol_leagues").catch(() => ({ rows: [] }));
   await pg.close();
   return leagues.rows ?? [];
 }

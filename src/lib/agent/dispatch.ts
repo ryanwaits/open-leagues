@@ -496,7 +496,7 @@ export async function dispatch(
       const [pairs, spots] = await Promise.all([
         eng.loadMatchups(leagueId, week),
         (await getSql())<{ player_id: string }>`
-          select distinct player_id from ff_spots where league_id = ${leagueId}
+          select distinct player_id from ol_spots where league_id = ${leagueId}
         `,
       ]);
       for (const pair of pairs) {

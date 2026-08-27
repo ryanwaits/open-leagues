@@ -54,11 +54,11 @@ function makeSchedule(
 
 async function ensureSnapColumns(): Promise<void> {
   const db = await sql();
-  await db.query(`alter table ff_rosters add column if not exists snap_wins int`);
-  await db.query(`alter table ff_rosters add column if not exists snap_losses int`);
-  await db.query(`alter table ff_rosters add column if not exists snap_ties int`);
-  await db.query(`alter table ff_rosters add column if not exists snap_pf real`);
-  await db.query(`alter table ff_rosters add column if not exists snap_pa real`);
+  await db.query(`alter table ol_rosters add column if not exists snap_wins int`);
+  await db.query(`alter table ol_rosters add column if not exists snap_losses int`);
+  await db.query(`alter table ol_rosters add column if not exists snap_ties int`);
+  await db.query(`alter table ol_rosters add column if not exists snap_pf real`);
+  await db.query(`alter table ol_rosters add column if not exists snap_pa real`);
 }
 
 async function armAfterImport(
@@ -74,14 +74,14 @@ async function armAfterImport(
   if (!fillSchedule) return;
   const db = await sql();
   const existing = await db<{ week: number }>`
-    select distinct week from ff_matchups
+    select distinct week from ol_matchups
     where league_id = ${leagueId} and week <= ${regularWeeks}
   `;
   const have = new Set(existing.map((e) => e.week));
   for (const m of makeSchedule(teamCount, regularWeeks)) {
     if (have.has(m.week)) continue;
     await db`
-      insert into ff_matchups (league_id, week, matchup_id, home_roster, away_roster, kind)
+      insert into ol_matchups (league_id, week, matchup_id, home_roster, away_roster, kind)
       values (${leagueId}, ${m.week}, ${m.id}, ${m.home}, ${m.away}, ${"regular"})
       on conflict do nothing
     `;
@@ -104,7 +104,7 @@ export async function commitImportPack(input: {
   const sourceKey = pack.sourceLeagueId || null;
   if (sourceKey) {
     const existing = await db<{ id: string; invite_code: string }>`
-      select id, invite_code from ff_leagues
+      select id, invite_code from ol_leagues
       where source_league_id = ${sourceKey} and commish_id = ${userId}
     `.catch(() => [] as Array<{ id: string; invite_code: string }>);
     if (existing[0]) {
@@ -117,7 +117,7 @@ export async function commitImportPack(input: {
   const id = nid("lg_");
   let code = inviteCode();
   for (let i = 0; i < 6; i++) {
-    if (!(await db`select id from ff_leagues where invite_code = ${code}`)[0]) break;
+    if (!(await db`select id from ol_leagues where invite_code = ${code}`)[0]) break;
     code = inviteCode();
   }
 
@@ -135,7 +135,7 @@ export async function commitImportPack(input: {
   const draftStatus = hasPlayers || pack.source === "rebuild" ? "complete" : "pending";
 
   await db`
-    insert into ff_leagues (
+    insert into ol_leagues (
       id, name, season, invite_code, commish_id, status, team_count,
       scoring, roster_slots, playoff_teams, current_week, locked,
       scoring_json, source, source_league_id, playoff_start_week, regular_weeks, playoff_byes
@@ -148,7 +148,7 @@ export async function commitImportPack(input: {
     )
   `;
   await db`
-    insert into ff_draft (league_id, status, pick_no)
+    insert into ol_draft (league_id, status, pick_no)
     values (${id}, ${draftStatus}, ${1})
   `;
 
@@ -156,7 +156,7 @@ export async function commitImportPack(input: {
     const claim = claimRosterId === t.rosterId ? userId : null;
     if (t.snap) {
       await db`
-        insert into ff_rosters (
+        insert into ol_rosters (
           league_id, roster_id, team_name, owner_id, sleeper_owner_id, manager_name,
           snap_wins, snap_losses, snap_ties, snap_pf, snap_pa
         ) values (
@@ -166,7 +166,7 @@ export async function commitImportPack(input: {
       `;
     } else {
       await db`
-        insert into ff_rosters (league_id, roster_id, team_name, owner_id, sleeper_owner_id, manager_name)
+        insert into ol_rosters (league_id, roster_id, team_name, owner_id, sleeper_owner_id, manager_name)
         values (${id}, ${t.rosterId}, ${t.teamName.slice(0, 40)}, ${claim}, ${t.ownerKey}, ${t.manager})
       `;
     }
@@ -174,7 +174,7 @@ export async function commitImportPack(input: {
       if (!p.playerId || p.playerId === "0") continue;
       const starter = p.starterSlot != null;
       await db`
-        insert into ff_spots (league_id, roster_id, player_id, slot, starter_slot)
+        insert into ol_spots (league_id, roster_id, player_id, slot, starter_slot)
         values (
           ${id}, ${t.rosterId}, ${p.playerId},
           ${starter ? "starter" : "bench"}, ${p.starterSlot}
@@ -189,14 +189,14 @@ export async function commitImportPack(input: {
     for (const g of week.games) {
       if (!g.home) continue;
       await db`
-        insert into ff_matchups (league_id, week, matchup_id, home_roster, away_roster)
+        insert into ol_matchups (league_id, week, matchup_id, home_roster, away_roster)
         values (${id}, ${week.week}, ${g.matchupId}, ${g.home}, ${g.away})
         on conflict do nothing
       `;
     }
     for (const r of week.results) {
       await db`
-        insert into ff_week_results (league_id, week, roster_id, points, starters_json)
+        insert into ol_week_results (league_id, week, roster_id, points, starters_json)
         values (
           ${id}, ${week.week}, ${r.rosterId}, ${r.points},
           ${JSON.stringify(r.starters ?? [])}
@@ -209,7 +209,7 @@ export async function commitImportPack(input: {
   if (!scoredWeeks.length && pack.synthesizeSchedule !== false) {
     for (const m of makeSchedule(pack.teams.length, 14)) {
       await db`
-        insert into ff_matchups (league_id, week, matchup_id, home_roster, away_roster)
+        insert into ol_matchups (league_id, week, matchup_id, home_roster, away_roster)
         values (${id}, ${m.week}, ${m.id}, ${m.home}, ${m.away})
       `;
     }

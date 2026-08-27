@@ -30,7 +30,7 @@ let ready = false;
 async function ensureAiSchema(): Promise<void> {
   if (ready) return;
   const sql = await getSql();
-  await sql.query(`create table if not exists ff_user_ai (
+  await sql.query(`create table if not exists ol_user_ai (
     user_id text primary key,
     provider text not null,
     model text not null,
@@ -92,7 +92,7 @@ export async function saveUserAi(
   if (input.apiKey) {
     const keyEnc = encryptSecret(input.apiKey, secret);
     await sql.query(
-      `insert into ff_user_ai (user_id, provider, model, key_enc, updated_at)
+      `insert into ol_user_ai (user_id, provider, model, key_enc, updated_at)
        values ($1, $2, $3, $4, now())
        on conflict (user_id) do update set
          provider = excluded.provider, model = excluded.model,
@@ -103,7 +103,7 @@ export async function saveUserAi(
   }
   // No new key — keep the stored one, only update provider/model.
   await sql.query(
-    `update ff_user_ai set provider = $2, model = $3, updated_at = now() where user_id = $1`,
+    `update ol_user_ai set provider = $2, model = $3, updated_at = now() where user_id = $1`,
     [userId, input.provider, input.model],
   );
 }
@@ -113,7 +113,7 @@ export async function getUserAiMasked(userId: string): Promise<UserAiMasked | nu
   const sql = await getSql();
   const row = (
     await sql<Pick<AiRow, "provider" | "model" | "key_enc">>`
-      select provider, model, key_enc from ff_user_ai where user_id = ${userId}`
+      select provider, model, key_enc from ol_user_ai where user_id = ${userId}`
   )[0];
   if (!row) return null;
   const secret = runtimeSecret();
@@ -130,7 +130,7 @@ export async function getUserAiMasked(userId: string): Promise<UserAiMasked | nu
 export async function deleteUserAi(userId: string): Promise<void> {
   await ensureAiSchema();
   const sql = await getSql();
-  await sql.query(`delete from ff_user_ai where user_id = $1`, [userId]);
+  await sql.query(`delete from ol_user_ai where user_id = $1`, [userId]);
 }
 
 /* -------------------------------------------------------------- provider -- */
@@ -142,7 +142,7 @@ async function loadUserAiForModel(
   const sql = await getSql();
   const row = (
     await sql<Pick<AiRow, "provider" | "model" | "key_enc">>`
-      select provider, model, key_enc from ff_user_ai where user_id = ${userId}`
+      select provider, model, key_enc from ol_user_ai where user_id = ${userId}`
   )[0];
   if (!row) return null;
   const secret = runtimeSecret();

@@ -106,7 +106,7 @@ async function leagueWeek(leagueId: string): Promise<number> {
     const sql = await getSql();
     const row = (
       await sql<{ current_week: number }>`
-        select current_week from ff_leagues where id = ${leagueId}
+        select current_week from ol_leagues where id = ${leagueId}
       `
     )[0];
     return row?.current_week ?? 1;

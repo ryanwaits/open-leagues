@@ -32,7 +32,7 @@ export async function seedLocalAccount(sql: Sql): Promise<void> {
 export async function seedLocalWiffl(): Promise<void> {
   const { getSql } = await import("@/lib/db");
   const sql = await getSql();
-  const existing = await sql`select id from ff_leagues limit 1`;
+  const existing = await sql`select id from ol_leagues limit 1`;
   if (existing[0]) return;
   const { WIFFL_2026 } = await import("@/lib/league/recaps/wiffl-2026");
   const claimRosterId = WIFFL_2026.teams.findIndex((t) => t.teamName === "hands") + 1;

@@ -185,13 +185,13 @@ export async function ensureRemainingSchedule(leagueId: string): Promise<void> {
   if (lastReg < 1) return;
   const sql = await getSql();
   const existing = await sql`
-    select distinct week from ff_matchups where league_id = ${leagueId} and week <= ${lastReg}
+    select distinct week from ol_matchups where league_id = ${leagueId} and week <= ${lastReg}
   `;
   const have = new Set(existing.map((e) => e.week));
   for (const m of makeSchedule(league.team_count, lastReg)) {
     if (have.has(m.week)) continue;
     await sql`
-      insert into ff_matchups (league_id, week, matchup_id, home_roster, away_roster, kind)
+      insert into ol_matchups (league_id, week, matchup_id, home_roster, away_roster, kind)
       values (${leagueId}, ${m.week}, ${m.id}, ${m.home}, ${m.away}, ${"regular"})
       on conflict do nothing
     `;
@@ -234,12 +234,12 @@ function applyLineup(spots, slots, pts) {
   return next;
 }
 async function getLeague(id) {
-  const rows = await (await getSql())`select * from ff_leagues where id = ${id}`;
+  const rows = await (await getSql())`select * from ol_leagues where id = ${id}`;
   if (!rows[0]) throw new Error("League not found");
   return rows[0];
 }
 async function getRosters(id) {
-  return (await getSql())`select * from ff_rosters where league_id = ${id} order by roster_id`;
+  return (await getSql())`select * from ol_rosters where league_id = ${id} order by roster_id`;
 }
 export async function rosterIdOwnedBy(
   leagueId: string,
@@ -248,7 +248,7 @@ export async function rosterIdOwnedBy(
   if (!userId) return null;
   const sql = await getSql();
   const rows = await sql<{ roster_id: number }>`
-		select roster_id from ff_rosters
+		select roster_id from ol_rosters
 		where league_id = ${leagueId} and owner_id = ${userId}
 		limit 1
 	`;
@@ -267,7 +267,7 @@ async function loadAllowEmails(leagueId: string): Promise<string[]> {
   await (await import("./ops.server")).ensureOpsSchema();
   const sql = await getSql();
   const rows = await sql<{ email: string }>`
-		select email from ff_allowlist where league_id = ${leagueId} order by email
+		select email from ol_allowlist where league_id = ${leagueId} order by email
 	`;
   return rows.map((r) => r.email);
 }
@@ -314,7 +314,7 @@ export async function addAllowlistEmail(
   await (await import("./ops.server")).ensureOpsSchema();
   const sql = await getSql();
   await sql`
-		insert into ff_allowlist (league_id, email) values (${leagueId}, ${email})
+		insert into ol_allowlist (league_id, email) values (${leagueId}, ${email})
 		on conflict do nothing
 	`;
 }
@@ -332,10 +332,10 @@ export async function removeAllowlistEmail(
   const email = normEmail(rawEmail);
   await (await import("./ops.server")).ensureOpsSchema();
   const sql = await getSql();
-  await sql`delete from ff_allowlist where league_id = ${leagueId} and email = ${email}`;
+  await sql`delete from ol_allowlist where league_id = ${leagueId} and email = ${email}`;
 }
 async function getSpots(id) {
-  return (await getSql())`select * from ff_spots where league_id = ${id}`;
+  return (await getSql())`select * from ol_spots where league_id = ${id}`;
 }
 export async function ensureDemo(): Promise<void> {
   (await import("./ops.server")).startLeagueClock();
@@ -343,22 +343,22 @@ export async function ensureDemo(): Promise<void> {
 }
 async function seedDemo() {
   const sql = await getSql();
-  if ((await sql`select id from ff_leagues where id = ${"lg_backyard"}`)[0]) return;
+  if ((await sql`select id from ol_leagues where id = ${"lg_backyard"}`)[0]) return;
   try {
     await seedDemoBody();
   } catch (err) {
-    await sql`delete from ff_leagues where id = ${DEMO_HOSTED_ID}`;
+    await sql`delete from ol_leagues where id = ${DEMO_HOSTED_ID}`;
     throw err;
   }
 }
 async function seedDemoBody() {
   const sql = await getSql();
-  if ((await sql`select id from ff_leagues where id = ${"lg_backyard"}`)[0]) return;
+  if ((await sql`select id from ol_leagues where id = ${"lg_backyard"}`)[0]) return;
   const slots = DEFAULT_SLOTS;
   const rounds = slots.length;
   const teams = 10;
   await sql`
-    insert into ff_leagues (
+    insert into ol_leagues (
       id, name, season, invite_code, commish_id, status, team_count,
       scoring, roster_slots, playoff_teams, current_week, locked
     ) values (
@@ -367,12 +367,12 @@ async function seedDemoBody() {
     )
   `;
   await sql`
-    insert into ff_draft (league_id, status, pick_no)
+    insert into ol_draft (league_id, status, pick_no)
     values (${DEMO_HOSTED_ID}, ${"complete"}, ${teams * rounds + 1})
   `;
   for (let i = 1; i <= teams; i++)
     await sql`
-      insert into ff_rosters (league_id, roster_id, team_name, owner_id)
+      insert into ol_rosters (league_id, roster_id, team_name, owner_id)
       values (${DEMO_HOSTED_ID}, ${i}, ${HOUSE_NAMES[i - 1] ?? `Seat ${i}`}, ${null})
     `;
   const order = snakeOrder(teams, rounds);
@@ -388,7 +388,7 @@ async function seedDemoBody() {
     list.push(player.player_id);
     byRoster.set(step.roster, list);
     await sql`
-      insert into ff_picks (league_id, pick_no, round, roster_id, player_id, picked_at)
+      insert into ol_picks (league_id, pick_no, round, roster_id, player_id, picked_at)
       values (${DEMO_HOSTED_ID}, ${step.pick}, ${step.round}, ${step.roster}, ${player.player_id}, ${now})
     `;
   }
@@ -407,13 +407,13 @@ async function seedDemoBody() {
     );
     for (const s of lined)
       await sql`
-        insert into ff_spots (league_id, roster_id, player_id, slot, starter_slot)
+        insert into ol_spots (league_id, roster_id, player_id, slot, starter_slot)
         values (${DEMO_HOSTED_ID}, ${s.roster_id}, ${s.player_id}, ${s.slot}, ${s.starter_slot})
       `;
   }
   for (const m of makeSchedule(teams, 14))
     await sql`
-      insert into ff_matchups (league_id, week, matchup_id, home_roster, away_roster)
+      insert into ol_matchups (league_id, week, matchup_id, home_roster, away_roster)
       values (${DEMO_HOSTED_ID}, ${m.week}, ${m.id}, ${m.home}, ${m.away})
     `;
 }
@@ -509,12 +509,12 @@ async function scoredStandings(row, rosters, spots) {
       .sort((a, b) => b.wins - a.wins || b.pf - a.pf);
   const sql = await getSql();
   const matchups = await sql`
-    select * from ff_matchups
+    select * from ol_matchups
     where league_id = ${row.id} and week <= ${row.current_week}
       and week < ${row.playoff_start_week ?? 15}
   `;
   const locked = await sql`
-    select * from ff_week_results where league_id = ${row.id} and week <= ${row.current_week}
+    select * from ol_week_results where league_id = ${row.id} and week <= ${row.current_week}
   `.catch(() => []);
   const lockedMap = /* @__PURE__ */ new Map();
   for (const r of locked) lockedMap.set(`${r.week}:${r.roster_id}`, r.points);
@@ -626,7 +626,7 @@ export async function loadLeagueBundle(
   const rosters = await getRosters(leagueId);
   const standings = await scoredStandings(row, rosters, await getSpots(leagueId));
   const mine = userId ? (rosters.find((r) => r.owner_id === userId)?.roster_id ?? null) : null;
-  const draft = (await (await getSql())`select * from ff_draft where league_id = ${leagueId}`)[0];
+  const draft = (await (await getSql())`select * from ol_draft where league_id = ${leagueId}`)[0];
   const draftStatus =
     draft?.status === "live" || draft?.status === "pending" || draft?.status === "complete"
       ? draft.status
@@ -702,12 +702,12 @@ export async function loadMatchups(leagueId: string, week: number): Promise<Matc
   const rosters = await getRosters(leagueId);
   const spots = await getSpots(leagueId);
   const matchups = await (await getSql())`
-    select * from ff_matchups
+    select * from ol_matchups
     where league_id = ${leagueId} and week = ${week}
     order by matchup_id
   `;
   const locked = await (await getSql())`
-    select * from ff_week_results where league_id = ${leagueId} and week = ${week}
+    select * from ol_week_results where league_id = ${leagueId} and week = ${week}
   `.catch(() => []);
   const lockedMap = new Map(locked.map((r) => [r.roster_id, r.points]));
   const pts = await scoreWeekMap(row, week);
@@ -757,7 +757,7 @@ export async function loadTeam(
   const roster = rosters.find((r) => r.roster_id === rosterId);
   if (!roster) throw new Error("Roster not found");
   const spots = await (await getSql())`
-    select * from ff_spots where league_id = ${leagueId} and roster_id = ${rosterId}
+    select * from ol_spots where league_id = ${leagueId} and roster_id = ${rosterId}
   `;
   const pts = await scoreWeekMap(row, week);
   let games = /* @__PURE__ */ new Map();
@@ -880,7 +880,7 @@ export async function loadWire(
 export async function loadActivity(leagueId: string, _week: number): Promise<ActivityItem[]> {
   await ensureDemo();
   const rows = await (await getSql())`
-    select * from ff_moves where league_id = ${leagueId}
+    select * from ol_moves where league_id = ${leagueId}
     order by created_at desc
     limit 60
   `;
@@ -929,8 +929,8 @@ export async function listMyLeagues(
   return (
     await (await getSql())`
     select l.id, l.name, l.season, l.status, l.commish_id, r.owner_id
-    from ff_leagues l
-    left join ff_rosters r on r.league_id = l.id and r.owner_id = ${userId}
+    from ol_leagues l
+    left join ol_rosters r on r.league_id = l.id and r.owner_id = ${userId}
     where r.owner_id = ${userId} or l.commish_id = ${userId}
     order by l.created_at desc
   `
@@ -966,7 +966,7 @@ export async function createLeague(input: {
   const id = nid("lg_");
   let code = inviteCode();
   for (let i = 0; i < 6; i++) {
-    if (!(await sql`select id from ff_leagues where invite_code = ${code}`)[0]) break;
+    if (!(await sql`select id from ol_leagues where invite_code = ${code}`)[0]) break;
     code = inviteCode();
   }
   const playoff = teamCount >= 14 ? 7 : teamCount >= 12 ? 6 : 4;
@@ -982,7 +982,7 @@ export async function createLeague(input: {
     /* keep calendar year */
   }
   await sql`
-    insert into ff_leagues (
+    insert into ol_leagues (
       id, name, season, invite_code, commish_id, status, team_count,
       scoring, roster_slots, playoff_teams, current_week, locked, scoring_json, source,
       playoff_byes
@@ -992,12 +992,12 @@ export async function createLeague(input: {
       ${playoff}, ${1}, ${0}, ${JSON.stringify(book)}, ${"ledger"}, ${byes}
     )
   `;
-  await sql`insert into ff_draft (league_id, status, pick_no) values (${id}, ${"pending"}, ${1})`;
+  await sql`insert into ol_draft (league_id, status, pick_no) values (${id}, ${"pending"}, ${1})`;
   for (let i = 1; i <= teamCount; i++) {
     const isCommish = i === 1;
     const house = !isCommish && input.fillHouse;
     await sql`
-      insert into ff_rosters (league_id, roster_id, team_name, owner_id)
+      insert into ol_rosters (league_id, roster_id, team_name, owner_id)
       values (
         ${id}, ${i},
         ${isCommish ? teamName : house ? (HOUSE_NAMES[i - 1] ?? `House ${i}`) : `Open seat ${i}`},
@@ -1013,7 +1013,7 @@ export async function createLeague(input: {
   try {
     const { seedPool } = await import("./wagers.server");
     const seed = Math.max(0, Math.round(teamCount * 20));
-    await sql`update ff_leagues set pool_seed = ${seed} where id = ${id}`;
+    await sql`update ol_leagues set pool_seed = ${seed} where id = ${id}`;
     await seedPool(id, seed);
   } catch {
     /* a league without a pool simply has betting switched off */
@@ -1026,34 +1026,34 @@ export async function createLeague(input: {
 }
 
 const LEAGUE_CHILD_TABLES = [
-  "ff_spots",
-  "ff_matchups",
-  "ff_moves",
-  "ff_picks",
-  "ff_claims",
-  "ff_week_results",
-  "ff_queue",
-  "ff_dispatches",
-  "ff_wagers",
-  "ff_pool",
-  "ff_events",
-  "ff_allowlist",
+  "ol_spots",
+  "ol_matchups",
+  "ol_moves",
+  "ol_picks",
+  "ol_claims",
+  "ol_week_results",
+  "ol_queue",
+  "ol_dispatches",
+  "ol_wagers",
+  "ol_pool",
+  "ol_events",
+  "ol_allowlist",
 ];
 
 export async function deleteLeague(userId: string, leagueId: string): Promise<void> {
   await ensureDemo();
   const sql = await getSql();
-  const row = (await sql`select commish_id, locked from ff_leagues where id = ${leagueId}`)[0];
+  const row = (await sql`select commish_id, locked from ol_leagues where id = ${leagueId}`)[0];
   if (!row) throw new Error("No such league.");
   if (row.commish_id !== userId) throw new Error("Only the commissioner can delete this league.");
   if (row.locked === 1) throw new Error("This desk is locked.");
   try {
-    const trades = await sql`select id from ff_trades where league_id = ${leagueId}`;
+    const trades = await sql`select id from ol_trades where league_id = ${leagueId}`;
     for (const t of trades) {
-      await sql`delete from ff_trade_assets where trade_id = ${t.id}`;
-      await sql`delete from ff_trade_sides where trade_id = ${t.id}`;
+      await sql`delete from ol_trade_assets where trade_id = ${t.id}`;
+      await sql`delete from ol_trade_sides where trade_id = ${t.id}`;
     }
-    await sql`delete from ff_trades where league_id = ${leagueId}`;
+    await sql`delete from ol_trades where league_id = ${leagueId}`;
   } catch {
     /* trades table may not exist on a fresh desk */
   }
@@ -1064,7 +1064,7 @@ export async function deleteLeague(userId: string, leagueId: string): Promise<vo
       /* table may not exist yet */
     }
   }
-  await sql`delete from ff_leagues where id = ${leagueId}`;
+  await sql`delete from ol_leagues where id = ${leagueId}`;
 }
 
 function serializeBackupRow(row: Record<string, unknown>): Record<string, unknown> {
@@ -1087,14 +1087,14 @@ export async function exportLeague(
 }> {
   await ensureDemo();
   const sql = await getSql();
-  const league = (await sql`select * from ff_leagues where id = ${leagueId}`)[0];
+  const league = (await sql`select * from ol_leagues where id = ${leagueId}`)[0];
   if (!league) throw new Error("No such league.");
   if (league.commish_id !== userId) {
     throw new Error("Only the commissioner can download a backup.");
   }
 
   const tables: Record<string, Record<string, unknown>[]> = {
-    ff_leagues: [serializeBackupRow(league)],
+    ol_leagues: [serializeBackupRow(league)],
   };
 
   async function dumpByLeagueId(name: string) {
@@ -1106,26 +1106,26 @@ export async function exportLeague(
     }
   }
 
-  await dumpByLeagueId("ff_rosters");
+  await dumpByLeagueId("ol_rosters");
   for (const table of LEAGUE_CHILD_TABLES) {
     await dumpByLeagueId(table);
   }
-  await dumpByLeagueId("ff_draft");
-  await dumpByLeagueId("ff_waiver_holds");
+  await dumpByLeagueId("ol_draft");
+  await dumpByLeagueId("ol_waiver_holds");
 
   try {
-    const trades = await sql.query(`select * from ff_trades where league_id = $1`, [leagueId]);
-    tables.ff_trades = trades.map(serializeBackupRow);
+    const trades = await sql.query(`select * from ol_trades where league_id = $1`, [leagueId]);
+    tables.ol_trades = trades.map(serializeBackupRow);
     const sides: Record<string, unknown>[] = [];
     const assets: Record<string, unknown>[] = [];
     for (const t of trades) {
-      const tradeSides = await sql`select * from ff_trade_sides where trade_id = ${t.id}`;
+      const tradeSides = await sql`select * from ol_trade_sides where trade_id = ${t.id}`;
       for (const s of tradeSides) sides.push(serializeBackupRow(s));
-      const tradeAssets = await sql`select * from ff_trade_assets where trade_id = ${t.id}`;
+      const tradeAssets = await sql`select * from ol_trade_assets where trade_id = ${t.id}`;
       for (const a of tradeAssets) assets.push(serializeBackupRow(a));
     }
-    tables.ff_trade_sides = sides;
-    tables.ff_trade_assets = assets;
+    tables.ol_trade_sides = sides;
+    tables.ol_trade_assets = assets;
   } catch {
     /* trades table may not exist on a fresh desk */
   }
@@ -1147,23 +1147,23 @@ export async function joinLeague(
   await ensureDemo();
   const sql = await getSql();
   const league = (
-    await sql`select * from ff_leagues where invite_code = ${code.trim().toUpperCase()}`
+    await sql`select * from ol_leagues where invite_code = ${code.trim().toUpperCase()}`
   )[0];
   if (!league) throw new Error("No league uses that code.");
   if (league.locked) throw new Error("That league is locked.");
   if (
-    (await sql`select * from ff_rosters where league_id = ${league.id} and owner_id = ${userId}`)[0]
+    (await sql`select * from ol_rosters where league_id = ${league.id} and owner_id = ${userId}`)[0]
   ) {
     return { leagueId: league.id, season: league.season, name: league.name };
   }
   await assertAllowlisted(league.id, userId);
   const seat = rosterId
     ? (
-        await sql`select * from ff_rosters where league_id = ${league.id} and roster_id = ${rosterId} and owner_id is null`
+        await sql`select * from ol_rosters where league_id = ${league.id} and roster_id = ${rosterId} and owner_id is null`
       )[0]
     : (
         await sql`
-      select * from ff_rosters
+      select * from ol_rosters
       where league_id = ${league.id} and owner_id is null
       order by roster_id
       limit 1
@@ -1172,7 +1172,7 @@ export async function joinLeague(
   if (!seat) throw new Error(rosterId ? "That seat is taken." : "League is full.");
   const keepName = teamName.trim() || seat.team_name;
   await sql`
-    update ff_rosters set owner_id = ${userId}, team_name = ${keepName.slice(0, 28) || `Club ${seat.roster_id}`}
+    update ol_rosters set owner_id = ${userId}, team_name = ${keepName.slice(0, 28) || `Club ${seat.roster_id}`}
     where league_id = ${league.id} and roster_id = ${seat.roster_id}
   `;
   return { leagueId: league.id, season: league.season, name: league.name };
@@ -1186,16 +1186,16 @@ async function stampDeadline(leagueId, pickNo, rosterId) {
   const sql = await getSql();
   const seat = (
     await sql`
-    select autodraft, owner_id from ff_rosters
+    select autodraft, owner_id from ol_rosters
     where league_id = ${leagueId} and roster_id = ${rosterId}
   `
   )[0];
   if (!seat || !seat.owner_id || seat.autodraft) {
-    await sql`update ff_draft set pick_deadline = null where league_id = ${leagueId}`;
+    await sql`update ol_draft set pick_deadline = null where league_id = ${leagueId}`;
     return false;
   }
   await sql`
-    update ff_draft
+    update ol_draft
     set pick_deadline = now() + (coalesce(pick_seconds, 90) || ' seconds')::interval
     where league_id = ${leagueId} and pick_no = ${pickNo}
   `;
@@ -1226,17 +1226,17 @@ async function flushAutodraft(leagueId: string): Promise<void> {
   try {
     const sql = await getSql();
     for (let guard = 0; guard < 200; guard++) {
-      const draft = (await sql`select * from ff_draft where league_id = ${leagueId}`)[0];
+      const draft = (await sql`select * from ol_draft where league_id = ${leagueId}`)[0];
       if (!draft || draft.status !== "live") return;
       const pick = (
         await sql`
-        select * from ff_picks where league_id = ${leagueId} and pick_no = ${draft.pick_no}
+        select * from ol_picks where league_id = ${leagueId} and pick_no = ${draft.pick_no}
       `
       )[0];
       if (!pick || pick.player_id) return;
       const seat = (
         await sql`
-        select autodraft, owner_id from ff_rosters
+        select autodraft, owner_id from ol_rosters
         where league_id = ${leagueId} and roster_id = ${pick.roster_id}
       `
       )[0];
@@ -1257,14 +1257,14 @@ export async function startDraft(userId: string, leagueId: string): Promise<void
   if (league.status !== "pre_draft") throw new Error("Draft already started.");
   await (await import("./ops.server")).ensureDraftBoard(leagueId);
   const sql = await getSql();
-  await sql`update ff_draft set status = ${"live"}, pick_no = ${1} where league_id = ${leagueId}`;
-  await sql`update ff_leagues set status = ${"drafting"} where id = ${leagueId}`;
+  await sql`update ol_draft set status = ${"live"}, pick_no = ${1} where league_id = ${leagueId}`;
+  await sql`update ol_leagues set status = ${"drafting"} where id = ${leagueId}`;
   await flushHousePicks(leagueId);
-  const draft = (await sql`select pick_no from ff_draft where league_id = ${leagueId}`)[0];
+  const draft = (await sql`select pick_no from ol_draft where league_id = ${leagueId}`)[0];
   if (draft) {
     const pick = (
       await sql`
-      select * from ff_picks where league_id = ${leagueId} and pick_no = ${draft.pick_no}
+      select * from ol_picks where league_id = ${leagueId} and pick_no = ${draft.pick_no}
     `
     )[0];
     if (pick) {
@@ -1334,8 +1334,8 @@ export async function loadDraft(
     // A stuck autopick must not make the draft page unreadable.
   }
   const sql = await getSql();
-  const draft = (await sql`select * from ff_draft where league_id = ${leagueId}`)[0];
-  const picks = await sql`select * from ff_picks where league_id = ${leagueId} order by pick_no`;
+  const draft = (await sql`select * from ol_draft where league_id = ${leagueId}`)[0];
+  const picks = await sql`select * from ol_picks where league_id = ${leagueId} order by pick_no`;
   const rosters = await getRosters(leagueId);
   const names = new Map(rosters.map((r) => [r.roster_id, r.team_name]));
   const taken = new Set(picks.map((p) => p.player_id).filter(Boolean));
@@ -1439,10 +1439,10 @@ export async function makePick(userId: string, leagueId: string, playerId: strin
   const league = await getLeague(leagueId);
   if (league.locked) throw new Error("This desk is locked.");
   const sql = await getSql();
-  const draft = (await sql`select * from ff_draft where league_id = ${leagueId}`)[0];
+  const draft = (await sql`select * from ol_draft where league_id = ${leagueId}`)[0];
   if (!draft || draft.status !== "live") throw new Error("Draft is not live.");
   const pick = (
-    await sql`select * from ff_picks where league_id = ${leagueId} and pick_no = ${draft.pick_no}`
+    await sql`select * from ol_picks where league_id = ${leagueId} and pick_no = ${draft.pick_no}`
   )[0];
   if (!pick) throw new Error("No pick on the clock.");
   const seat = (await getRosters(leagueId)).find((r) => r.roster_id === pick.roster_id);
@@ -1456,28 +1456,28 @@ async function claimPick(leagueId, pick, playerId) {
   const sql = await getSql();
   if (
     (
-      await sql`select player_id from ff_picks where league_id = ${leagueId} and player_id = ${playerId}`
+      await sql`select player_id from ol_picks where league_id = ${leagueId} and player_id = ${playerId}`
     )[0]
   )
     throw new Error("Already drafted.");
   if (!getPlayer(playerId)) throw new Error("Unknown player.");
   await sql`
-    update ff_picks set player_id = ${playerId}, picked_at = ${(/* @__PURE__ */ new Date()).toISOString()}
+    update ol_picks set player_id = ${playerId}, picked_at = ${(/* @__PURE__ */ new Date()).toISOString()}
     where league_id = ${leagueId} and pick_no = ${pick.pick_no}
   `;
   await sql`
-    insert into ff_spots (league_id, roster_id, player_id, slot, starter_slot)
+    insert into ol_spots (league_id, roster_id, player_id, slot, starter_slot)
     values (${leagueId}, ${pick.roster_id}, ${playerId}, ${"bench"}, ${null})
   `;
   const next = (
     await sql`
-      select * from ff_picks where league_id = ${leagueId} and player_id is null
+      select * from ol_picks where league_id = ${leagueId} and player_id is null
       order by pick_no limit 1
     `
   )[0];
   if (!next) await finishDraft(leagueId);
   else {
-    await sql`update ff_draft set pick_no = ${next.pick_no} where league_id = ${leagueId}`;
+    await sql`update ol_draft set pick_no = ${next.pick_no} where league_id = ${leagueId}`;
     const stamped = await stampDeadline(leagueId, next.pick_no, next.roster_id);
     if (!stamped) await flushAutodraft(leagueId);
   }
@@ -1498,26 +1498,26 @@ async function finishDraft(leagueId) {
     const lined = applyLineup(list, slots, pts);
     for (const s of lined)
       await sql`
-        update ff_spots set slot = ${s.slot}, starter_slot = ${s.starter_slot}
+        update ol_spots set slot = ${s.slot}, starter_slot = ${s.starter_slot}
         where league_id = ${leagueId} and roster_id = ${rosterId} and player_id = ${s.player_id}
       `;
   }
-  if (!(await sql`select week from ff_matchups where league_id = ${leagueId} limit 1`)[0]) {
+  if (!(await sql`select week from ol_matchups where league_id = ${leagueId} limit 1`)[0]) {
     const weeks = Math.min(league.regular_weeks ?? 14, (league.playoff_start_week ?? 15) - 1);
     for (const m of makeSchedule(league.team_count, weeks))
       await sql`
-        insert into ff_matchups (league_id, week, matchup_id, home_roster, away_roster, kind)
+        insert into ol_matchups (league_id, week, matchup_id, home_roster, away_roster, kind)
         values (${leagueId}, ${m.week}, ${m.id}, ${m.home}, ${m.away}, ${"regular"})
       `;
   } else await ensureRemainingSchedule(leagueId);
-  await sql`update ff_draft set status = ${"complete"}, pick_deadline = null where league_id = ${leagueId}`;
-  await sql`update ff_leagues set status = ${"in_season"} where id = ${leagueId}`;
+  await sql`update ol_draft set status = ${"complete"}, pick_deadline = null where league_id = ${leagueId}`;
+  await sql`update ol_leagues set status = ${"in_season"} where id = ${leagueId}`;
 }
 export async function loadQueue(leagueId: string, rosterId: number) {
   await (await import("./ops.server")).ensureOpsSchema();
   const sql = await getSql();
   const rows = await sql`
-    select player_id, rank from ff_queue
+    select player_id, rank from ol_queue
     where league_id = ${leagueId} and roster_id = ${rosterId}
     order by rank asc
   `;
@@ -1536,12 +1536,12 @@ export async function queueAdd(userId: string, leagueId: string, playerId: strin
   const sql = await getSql();
   const last = (
     await sql`
-    select coalesce(max(rank), 0) as n from ff_queue
+    select coalesce(max(rank), 0) as n from ol_queue
     where league_id = ${leagueId} and roster_id = ${mine.roster_id}
   `
   )[0];
   await sql`
-    insert into ff_queue (league_id, roster_id, player_id, rank)
+    insert into ol_queue (league_id, roster_id, player_id, rank)
     values (${leagueId}, ${mine.roster_id}, ${playerId}, ${(last?.n ?? 0) + 1})
     on conflict do nothing
   `;
@@ -1557,7 +1557,7 @@ export async function queueRemove(
   if (!mine) throw new Error("You don't have a seat.");
   const sql = await getSql();
   await sql`
-    delete from ff_queue
+    delete from ol_queue
     where league_id = ${leagueId} and roster_id = ${mine.roster_id} and player_id = ${playerId}
   `;
 }
@@ -1573,7 +1573,7 @@ export async function queueReorder(
   const sql = await getSql();
   for (let i = 0; i < playerIds.length; i++) {
     await sql`
-      update ff_queue set rank = ${i + 1}
+      update ol_queue set rank = ${i + 1}
       where league_id = ${leagueId} and roster_id = ${mine.roster_id}
         and player_id = ${playerIds[i]}
     `;
@@ -1587,7 +1587,7 @@ async function autopickFor(leagueId, rosterId) {
   const taken = new Set(
     (
       await sql`
-      select player_id from ff_picks where league_id = ${leagueId} and player_id is not null
+      select player_id from ol_picks where league_id = ${leagueId} and player_id is not null
     `
     ).map((r) => r.player_id),
   );
@@ -1618,20 +1618,20 @@ export async function expireDraftPicks(leagueId: string): Promise<number> {
   const sql = await getSql();
   let advanced = 0;
   for (let guard = 0; guard < 50; guard++) {
-    const draft = (await sql`select * from ff_draft where league_id = ${leagueId}`)[0];
+    const draft = (await sql`select * from ol_draft where league_id = ${leagueId}`)[0];
     if (!draft || draft.status !== "live") return advanced;
     if (draft.pick_deadline == null) return advanced;
 
     const pick = (
       await sql`
-      select * from ff_picks where league_id = ${leagueId} and pick_no = ${draft.pick_no}
+      select * from ol_picks where league_id = ${leagueId} and pick_no = ${draft.pick_no}
     `
     )[0];
     if (!pick || pick.player_id) return advanced;
 
     const seat = (
       await sql`
-      select autodraft, owner_id from ff_rosters
+      select autodraft, owner_id from ol_rosters
       where league_id = ${leagueId} and roster_id = ${pick.roster_id}
     `
     )[0];
@@ -1641,7 +1641,7 @@ export async function expireDraftPicks(leagueId: string): Promise<number> {
     if (!expired && !skipClock) return advanced;
 
     const claimed = await sql`
-      update ff_draft set pick_deadline = null
+      update ol_draft set pick_deadline = null
       where league_id = ${leagueId} and pick_no = ${draft.pick_no}
         and pick_deadline is not null
       returning pick_no
@@ -1649,7 +1649,7 @@ export async function expireDraftPicks(leagueId: string): Promise<number> {
     if (!claimed[0]) return advanced;
 
     await sql`
-      update ff_rosters set autodraft = 1
+      update ol_rosters set autodraft = 1
       where league_id = ${leagueId} and roster_id = ${pick.roster_id}
     `;
 
@@ -1666,10 +1666,10 @@ export async function flushHousePicks(leagueId: string): Promise<void> {
   const sql = await getSql();
   const rosters = await getRosters(leagueId);
   for (let guard = 0; guard < 200; guard++) {
-    const draft = (await sql`select * from ff_draft where league_id = ${leagueId}`)[0];
+    const draft = (await sql`select * from ol_draft where league_id = ${leagueId}`)[0];
     if (!draft || draft.status !== "live") return;
     const pick = (
-      await sql`select * from ff_picks where league_id = ${leagueId} and pick_no = ${draft.pick_no}`
+      await sql`select * from ol_picks where league_id = ${leagueId} and pick_no = ${draft.pick_no}`
     )[0];
     if (!pick || pick.player_id) return;
     if (rosters.find((r) => r.roster_id === pick.roster_id)?.owner_id) return;
@@ -1684,15 +1684,15 @@ export async function setAutodraft(userId: string, leagueId: string, on: boolean
   if (!mine) throw new Error("You don't have a seat.");
   const sql = await getSql();
   await sql`
-    update ff_rosters set autodraft = ${on ? 1 : 0}
+    update ol_rosters set autodraft = ${on ? 1 : 0}
     where league_id = ${leagueId} and roster_id = ${mine.roster_id}
   `;
   if (!on) {
-    const draft = (await sql`select * from ff_draft where league_id = ${leagueId}`)[0];
+    const draft = (await sql`select * from ol_draft where league_id = ${leagueId}`)[0];
     if (draft?.status === "live") {
       const pick = (
         await sql`
-        select * from ff_picks where league_id = ${leagueId} and pick_no = ${draft.pick_no}
+        select * from ol_picks where league_id = ${leagueId} and pick_no = ${draft.pick_no}
       `
       )[0];
       if (pick && !pick.player_id && pick.roster_id === mine.roster_id) {
@@ -1709,16 +1709,16 @@ export async function autoFillDraft(userId: string, leagueId: string): Promise<v
   const sql = await getSql();
   const ranked = rankPool();
   for (let guard = 0; guard < 220; guard++) {
-    const draft = (await sql`select * from ff_draft where league_id = ${leagueId}`)[0];
+    const draft = (await sql`select * from ol_draft where league_id = ${leagueId}`)[0];
     if (!draft || draft.status !== "live") return;
     const pick = (
-      await sql`select * from ff_picks where league_id = ${leagueId} and pick_no = ${draft.pick_no}`
+      await sql`select * from ol_picks where league_id = ${leagueId} and pick_no = ${draft.pick_no}`
     )[0];
     if (!pick) return;
     const taken = new Set(
       (
         await sql`
-        select player_id from ff_picks where league_id = ${leagueId} and player_id is not null
+        select player_id from ol_picks where league_id = ${leagueId} and player_id is not null
       `
       ).map((r) => r.player_id),
     );
@@ -1774,7 +1774,7 @@ export async function startPlayer(
   if (!mine) throw new Error("You don't have a seat.");
   const sql = await getSql();
   const spots = await sql`
-    select * from ff_spots where league_id = ${leagueId} and roster_id = ${mine.roster_id}
+    select * from ol_spots where league_id = ${leagueId} and roster_id = ${mine.roster_id}
   `;
   if (!spots.find((s) => s.player_id === playerId))
     throw new Error("Player is not on your roster.");
@@ -1791,11 +1791,11 @@ export async function startPlayer(
     if (!compatible(pos, invertSlot(swap.starter_slot)))
       throw new Error("That slot does not take this position.");
     await sql`
-      update ff_spots set slot = ${"bench"}, starter_slot = ${null}
+      update ol_spots set slot = ${"bench"}, starter_slot = ${null}
       where league_id = ${leagueId} and roster_id = ${mine.roster_id} and player_id = ${swap.player_id}
     `;
     await sql`
-      update ff_spots set slot = ${"starter"}, starter_slot = ${swap.starter_slot}
+      update ol_spots set slot = ${"starter"}, starter_slot = ${swap.starter_slot}
       where league_id = ${leagueId} and roster_id = ${mine.roster_id} and player_id = ${playerId}
     `;
     await recordEvent({
@@ -1814,12 +1814,12 @@ export async function startPlayer(
     const occupant = spots.find((s) => s.slot === "starter" && s.starter_slot === slot);
     if (occupant) {
       await sql`
-        update ff_spots set slot = ${"bench"}, starter_slot = ${null}
+        update ol_spots set slot = ${"bench"}, starter_slot = ${null}
         where league_id = ${leagueId} and roster_id = ${mine.roster_id} and player_id = ${occupant.player_id}
       `;
     }
     await sql`
-      update ff_spots set slot = ${"starter"}, starter_slot = ${slot}
+      update ol_spots set slot = ${"starter"}, starter_slot = ${slot}
       where league_id = ${leagueId} and roster_id = ${mine.roster_id} and player_id = ${playerId}
     `;
     await recordEvent({
@@ -1845,7 +1845,7 @@ export async function startPlayer(
   }
   if (!next) throw new Error("Pick a starter to replace.");
   await sql`
-    update ff_spots set slot = ${"starter"}, starter_slot = ${next}
+    update ol_spots set slot = ${"starter"}, starter_slot = ${next}
     where league_id = ${leagueId} and roster_id = ${mine.roster_id} and player_id = ${playerId}
   `;
   await recordEvent({
@@ -1866,12 +1866,12 @@ export async function sitPlayer(userId: string, leagueId: string, playerId: stri
   const sql = await getSql();
   const before = (
     await sql<{ starter_slot: string | null }>`
-    select starter_slot from ff_spots
+    select starter_slot from ol_spots
     where league_id = ${leagueId} and roster_id = ${mine.roster_id} and player_id = ${playerId}
   `
   )[0];
   await sql`
-    update ff_spots set slot = ${"bench"}, starter_slot = ${null}
+    update ol_spots set slot = ${"bench"}, starter_slot = ${null}
     where league_id = ${leagueId} and roster_id = ${mine.roster_id} and player_id = ${playerId}
   `;
   // The slot he vacated is the part worth keeping: an empty FLEX on Sunday is
@@ -2145,11 +2145,11 @@ export async function previewRebuild(input: {
 }
 async function ensureSnapColumns() {
   const sql = await getSql();
-  await sql.query(`alter table ff_rosters add column if not exists snap_wins int`);
-  await sql.query(`alter table ff_rosters add column if not exists snap_losses int`);
-  await sql.query(`alter table ff_rosters add column if not exists snap_ties int`);
-  await sql.query(`alter table ff_rosters add column if not exists snap_pf real`);
-  await sql.query(`alter table ff_rosters add column if not exists snap_pa real`);
+  await sql.query(`alter table ol_rosters add column if not exists snap_wins int`);
+  await sql.query(`alter table ol_rosters add column if not exists snap_losses int`);
+  await sql.query(`alter table ol_rosters add column if not exists snap_ties int`);
+  await sql.query(`alter table ol_rosters add column if not exists snap_pf real`);
+  await sql.query(`alter table ol_rosters add column if not exists snap_pa real`);
 }
 const rebuildInflight = new Map<string, Promise<{ leagueId: string; inviteCode: string }>>();
 
@@ -2354,24 +2354,24 @@ export async function saveSettings(
     const { ensureWagerSchema, seedPool } = await import("./wagers.server");
     await ensureWagerSchema();
     if (input.bettingOn != null) {
-      await sql`update ff_leagues set betting_on = ${input.bettingOn ? 1 : 0} where id = ${leagueId}`;
+      await sql`update ol_leagues set betting_on = ${input.bettingOn ? 1 : 0} where id = ${leagueId}`;
     }
     if (input.poolSeed != null) {
       const seed = Math.max(0, Math.min(5000, Math.round(input.poolSeed)));
-      await sql`update ff_leagues set pool_seed = ${seed} where id = ${leagueId}`;
+      await sql`update ol_leagues set pool_seed = ${seed} where id = ${leagueId}`;
       await seedPool(leagueId, seed);
     }
     if (input.wagerCap != null) {
-      await sql`update ff_leagues set wager_cap = ${Math.max(1, Math.round(input.wagerCap))} where id = ${leagueId}`;
+      await sql`update ol_leagues set wager_cap = ${Math.max(1, Math.round(input.wagerCap))} where id = ${leagueId}`;
     }
     if (input.exposureCap != null) {
-      await sql`update ff_leagues set exposure_cap = ${Math.max(1, Math.round(input.exposureCap))} where id = ${leagueId}`;
+      await sql`update ol_leagues set exposure_cap = ${Math.max(1, Math.round(input.exposureCap))} where id = ${leagueId}`;
     }
   } catch {
     /* a league without the book tables simply has no betting */
   }
   await sql`
-    update ff_leagues
+    update ol_leagues
     set name = ${name}, scoring = ${preset}, scoring_json = ${JSON.stringify(book)},
         playoff_teams = ${playoff}, current_week = ${week},
         waiver_type = ${waiverType}, faab_budget = ${faab},
@@ -2389,7 +2389,7 @@ export async function saveSettings(
       const lined = applyLineup(mine, slots, pts);
       for (const s of lined) {
         await sql`
-          update ff_spots set slot = ${s.slot}, starter_slot = ${s.starter_slot}
+          update ol_spots set slot = ${s.slot}, starter_slot = ${s.starter_slot}
           where league_id = ${leagueId} and roster_id = ${roster.roster_id} and player_id = ${s.player_id}
         `;
       }
@@ -2415,16 +2415,16 @@ export async function claimRoster(
   await assertAllowlisted(leagueId, userId);
   const sql = await getSql();
   if (
-    (await sql`select * from ff_rosters where league_id = ${leagueId} and owner_id = ${userId}`)[0]
+    (await sql`select * from ol_rosters where league_id = ${leagueId} and owner_id = ${userId}`)[0]
   )
     throw new Error("You already have a seat.");
   const seat = (
-    await sql`select * from ff_rosters where league_id = ${leagueId} and roster_id = ${rosterId}`
+    await sql`select * from ol_rosters where league_id = ${leagueId} and roster_id = ${rosterId}`
   )[0];
   if (!seat) throw new Error("No such team.");
   if (seat.owner_id) throw new Error("That seat is taken.");
   await sql`
-    update ff_rosters set owner_id = ${userId}
+    update ol_rosters set owner_id = ${userId}
     where league_id = ${leagueId} and roster_id = ${rosterId}
   `;
 }
@@ -2459,13 +2459,13 @@ export async function loadSchedule(
     kind: string | null;
   }>`
     select week, matchup_id, home_roster, away_roster, kind
-    from ff_matchups
+    from ol_matchups
     where league_id = ${leagueId} and week <= ${lastReg}
       and (kind is null or kind = ${"regular"})
     order by week, matchup_id
   `;
   const scored = await sql<{ week: number; points: number }>`
-    select week, points from ff_week_results where league_id = ${leagueId}
+    select week, points from ol_week_results where league_id = ${leagueId}
   `.catch(() => []);
   const lockedWeeks = new Set<number>();
   for (const r of scored) {
@@ -2529,20 +2529,20 @@ export async function saveWeekSchedule(
   assertWeekPairs(row.team_count, pairs);
   const sql = await getSql();
   const scored = await sql<{ points: number }>`
-    select points from ff_week_results where league_id = ${leagueId} and week = ${week}
+    select points from ol_week_results where league_id = ${leagueId} and week = ${week}
   `;
   if (scored.some((r) => (r.points ?? 0) > 0)) {
     throw new Error("That week already has scores. Leave it.");
   }
-  await sql`delete from ff_week_results where league_id = ${leagueId} and week = ${week}`;
+  await sql`delete from ol_week_results where league_id = ${leagueId} and week = ${week}`;
   await sql`
-    delete from ff_matchups
+    delete from ol_matchups
     where league_id = ${leagueId} and week = ${week} and (kind is null or kind = ${"regular"})
   `;
   for (let i = 0; i < pairs.length; i++) {
     const p = pairs[i]!;
     await sql`
-      insert into ff_matchups (league_id, week, matchup_id, home_roster, away_roster, kind)
+      insert into ol_matchups (league_id, week, matchup_id, home_roster, away_roster, kind)
       values (${leagueId}, ${week}, ${i + 1}, ${p.home}, ${p.away}, ${"regular"})
     `;
   }
@@ -2555,7 +2555,7 @@ export async function rebuildSchedule(userId: string, leagueId: string): Promise
   const lastReg = Math.min(row.regular_weeks ?? 14, (row.playoff_start_week ?? 15) - 1);
   const sql = await getSql();
   const scored = await sql<{ week: number; points: number }>`
-    select week, points from ff_week_results where league_id = ${leagueId}
+    select week, points from ol_week_results where league_id = ${leagueId}
   `;
   const keep = new Set<number>();
   for (const r of scored) {
@@ -2564,15 +2564,15 @@ export async function rebuildSchedule(userId: string, leagueId: string): Promise
   const generated = makeSchedule(row.team_count, lastReg);
   for (let w = 1; w <= lastReg; w++) {
     if (keep.has(w)) continue;
-    await sql`delete from ff_week_results where league_id = ${leagueId} and week = ${w}`;
+    await sql`delete from ol_week_results where league_id = ${leagueId} and week = ${w}`;
     await sql`
-      delete from ff_matchups
+      delete from ol_matchups
       where league_id = ${leagueId} and week = ${w} and (kind is null or kind = ${"regular"})
     `;
     const rows = generated.filter((m) => m.week === w);
     for (const m of rows) {
       await sql`
-        insert into ff_matchups (league_id, week, matchup_id, home_roster, away_roster, kind)
+        insert into ol_matchups (league_id, week, matchup_id, home_roster, away_roster, kind)
         values (${leagueId}, ${m.week}, ${m.id}, ${m.home}, ${m.away}, ${"regular"})
       `;
     }
@@ -2588,11 +2588,11 @@ export async function previewInvite(code: string): Promise<{
   await ensureDemo();
   const sql = await getSql();
   const league = (
-    await sql`select * from ff_leagues where invite_code = ${code.trim().toUpperCase()}`
+    await sql`select * from ol_leagues where invite_code = ${code.trim().toUpperCase()}`
   )[0];
   if (!league || league.locked) return null;
   const seats = await sql`
-    select roster_id, team_name from ff_rosters
+    select roster_id, team_name from ol_rosters
     where league_id = ${league.id} and owner_id is null
     order by roster_id
   `;
@@ -2621,7 +2621,7 @@ export async function loadDesk(
   const sql = await getSql();
   const { parseJson } = await import("./dispatch");
   const existing = await sql`
-    select * from ff_dispatches
+    select * from ol_dispatches
     where league_id = ${leagueId} and week = ${week}
     order by created_at asc
   `;
@@ -2657,7 +2657,7 @@ export async function loadDesk(
     };
   }
   if (stale || existing.length) {
-    await sql`delete from ff_dispatches where league_id = ${leagueId} and week = ${week}`;
+    await sql`delete from ol_dispatches where league_id = ${leagueId} and week = ${week}`;
   }
   const row = await getLeague(leagueId);
   const rosters = await getRosters(leagueId);
@@ -2704,7 +2704,7 @@ export async function loadDesk(
   if (facts.length && week > 1) {
     try {
       const prev = await sql`
-        select context_json from ff_dispatches
+        select context_json from ol_dispatches
         where league_id = ${leagueId} and week = ${week - 1}
         order by created_at asc
         limit 1
@@ -2743,7 +2743,7 @@ export async function loadDesk(
   for (const draft of desk.articles) {
     const id = `ds_${leagueId}_${week}_${draft.slug}`.slice(0, 64);
     await sql`
-      insert into ff_dispatches (
+      insert into ol_dispatches (
         id, league_id, week, kind, slug, headline, dek, body_json, bullets_json, box_json, focus_json, context_json, source
       ) values (
         ${id}, ${leagueId}, ${week}, ${draft.kind}, ${draft.slug}, ${draft.headline}, ${draft.dek},

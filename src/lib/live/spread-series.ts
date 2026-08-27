@@ -2,7 +2,7 @@ import type { StoredTick } from "@/lib/league/ticks.server";
 import type { LinePoint } from "./series";
 
 /**
- * The book's own history: `ff_ticks.spread`, home-signed, turned into a
+ * The book's own history: `ol_ticks.spread`, home-signed, turned into a
  * plain `LinePoint[]` for `<LiveLine>`. Pulled out of `book-panel.tsx` so
  * the ticket can draw the same strip without importing the panel.
  */

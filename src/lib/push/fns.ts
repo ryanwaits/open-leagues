@@ -27,7 +27,7 @@ export const pushStatus = createServerFn({ method: "GET" })
         const { getSql } = await import("@/lib/db");
         const sql = await getSql();
         const rows = await sql<{ endpoint: string }>`
-          select endpoint from ff_push_subs
+          select endpoint from ol_push_subs
           where user_id = ${context.userId} and league_id = ${data.leagueId}
           limit 1
         `;
@@ -56,7 +56,7 @@ export const subscribePush = createServerFn({ method: "POST" })
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     await sql`
-      insert into ff_push_subs (endpoint, user_id, league_id, p256dh, auth)
+      insert into ol_push_subs (endpoint, user_id, league_id, p256dh, auth)
       values (${data.endpoint}, ${context.userId}, ${data.leagueId}, ${data.p256dh}, ${data.auth})
       on conflict (endpoint, league_id) do update
         set user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth
@@ -71,7 +71,7 @@ export const unsubscribePush = createServerFn({ method: "POST" })
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     await sql`
-      delete from ff_push_subs
+      delete from ol_push_subs
       where user_id = ${context.userId} and league_id = ${data.leagueId}
     `;
     return { ok: true as const };

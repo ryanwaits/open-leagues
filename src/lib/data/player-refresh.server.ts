@@ -37,7 +37,7 @@ async function ensureSchema(): Promise<void> {
   if (ready) return;
   const sql = await getSql();
   await sql.query(
-    `create table if not exists ff_player_status (
+    `create table if not exists ol_player_status (
       player_id text primary key,
       injury_status text,
       status text,
@@ -51,19 +51,19 @@ async function ensureSchema(): Promise<void> {
       rotowire_id text,
       updated_at timestamptz not null default now())`,
   );
-  await sql.query(`alter table ff_player_status add column if not exists news_updated timestamptz`);
-  await sql.query(`alter table ff_player_status add column if not exists injury_body_part text`);
-  await sql.query(`alter table ff_player_status add column if not exists injury_notes text`);
+  await sql.query(`alter table ol_player_status add column if not exists news_updated timestamptz`);
+  await sql.query(`alter table ol_player_status add column if not exists injury_body_part text`);
+  await sql.query(`alter table ol_player_status add column if not exists injury_notes text`);
   await sql.query(
-    `alter table ff_player_status add column if not exists practice_participation text`,
+    `alter table ol_player_status add column if not exists practice_participation text`,
   );
   await sql.query(
-    `alter table ff_player_status add column if not exists practice_description text`,
+    `alter table ol_player_status add column if not exists practice_description text`,
   );
-  await sql.query(`alter table ff_player_status add column if not exists depth_chart_order int`);
-  await sql.query(`alter table ff_player_status add column if not exists rotowire_id text`);
+  await sql.query(`alter table ol_player_status add column if not exists depth_chart_order int`);
+  await sql.query(`alter table ol_player_status add column if not exists rotowire_id text`);
   await sql.query(
-    `create table if not exists ff_refresh_log (
+    `create table if not exists ol_refresh_log (
       key text primary key,
       at timestamptz not null default now(),
       note text)`,
@@ -73,7 +73,7 @@ async function ensureSchema(): Promise<void> {
 
 async function lastRunAt(key: string): Promise<number | null> {
   const sql = await getSql();
-  const row = (await sql<{ at: string }>`select at from ff_refresh_log where key = ${key}`)[0];
+  const row = (await sql<{ at: string }>`select at from ol_refresh_log where key = ${key}`)[0];
   return row ? new Date(row.at).getTime() : null;
 }
 
@@ -111,7 +111,7 @@ export async function refreshPlayerStatus(opts: { force?: boolean } = {}): Promi
     const seeded = (
       await sql<{
         ok: number;
-      }>`select 1 as ok from ff_player_status where rotowire_id is not null limit 1`
+      }>`select 1 as ok from ol_player_status where rotowire_id is not null limit 1`
     )[0];
     if (!seeded) force = true;
   }
@@ -130,7 +130,7 @@ export async function refreshPlayerStatus(opts: { force?: boolean } = {}): Promi
   const prior = new Map(
     (
       await sql<{ player_id: string; injury_status: string | null }>`
-        select player_id, injury_status from ff_player_status
+        select player_id, injury_status from ol_player_status
       `
     ).map((r) => [r.player_id, r.injury_status]),
   );
@@ -159,7 +159,7 @@ export async function refreshPlayerStatus(opts: { force?: boolean } = {}): Promi
     }
 
     await sql`
-      insert into ff_player_status (
+      insert into ol_player_status (
         player_id, injury_status, status, team, news_updated,
         injury_body_part, injury_notes, practice_participation,
         practice_description, depth_chart_order, rotowire_id, updated_at
@@ -184,7 +184,7 @@ export async function refreshPlayerStatus(opts: { force?: boolean } = {}): Promi
   }
 
   await sql`
-    insert into ff_refresh_log (key, at, note)
+    insert into ol_refresh_log (key, at, note)
     values (${"players"}, now(), ${`${scanned} scanned, ${changed.length} changed`})
     on conflict (key) do update set at = now(), note = excluded.note
   `;
@@ -213,7 +213,7 @@ export async function statusOverlay(playerIds: string[]): Promise<Record<string,
       select player_id, injury_status, status, team, news_updated,
         injury_body_part, injury_notes, practice_participation,
         practice_description, depth_chart_order, rotowire_id
-      from ff_player_status
+      from ol_player_status
       where player_id = any(${playerIds})
     `;
     const out: Record<string, StatusOverlay> = {};
