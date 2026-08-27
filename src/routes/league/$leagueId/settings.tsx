@@ -679,7 +679,7 @@ function DownloadBackup({ leagueId }: { leagueId: string }) {
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a");
               a.href = url;
-              a.download = `open-ff-${leagueId}.json`;
+              a.download = `open-leagues-${leagueId}.json`;
               a.click();
               URL.revokeObjectURL(url);
               toast("Backup downloaded.");

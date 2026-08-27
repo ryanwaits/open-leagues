@@ -74,7 +74,7 @@ function Login() {
           {brand.name}
         </Link>
         <p className="mt-2 text-sm text-muted">
-          Your open-ff account — not Sleeper, not ESPN.
+          Your open-leagues account — not Sleeper, not ESPN.
           {socialCopy}
         </p>
 

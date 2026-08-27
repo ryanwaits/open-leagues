@@ -2,10 +2,10 @@
 // unit-tested without a DOM; the impure localStorage/date wrapper is the
 // only piece the component needs to call directly.
 
-export const A2HS_DISMISS_KEY = "open-ff-a2hs-2"; // v2 on purpose: people who
+export const A2HS_DISMISS_KEY = "open-leagues-a2hs-2"; // v2 on purpose: people who
 // dismissed the old card get ONE fresh offer from the richer drawer.
-export const A2HS_JOIN_KEY = "open-ff-a2hs-join"; // set on join success
-export const A2HS_DAYS_KEY = "open-ff-a2hs-days"; // JSON {last:"YYYY-MM-DD",days:n}
+export const A2HS_JOIN_KEY = "open-leagues-a2hs-join"; // set on join success
+export const A2HS_DAYS_KEY = "open-leagues-a2hs-days"; // JSON {last:"YYYY-MM-DD",days:n}
 
 export function standalone() {
   if (typeof window === "undefined") return true;
