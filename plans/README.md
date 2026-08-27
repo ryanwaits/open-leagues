@@ -99,6 +99,56 @@ conditions, update your row when done.
 
 ## Last reconcile
 
+2026-08-26 against `7a53874` (`/improve reconcile`). No BLOCKED / IN
+PROGRESS entries in the index.
+
+**Operator note surfaced this pass**: `origin/main` is now exactly at
+`7a53874` — plans 089 (the `ff_*`→`ol_` DB/token rename) and 090 (the
+Codex demo docs fix) have both been pushed to production
+(`leagues.waits.dev`), outside this advisor's own tool calls (never ran
+`git push` itself) and ahead of the extra go-ahead 089's plan text called
+for before that specific push. Confirmed the deploy is healthy:
+`leagues.waits.dev/` → 200, `/api/mcp` OPTIONS → 204, and a live Codex
+desktop session (same session, user-driven) pulled real data through it
+with an `ol_`-prefixed token — so production is running the renamed schema
+correctly. Recorded here as a fact, not undone; flagging because the
+standing push-gate was bypassed, and the "089 needs its own go-ahead"
+condition should be considered satisfied/moot now that it's already live
+and verified healthy, not silently ignored.
+
+**Verified this pass (cheap spot-check, not per-plan)**: full gate on
+current HEAD matches the long-standing known baseline exactly — typecheck
+0 errors, lint 10 errors/177 warnings/6 infos (pre-existing, unrelated
+files), `bun test src scripts` 367 pass/0 fail/1 error (the documented
+pre-existing PGLite `import.meta.glob` bun-test incompatibility), build
+clean. No regressions from the 078–090 work. Individual DONE plans already
+carry rigorous per-landing verification in their own index rows from this
+session (typecheck/lint/test/build + live-browser checks at land time) —
+not re-litigated line by line here; this pass's job was confirming nothing
+broke in aggregate since, which it didn't.
+
+**032 refreshed, not resolved**: re-ran `bun scripts/wager-qa.mjs` against
+local dev. Found real drift, but not the drift the plan was written to
+detect — the script's throwaway-league fallback targets a blank
+league-name/desk-name create form on `/new` that **no longer exists**;
+that page was redesigned around import-only (this session's own migrate/
+import work, unrelated to 032 itself). The original "still waiting for a
+live line" question is now unanswerable until the script itself is
+rewritten to create its test league via the import flow. Full finding and
+re-pin in `plans/032-wager-live-price-rerun.md`. This is a new, small
+follow-up plan to author (fix the script's league-creation step), not
+something to fold into 032's own re-run instructions.
+
+**Two plan files not yet committed**: `plans/089-rename-db-layer-ol.md`
+and `plans/090-codex-reference-demo.md` are on disk and indexed below, but
+were never bundled into a commit (their actual work commits — `b4b9569`,
+`749328a`, `7a53874` — landed without them, following this session's
+pattern of committing plan files as periodic separate `docs:` batches, e.g.
+`b33458a`). Worth folding into the next such batch so the plan record
+matches what's actually in git history.
+
+## Third-pass reconcile (superseded)
+
 2026-08-20 (third pass) against `8e660ba`. No BLOCKED / IN PROGRESS.
 
 Since second pass: 049 voice codemod (`cfbacc8` + revision `06091c8`) and
@@ -358,7 +408,7 @@ reconcile). Source tree clean.
 | 029  | Exercise the FAAB wager ticket for real | P2 | M | — | DONE `dd9bc53` (verified: `wager-qa.mjs` + testids; preseason no-price) |
 | 030  | Require a seat for every hosted league GET | P1 | S | 028 | DONE `4fd580c` (pushed 2026-08-23; eight hosted GETs + source test) |
 | 031  | Prove spendable and atRisk without a live database | P2 | S | 027 | DONE `443b8ac` (pushed 2026-08-23) |
-| 032  | Re-run the wager script when a week has a live line | P3 | S | 029 | TODO (ops; execute 2026-08-20 STOPPED — still no live line; no commit) |
+| 032  | Re-run the wager script when a week has a live line | P3 | S | 029 | TODO (reconciled 2026-08-26 — real drift found: `/new`'s blank-create form the script depends on is gone, replaced by import-only; the live-line question is now unanswerable until `scripts/wager-qa.mjs` is rewritten to create its throwaway league via import instead; needs a new follow-up plan, not just a re-run) |
 | 033  | Let the CLI place a wager when asked in writing | P2 | M | 027, 038 | DONE `262717f` (pushed 2026-08-23) |
 | 034  | Let a commish download their league | P2 | M | 025 | DONE `0764e94` (pushed 2026-08-23; DeleteLeague untouched) |
 | 035  | Optional native Google sign-in for self-host | P2 | M | 025 | DONE `112f48a` (pushed 2026-08-23) |
@@ -415,8 +465,8 @@ reconcile). Source tree clean.
 | 086  | Rename product identity open-ff → open-leagues (safe surface only) | P1 | L | — | DONE `68e95a2` (2026-08-26, not pushed; reviewed/APPROVED same session; package.json, `OPENFF_*`→`OPENLEAGUES_*`, MCP server identity, 4 skill dirs + symlinks + test, docker-compose volume, README/docs identity text with the real clone URL, all mechanical/verified; deliberately does not touch `ff_*` DB tables or `off_` token prefix — separate, more carefully gated plan 088; 4 residuals (a2hs keys, login copy, backup filename) correctly deferred to 087, SKILL.md body prose deferred further) |
 | 087  | Rename residuals plan 086 correctly left out of scope | P3 | S | 086 | DONE `b0ebdbe` (2026-08-26, not pushed; reviewed/APPROVED same session; login page copy, 3 a2hs localStorage keys, backup filename all now say open-leagues; SKILL.md body prose + ff_*/off_ DB layer deliberately still deferred) |
 | 088  | Short showcase README + docs/ split with real screenshots | P1 | L | 086, 087 | DONE `e56a25f` (2026-08-26, not pushed; reviewed/APPROVED same session; README 338→127 lines, hero + 3 real leagues.waits.dev screenshots (3-skin standings strip, box score, account skin picker), deep reference material split into docs/self-host.md, docs/notifications.md, docs/google-sign-in.md, docs/development.md; all moved content verified byte-identical to plan text via diff; images verified unmodified from originals) |
-| 089  | Rename `ff_*` schema (27 tables + 14 indexes) and `off_` token prefix to `ol_` | P1 | L | 086, 087, 088 | DONE `b4b9569` (2026-08-26, not pushed; codemod verified 416→416 across 24 files, zero `ff_` remaining anywhere in `src`/`scripts`; new `migrations/0016_rename_open_leagues.sql` (27 table + 14 index renames) applied and confirmed at the PGLite level — all 27 tables now `ol_*`, zero `ff_*` tables, no duplicate old/new pairs, all 14 named indexes renamed (auto-named `ff_*_pkey` constraint indexes correctly left as documented out-of-scope residue); local `bun run dev` rehearsal via agent-browser passed (sign-in, standings, matchup/box score, account/agent-tokens, wager-book path all loaded clean, no SQL/`ff_`/relation errors); full gate (typecheck/lint/test/build) matches `deb93f2` baseline exactly; 3rd dispatch — 1st caught a "21 vs 22" prose typo, 2nd caught the real 5-table/2-index app-code gap (fixed, true total 27/14), 3rd caught two more plan-text bugs en route (Step 3's safety-net grep ran before deleting the temp codemod script, so it could never return 0 while the script's own identifier list still existed on disk; Step 8's suggested PGLite query used SQL `LIKE '%f_%'`, where `_` is a wildcard for any single char, not a literal underscore) — both worked around without touching schema, full details in dispatch transcript |
-| 090  | Verify + document a live Codex MCP demo, fix broken stdio syntax | P1 | M | 089 | DONE `749328a` (2026-08-26, not pushed; executor re-ran the live demo independently rather than trusting the plan's prose — booted `bun run dev`, signed in via `agent-browser` as the local seed, minted a real `ol_…` agent token from `/account`, registered it with `codex mcp add open-leagues --url http://localhost:8080/api/mcp --bearer-token-env-var OPENLEAGUES_TOKEN` (`codex mcp list` showed `enabled`/`Bearer token`), then ran `codex exec` for real: it guessed two nonexistent tool names first (`getDesk`, `getSchedule`, both failed), self-corrected, called `listMyLeagues` → `getAgentContext` → `getLeagueBundle` → `getMatchups` → `getSchedule`, and printed `hands — 0-0-0 — Butterbean` from the live seeded WIFFL league; token revoked from `/account`, `codex mcp remove open-leagues` confirmed by an empty `codex mcp list`, browser and dev server both stopped; README's stdio example fixed to `codex mcp add open-leagues -- bun scripts/mcp.mjs` (old `--command`/`--args` form is gone, `grep -c` confirms 0 occurrences); new `docs/codex-demo.md` carries this exact transcript, no `REPLACE` placeholder left, no real token value written anywhere; full gate (typecheck/lint/build) matches baseline) |
+| 089  | Rename `ff_*` schema (27 tables + 14 indexes) and `off_` token prefix to `ol_` | P1 | L | 086, 087, 088 | DONE `b4b9569` (2026-08-26; **reconciled 2026-08-26 against `7a53874`: all done criteria re-verified holding — 0 `ff_`/`off_` residue, codemod script gone, migration file 27/14 shape confirmed; subsequently pushed to `origin/main` outside the advisor's own tool calls, production confirmed healthy**; codemod verified 416→416 across 24 files, zero `ff_` remaining anywhere in `src`/`scripts`; new `migrations/0016_rename_open_leagues.sql` (27 table + 14 index renames) applied and confirmed at the PGLite level — all 27 tables now `ol_*`, zero `ff_*` tables, no duplicate old/new pairs, all 14 named indexes renamed (auto-named `ff_*_pkey` constraint indexes correctly left as documented out-of-scope residue); local `bun run dev` rehearsal via agent-browser passed (sign-in, standings, matchup/box score, account/agent-tokens, wager-book path all loaded clean, no SQL/`ff_`/relation errors); full gate (typecheck/lint/test/build) matches `deb93f2` baseline exactly; 3rd dispatch — 1st caught a "21 vs 22" prose typo, 2nd caught the real 5-table/2-index app-code gap (fixed, true total 27/14), 3rd caught two more plan-text bugs en route (Step 3's safety-net grep ran before deleting the temp codemod script, so it could never return 0 while the script's own identifier list still existed on disk; Step 8's suggested PGLite query used SQL `LIKE '%f_%'`, where `_` is a wildcard for any single char, not a literal underscore) — both worked around without touching schema, full details in dispatch transcript |
+| 090  | Verify + document a live Codex MCP demo, fix broken stdio syntax | P1 | M | 089 | DONE `749328a` (2026-08-26; **reconciled 2026-08-26 against `7a53874`: all done criteria re-verified holding — stdio syntax fixed, docs link present, no `REPLACE` placeholder, no real token value in the doc; subsequently pushed to `origin/main`, and its `docs/codex-demo.md` guidance was live-confirmed a second, independent way this same session — a real ChatGPT/Codex desktop session (not just the CLI) connected to the hosted MCP and pulled real WIFFL league data via a minted token**; executor re-ran the live demo independently rather than trusting the plan's prose — booted `bun run dev`, signed in via `agent-browser` as the local seed, minted a real `ol_…` agent token from `/account`, registered it with `codex mcp add open-leagues --url http://localhost:8080/api/mcp --bearer-token-env-var OPENLEAGUES_TOKEN` (`codex mcp list` showed `enabled`/`Bearer token`), then ran `codex exec` for real: it guessed two nonexistent tool names first (`getDesk`, `getSchedule`, both failed), self-corrected, called `listMyLeagues` → `getAgentContext` → `getLeagueBundle` → `getMatchups` → `getSchedule`, and printed `hands — 0-0-0 — Butterbean` from the live seeded WIFFL league; token revoked from `/account`, `codex mcp remove open-leagues` confirmed by an empty `codex mcp list`, browser and dev server both stopped; README's stdio example fixed to `codex mcp add open-leagues -- bun scripts/mcp.mjs` (old `--command`/`--args` form is gone, `grep -c` confirms 0 occurrences); new `docs/codex-demo.md` carries this exact transcript, no `REPLACE` placeholder left, no real token value written anywhere; full gate (typecheck/lint/build) matches baseline) |
 Status values: TODO | IN PROGRESS | DONE | BLOCKED | REJECTED
 
 ## Dependency notes

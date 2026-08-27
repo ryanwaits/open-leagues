@@ -8,6 +8,25 @@
 > (Reconciled 2026-08-20 at `8e660ba`: 049's classname codemod restyled both
 > components — cosmetic only; `wager-no-price`/`wager-price` testids intact
 > at book-panel.tsx:28/196; wager-qa.mjs unchanged. Finding still live.)
+>
+> **Reconciled again 2026-08-26 at `7a53874`**: real drift found, and it's
+> not the live-line question. `bun scripts/wager-qa.mjs` was re-run against
+> local dev and failed at `wait --url **/league/lg_*` after clicking "Open
+> the league" — because **that button no longer exists**. `/new` was
+> redesigned (independent of this plan — part of this session's migrate/
+> import work, plans 045/081–088) into an import-only flow: the page now
+> shows a single "Import WIFFL or a recap" card, with no more blank
+> league-name/desk-name quick-create form (the old "The Backyard"/
+> "Night Desk" placeholders the script fills are gone). `scripts/
+> wager-qa.mjs`'s entire "no existing throwaway league → create one"
+> fallback path (lines ~119–133) targets UI that doesn't exist anymore.
+> **This plan cannot usefully re-run as written** — the script needs a
+> rewrite to create its throwaway league via the Draft/rebuild import path
+> instead of the removed blank-create form, *before* the original live-line
+> question can even be tested again. That rewrite is out of scope for a
+> reconcile pass (script changes need their own plan, not a status-note
+> update) — flagging it here rather than silently leaving 032 looking
+> re-runnable as-is.
 
 ## Status
 
@@ -18,7 +37,11 @@
 - **Category**: tests
 - **Planned at**: commit `84d684e`, 2026-08-20 (reconciled `8f04751`;
   execute that day STOPPED — throwaway league still `wager-no-price`.
-  Finding live; `scripts/wager-qa.mjs` / ticket files unchanged.)
+  Finding live; `scripts/wager-qa.mjs` / ticket files unchanged.) —
+  **re-pinned to `7a53874`, 2026-08-26**: this plan is now blocked on a
+  script rewrite (see drift check above), not just a live-line wait. Needs
+  a follow-up plan (`fix wager-qa.mjs's throwaway-league creation to use
+  the import flow`) before this one is executable again.
 
 ## Why this matters
 
