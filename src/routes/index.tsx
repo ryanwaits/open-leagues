@@ -62,6 +62,9 @@ function GuestHome() {
           <Link to="/join">I have an invite</Link>
         </Button>
       </div>
+      <Link to="/about" className="mt-3 block text-sm text-muted underline underline-offset-4">
+        What is this?
+      </Link>
     </section>
   );
 }
