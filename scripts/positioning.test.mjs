@@ -28,7 +28,6 @@ test("retired taglines are gone from every reader-facing surface", () => {
     "PRODUCT.md",
     "src/lib/docs/pages.tsx",
     "src/lib/docs/guide.tsx",
-    "docs/codex-demo.md",
   ]) {
     const s = read(p);
     assert.doesNotMatch(s, /Receipts for your fantasy week/, p);
@@ -50,10 +49,10 @@ test("README opens with the substrate and the install line, not a receipt", () =
     readme.slice(firstCode, firstCode + 200),
     /claude mcp add --transport http open-leagues https:\/\/leagues\.waits\.dev\/api\/mcp/,
   );
-  assert.match(readme, /## What an agent can ask/);
-  assert.ok(
-    readme.indexOf("## What an agent can ask") < readme.indexOf("## A worked example: the receipt"),
-  );
+  assert.match(readme, /## Then ask/);
+  assert.ok(readme.indexOf("## Then ask") < readme.indexOf("## Run your own"));
+  assert.ok(readme.split("
+").length < 90, "README grew past a screen");
 });
 
 test("the guide leads with agents and knows bettors", () => {

@@ -72,7 +72,7 @@ export const MATCHUPS_FIXTURE: MatchupPair[] = [
   },
 ];
 
-/** The real Codex session in docs/codex-demo.md — first two guesses failed. */
+/** A real Codex session against a league box (2026-08-26); the first two guesses failed. */
 export type TranscriptCall = { id: string; name: string; ok: boolean };
 
 export const CODEX_TRANSCRIPT: TranscriptCall[] = [
