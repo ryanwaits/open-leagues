@@ -45,7 +45,9 @@ export type LeagueEventKind =
   /** A wager was withdrawn before the book closed. */
   | "wager_pulled"
   | "wager_won"
-  | "wager_lost";
+  | "wager_lost"
+  /** An agent, acting through a credential, ran a write. `payload.tool`, `payload.actor`. */
+  | "agent_action";
 
 export type LeagueEvent = {
   leagueId: string;

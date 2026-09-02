@@ -76,3 +76,22 @@ test("a misconfigured auth mode is a closed door", async () => {
   const res = await handleMcp(rpc(LIST, { "x-openleagues-user": "usr_1" }));
   assert.equal(res.status, 401);
 });
+
+test("proxy mode can narrow a caller to read-only, and a write is then refused", async () => {
+  process.env.OPENLEAGUES_MCP_AUTH = "proxy";
+  const res = await handleMcp(
+    rpc(
+      {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: { name: "sitPlayer", arguments: { leagueId: "lg_x", playerId: "p1" } },
+      },
+      { "x-openleagues-user": "usr_1", "x-openleagues-scope": "read" },
+    ),
+  );
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.result.isError, true);
+  assert.match(body.result.content[0].text, /read-only/);
+});

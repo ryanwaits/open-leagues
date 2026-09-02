@@ -12,7 +12,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AGENT_TOOLS } from "@/lib/agent/catalog";
 import { AGENT_CORE } from "@/lib/agent/core";
 import { dispatch } from "@/lib/agent/dispatch";
-import { resolveMcpUser } from "@/lib/auth/mcp-identity.server";
+import { type McpIdentity, resolveMcpIdentity } from "@/lib/auth/mcp-identity.server";
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -33,10 +33,10 @@ function unauthorized(): Response {
 }
 
 /** Resolve the caller → userId, or 401. Cookie sessions are not accepted. */
-async function authorize(request: Request): Promise<string | Response> {
+async function authorize(request: Request): Promise<McpIdentity | Response> {
   try {
-    const userId = await resolveMcpUser(request);
-    return userId ?? unauthorized();
+    const who = await resolveMcpIdentity(request);
+    return who ?? unauthorized();
   } catch (err) {
     // A misconfigured identity mode is a closed door, not an open one.
     console.error("[mcp] identity resolution failed:", err);
@@ -50,7 +50,7 @@ const inputSchema = {
   additionalProperties: true,
 };
 
-function buildServer(userId: string): Server {
+function buildServer(who: McpIdentity): Server {
   const coreTools = AGENT_TOOLS.filter((t) => AGENT_CORE.has(t.id));
   const server = new Server(
     { name: "open-leagues", version: "0.1.0" },
@@ -72,8 +72,9 @@ function buildServer(userId: string): Server {
         ? (request.params.arguments as Record<string, unknown>)
         : {};
     try {
-      // userId from the resolved identity only — never from tool arguments
-      const result = await dispatch(name, userId, args);
+      // Identity from the resolved credential only — never from tool arguments.
+      // A read-scoped token is refused at the door of every write.
+      const result = await dispatch(name, who.userId, args, { scope: who.scope, actor: who.label });
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       };
@@ -96,7 +97,7 @@ function buildServer(userId: string): Server {
  */
 export async function handleMcp(request: Request): Promise<Response> {
   const auth = await authorize(request);
-  if (typeof auth !== "string") return auth;
+  if (auth instanceof Response) return auth;
 
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,

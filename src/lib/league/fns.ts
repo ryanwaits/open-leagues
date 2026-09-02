@@ -737,10 +737,10 @@ export const analyzeImport = createServerFn({ method: "POST" })
 
 export const mintAgentToken = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator(z.object({ name: z.string() }))
+  .validator(z.object({ name: z.string(), scope: z.enum(["read", "act"]).optional() }))
   .handler(async ({ context, data }) => {
     const tokens = await import("@/lib/auth/tokens.server");
-    return tokens.mintToken(context.userId, data.name);
+    return tokens.mintToken(context.userId, data.name, data.scope ?? "act");
   });
 
 export const listAgentTokens = createServerFn({ method: "GET" })

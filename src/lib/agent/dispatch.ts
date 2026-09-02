@@ -194,10 +194,18 @@ function rebuildTeamRows(v: unknown, name: string): RebuildTeamRow[] | undefined
  * Call a core catalog id against the hosted-league engine.
  * `userId` must come from the host (OPENLEAGUES_USER / token) — never from model args.
  */
+export type DispatchOptions = {
+  /** What the credential may do. `read` is refused at the door of every write. */
+  scope?: "read" | "act";
+  /** A name for the receipt: the token's label, "stdio", or "proxy". */
+  actor?: string;
+};
+
 export async function dispatch(
   id: string,
   userId: string | null | undefined,
   args: DispatchArgs = {},
+  opts: DispatchOptions = {},
 ): Promise<unknown> {
   if (id === "tick" || id === "tickAllLeagues") {
     throw new Error(`${id} is a cron clock, not a tool`);
@@ -205,7 +213,51 @@ export async function dispatch(
   if (!AGENT_CORE.has(id)) {
     throw new Error(`Unknown tool: ${id}`);
   }
+  const mutating = AGENT_TOOLS.find((t) => t.id === id)?.mutating ?? false;
+  if (mutating && opts.scope === "read") {
+    throw new Error(`${id} is a write; this token is read-only`);
+  }
 
+  const result = await run(id, userId, args);
+
+  // The receipt names the agent. A write that came through a credential is
+  // logged against the roster it acted for; failure to log never fails the write.
+  if (mutating && userId && opts.actor && typeof args.leagueId === "string") {
+    void tagAgentAction(args.leagueId, userId, id, opts.actor);
+  }
+  return result;
+}
+
+async function tagAgentAction(leagueId: string, userId: string, tool: string, actor: string) {
+  try {
+    if (!leagueId.startsWith("lg_")) return;
+    const eng = await import("@/lib/league/engine.server");
+    const rosterId = await eng.rosterIdOwnedBy(leagueId, userId);
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    const row = (
+      await sql<{
+        current_week: number;
+      }>`select current_week from ol_leagues where id = ${leagueId}`
+    )[0];
+    const { recordEvent } = await import("@/lib/league/events.server");
+    await recordEvent({
+      leagueId,
+      week: row?.current_week ?? 1,
+      kind: "agent_action",
+      actorRoster: rosterId ?? null,
+      payload: { tool, actor },
+    });
+  } catch {
+    /* best-effort */
+  }
+}
+
+async function run(
+  id: string,
+  userId: string | null | undefined,
+  args: DispatchArgs,
+): Promise<unknown> {
   const meta = AGENT_TOOLS.find((t) => t.id === id);
   if (meta?.mutating) {
     if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);

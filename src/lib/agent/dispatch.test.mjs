@@ -247,3 +247,23 @@ test("joinLeague needs a code and a team name", async () => {
     /teamName is required/,
   );
 });
+
+test("a read-scoped token cannot write, before any argument is looked at", async () => {
+  await assert.rejects(
+    () =>
+      dispatch("startPlayer", "user_x", { leagueId: "lg_x", playerId: "p1" }, { scope: "read" }),
+    /read-only/,
+  );
+  await assert.rejects(
+    () => dispatch("advanceWeek", "user_x", { leagueId: "lg_x", confirm: true }, { scope: "read" }),
+    /read-only/,
+  );
+});
+
+test("an act-scoped token reaches the normal gates", async () => {
+  // Past the scope check, the usual refusal (no confirm) is what we hit.
+  await assert.rejects(
+    () => dispatch("advanceWeek", "user_x", { leagueId: "lg_x" }, { scope: "act", actor: "codex" }),
+    /requires confirm: true/,
+  );
+});

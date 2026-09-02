@@ -30,13 +30,20 @@ async function ensureTable(): Promise<void> {
   await sql.query(
     `create index if not exists ol_agent_tokens_hash on ol_agent_tokens (hash) where revoked_at is null`,
   );
+  // read | act. Existing tokens predate the column and keep the power they had.
+  await sql.query(
+    `alter table ol_agent_tokens add column if not exists scope text not null default 'act'`,
+  );
   tableReady = true;
 }
+
+export type TokenScope = "read" | "act";
 
 export async function mintToken(
   userId: string,
   name: string,
-): Promise<{ id: string; token: string; prefix: string }> {
+  scope: TokenScope = "act",
+): Promise<{ id: string; token: string; prefix: string; scope: TokenScope }> {
   await ensureTable();
   const sql = await getSql();
   const id = `at_${randomBytes(12).toString("hex")}`;
@@ -45,10 +52,10 @@ export async function mintToken(
   const hash = hashToken(token);
   const label = name.trim() || "codex";
   await sql`
-    insert into ol_agent_tokens (id, user_id, name, prefix, hash)
-    values (${id}, ${userId}, ${label}, ${prefix}, ${hash})
+    insert into ol_agent_tokens (id, user_id, name, prefix, hash, scope)
+    values (${id}, ${userId}, ${label}, ${prefix}, ${hash}, ${scope})
   `;
-  return { id, token, prefix };
+  return { id, token, prefix, scope };
 }
 
 /** Resolve a raw bearer to userId, or null if unknown / revoked / wrong prefix. */
@@ -67,6 +74,30 @@ export async function lookupToken(raw: string): Promise<string | null> {
   return row?.user_id ?? null;
 }
 
+/** Who this bearer is, and how much it may do. Null when unknown or revoked. */
+export async function lookupTokenIdentity(
+  raw: string,
+): Promise<{ userId: string; scope: TokenScope; name: string; id: string } | null> {
+  if (!raw.startsWith(RAW_PREFIX)) return null;
+  await ensureTable();
+  const sql = await getSql();
+  const hash = hashToken(raw);
+  const row = (
+    await sql`
+      select id, user_id, name, scope from ol_agent_tokens
+      where hash = ${hash} and revoked_at is null
+      limit 1
+    `
+  )[0] as { id: string; user_id: string; name: string; scope: string } | undefined;
+  if (!row) return null;
+  return {
+    id: row.id,
+    userId: row.user_id,
+    name: row.name,
+    scope: row.scope === "read" ? "read" : "act",
+  };
+}
+
 export async function revokeToken(userId: string, id: string): Promise<void> {
   await ensureTable();
   const sql = await getSql();
@@ -79,11 +110,11 @@ export async function revokeToken(userId: string, id: string): Promise<void> {
 
 export async function listTokens(
   userId: string,
-): Promise<{ id: string; name: string; prefix: string; createdAt: string }[]> {
+): Promise<{ id: string; name: string; prefix: string; scope: TokenScope; createdAt: string }[]> {
   await ensureTable();
   const sql = await getSql();
   const rows = await sql`
-    select id, name, prefix, created_at
+    select id, name, prefix, scope, created_at
     from ol_agent_tokens
     where user_id = ${userId} and revoked_at is null
     order by created_at desc
@@ -93,12 +124,14 @@ export async function listTokens(
       id: string;
       name: string;
       prefix: string;
+      scope: string;
       created_at: string | Date;
     };
     return {
       id: row.id,
       name: row.name,
       prefix: row.prefix,
+      scope: (row.scope === "read" ? "read" : "act") as TokenScope,
       createdAt: typeof row.created_at === "string" ? row.created_at : row.created_at.toISOString(),
     };
   });

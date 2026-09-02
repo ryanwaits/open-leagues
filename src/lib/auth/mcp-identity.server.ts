@@ -1,4 +1,4 @@
-import { lookupToken } from "@/lib/auth/tokens.server";
+import { lookupTokenIdentity, type TokenScope } from "@/lib/auth/tokens.server";
 
 /**
  * Who is calling /api/mcp.
@@ -62,16 +62,34 @@ function proxySecretOk(request: Request): boolean {
   return sent.length > 0 && sent === expected;
 }
 
-/** Resolve a request to a user id, or null. Never throws on a bad credential. */
-export async function resolveMcpUser(request: Request): Promise<string | null> {
+export type McpIdentity = { userId: string; scope: TokenScope; label: string };
+
+/**
+ * Resolve a request to who is calling and how much they may do. In proxy mode
+ * the edge may narrow a caller to read-only with `x-openleagues-scope: read`;
+ * it cannot widen anything, because act is already the ceiling.
+ */
+export async function resolveMcpIdentity(request: Request): Promise<McpIdentity | null> {
   if (mcpAuthMode() === "proxy") {
     if (!proxySecretOk(request)) return null;
     const claimed = request.headers.get(proxyUserHeader())?.trim() ?? "";
-    return claimed.length > 0 ? claimed : null;
+    if (!claimed) return null;
+    const scope: TokenScope =
+      (request.headers.get("x-openleagues-scope") ?? "").trim().toLowerCase() === "read"
+        ? "read"
+        : "act";
+    return { userId: claimed, scope, label: "proxy" };
   }
 
   const header = request.headers.get("authorization") ?? "";
   const raw = header.startsWith("Bearer ") ? header.slice("Bearer ".length).trim() : "";
   if (!raw.startsWith("ol_")) return null;
-  return await lookupToken(raw);
+  const t = await lookupTokenIdentity(raw);
+  return t ? { userId: t.userId, scope: t.scope, label: t.name } : null;
+}
+
+/** Resolve a request to a user id, or null. Never throws on a bad credential. */
+export async function resolveMcpUser(request: Request): Promise<string | null> {
+  const id = await resolveMcpIdentity(request);
+  return id?.userId ?? null;
 }

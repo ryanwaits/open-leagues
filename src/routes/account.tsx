@@ -273,6 +273,7 @@ function AiSettingsPanel() {
 function AgentTokensPanel() {
   const qc = useQueryClient();
   const [name, setName] = useState("codex");
+  const [scope, setScope] = useState<"read" | "act">("act");
   const [once, setOnce] = useState<string | null>(null);
 
   const tokens = useQuery({
@@ -281,7 +282,7 @@ function AgentTokensPanel() {
   });
 
   const mint = useMutation({
-    mutationFn: () => mintAgentToken({ data: { name } }),
+    mutationFn: () => mintAgentToken({ data: { name, scope } }),
     onSuccess: (res) => {
       setOnce(res.token);
       void qc.invalidateQueries({ queryKey: ["agent-tokens"] });
@@ -325,6 +326,28 @@ function AgentTokensPanel() {
           Create
         </Button>
       </form>
+      {/* read = it can look; act = it can do what you could do, and nothing you couldn't. */}
+      <div className="mt-2 flex items-center gap-1.5">
+        {(["read", "act"] as const).map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => setScope(s)}
+            aria-pressed={scope === s}
+            className={cn(
+              "rounded-pill border px-2.5 py-0.5 font-mono text-[11px]",
+              scope === s
+                ? "border-fg bg-fg text-bg"
+                : "border-line-strong text-muted hover:text-fg",
+            )}
+          >
+            {s}
+          </button>
+        ))}
+        <span className="text-[12px] text-muted">
+          {scope === "read" ? "reads the league, cannot move a player" : "can do what you can do"}
+        </span>
+      </div>
 
       {once ? (
         <div className="mt-3 rounded-xl bg-raised px-3 py-3">

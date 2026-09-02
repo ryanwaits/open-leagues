@@ -62,7 +62,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       : {};
   try {
     // userId from OPENLEAGUES_USER only — never from tool arguments
-    const result = await dispatch(name, userId, args);
+    const result = await dispatch(name, userId, args, { scope: "act", actor: "stdio" });
     return {
       content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
     };

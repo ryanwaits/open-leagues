@@ -65,7 +65,7 @@ function printHelp() {
     "  bun scripts/ledger.mjs getAgentContext --league <id> --user <id>",
     "  bun scripts/ledger.mjs placeWager --write --user <id> --league <id> \\",
     "    --matchup <n> --kind spread|moneyline --side <rosterId> --line <n> --stake <n>",
-    "  bun scripts/ledger.mjs mintToken --write --user <id> [--name codex]",
+    "  bun scripts/ledger.mjs mintToken --write --user <id> [--name codex] [--scope read|act]",
     "",
     "Live reads/writes need DATABASE_URL (same Postgres as the app) or the running app.",
     "bun cannot boot the PGLite fallback (no import.meta.glob).",
@@ -164,7 +164,8 @@ async function dispatchMintToken(args) {
   const data = payloadOf(args);
   if (!data.userId) fail("mintToken requires --user <id>");
   const { mintToken } = await import("../src/lib/auth/tokens.server.ts");
-  const minted = await mintToken(data.userId, data.name ?? "codex");
+  const scope = args.scope === "read" ? "read" : "act";
+  const minted = await mintToken(data.userId, data.name ?? "codex", scope);
   return {
     ...minted,
     note: "Copy the token now — only its hash is stored. Revoke from /account or by id.",
