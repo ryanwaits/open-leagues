@@ -211,12 +211,21 @@ export async function projectPlayers(input: {
 }): Promise<Record<string, Projection>> {
   const book = await scoringBookFor(input.leagueId);
   const byes = await byeWeeks(input.season).catch(() => ({}) as Record<string, number>);
-  const { projectionsFor } = await import("./projection-feed.server");
-  const feed = await projectionsFor(
-    input.season,
-    input.week,
-    input.players.map((p) => p.player_id),
-  );
+  const { projectionsFor, refreshProjections } = await import("./projection-feed.server");
+  const ids = input.players.map((p) => p.player_id);
+  let feed = await projectionsFor(input.season, input.week, ids);
+  // The clock refreshes the feed for hosted leagues' weeks. A raw Sleeper id
+  // has no clock, so the first read of a week pulls the feed itself — otherwise
+  // every number below is last season's average wearing a PROJ label.
+  // refreshProjections self-throttles (6h) and never throws into a page.
+  if (Object.keys(feed).length === 0) {
+    try {
+      await refreshProjections(input.season, input.week);
+      feed = await projectionsFor(input.season, input.week, ids);
+    } catch {
+      /* feed down — season average is the honest fallback, and it is labeled */
+    }
+  }
   const out: Record<string, Projection> = {};
 
   for (const p of input.players) {
