@@ -60,7 +60,7 @@ curl https://YOUR_HOST/api/lines/2025.json        # closing spread, total, money
 
 ## The public box
 
-`leagues.waits.dev` runs in substrate mode: receipts for any Sleeper league,
+`leagues.waits.dev` is the default shape of this code — a substrate: receipts for any Sleeper league,
 the open-data files, and `/api/mcp` with no account and no token. Add it to
 your agent and go:
 
@@ -82,9 +82,10 @@ docker compose up -d
 ```
 
 Open `http://YOUR_HOST:8080`. Receipts work immediately for any Sleeper id.
-To migrate a league in and run it here — standings, waivers, trades, a
-book — see [docs/migrate.md](docs/migrate.md). Set `OPENLEAGUES_MODE=substrate`
-to run a public box like ours instead. Env vars, Vercel, and
+Compose runs a league box (`OPENLEAGUES_MODE=league`): accounts, your
+league, tokens. To migrate a league in — standings, waivers, trades, a
+book — see [docs/migrate.md](docs/migrate.md). Drop the mode line and the same
+box is a public substrate like ours. Env vars, Vercel, and
 running without Docker: [docs/self-host.md](docs/self-host.md).
 
 ## Connect an agent

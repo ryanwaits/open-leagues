@@ -103,8 +103,8 @@ const overview: DocsPage = {
                 <strong key="a" className="font-medium text-fg">
                   The public box
                 </strong>,
-                "Substrate mode: receipts, open data, the lab, public MCP · no accounts, no leagues",
-                <Mono key="c">OPENLEAGUES_MODE=substrate</Mono>,
+                "The default shape: receipts, open data, the lab, public MCP · no accounts, no leagues",
+                <Mono key="c">OPENLEAGUES_MODE unset · league for the whole product</Mono>,
               ],
               [
                 <strong key="a" className="font-medium text-fg">
@@ -1390,6 +1390,12 @@ bun run dev               # 0.0.0.0:8080`}</Pre>
                 <Pill key="b">optional</Pill>,
                 <Pill key="c">optional</Pill>,
                 "token (default) or proxy — who /api/mcp trusts.",
+              ],
+              [
+                <Mono key="a">OPENLEAGUES_MODE</Mono>,
+                <Pill key="b">optional</Pill>,
+                <Pill key="c">optional</Pill>,
+                "unset = substrate (receipts, open data, the lab, public MCP; no accounts or leagues). league = the whole product. Compose and bun run dev set league.",
               ],
               [
                 <Mono key="a">OPENLEAGUES_SPLITS_SOURCE</Mono>,

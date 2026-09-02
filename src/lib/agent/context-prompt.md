@@ -46,11 +46,11 @@ Thirteen read-mostly verbs over real NFL games, not a league seat: `getGameLines
 
 ## Two kinds of box
 
-- **substrate** (the public host) — receipts, open data, the lab, and the
+- **substrate** (the default, and the public host) — receipts, open data, the lab, and the
   public read verbs, with no credential. No accounts, no leagues, no tokens.
   `tools/list` shows only what works here; anything else answers with a
   pointer to self-hosting. Keep strategies and runs in the user's own files.
-- **box** (self-hosted) — everything, behind a token or a proxied user id.
+- **league** (`OPENLEAGUES_MODE=league`, what compose runs) — everything, behind a token or a proxied user id.
 
 ## Catalog is the ceiling
 
