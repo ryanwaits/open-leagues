@@ -245,6 +245,7 @@ type RawMatchup = {
   points?: number;
   starters?: string[];
   starters_points?: number[];
+  players?: string[];
   players_points?: Record<string, number>;
 };
 
@@ -412,7 +413,11 @@ export async function loadTeam(
   const reserve = new Set(roster.reserve ?? []);
   const taxi = new Set(roster.taxi ?? []);
   const starterSet = new Set(starterIds.filter((id) => id && id !== "0"));
-  const players = (roster.players ?? []).map((id) => {
+  // The matchup carries the roster as it stood that week. /rosters is today's,
+  // and a player who started in December may be long gone by the time anyone
+  // asks for the receipt.
+  const weekIds = match?.players?.length ? match.players : (roster.players ?? []);
+  const players = weekIds.map((id) => {
     const p = getPlayer(id);
     const idx = starterIds.indexOf(id);
     const slot = taxi.has(id)

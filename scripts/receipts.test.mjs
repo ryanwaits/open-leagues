@@ -82,3 +82,9 @@ test("flip times are stated in Eastern, the clock fantasy keeps", () => {
   const server = read("src/lib/receipts/receipt.server.ts");
   assert.match(server, /timeZone: "America\/New_York"/);
 });
+
+test("team loader reads the week's roster from the matchup, not today's /rosters", () => {
+  const src = readFileSync(join(root, "src/lib/data/sleeper.server.ts"), "utf8");
+  // A December starter who was dropped in March must still be on December's receipt.
+  assert.match(src, /match\?\.players\?\.length \? match\.players/);
+});
