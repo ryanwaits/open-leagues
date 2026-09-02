@@ -1103,7 +1103,7 @@ const state: DocsPage = {
 
 const playbooks: DocsPage = {
   title: "Playbooks",
-  lede: "Four skills ship in the repo. A skill turns one sentence into the right chain of verbs, in the right order, stopping where a human should confirm.",
+  lede: "Six skills ship in the repo. A skill turns one sentence into the right chain of verbs, in the right order, stopping where a human should confirm.",
   sections: [
     {
       id: "install",
@@ -1131,8 +1131,8 @@ ln -s "$PWD/src/lib/agent/skills/open-leagues-week" ~/.codex/skills/`}</Pre>
           </P>
           <PlaybookList playbooks={PLAYBOOKS} />
           <Note>
-            Every verb these four skills call is on the MCP allowlist, with one exception the
-            migrate skill flags itself: <Inline>addAllowlistEmail</Inline> is app-only.
+            Every verb these six skills call is on the MCP allowlist, with one exception the migrate
+            skill flags itself: <Inline>addAllowlistEmail</Inline> is app-only.
           </Note>
         </>
       ),

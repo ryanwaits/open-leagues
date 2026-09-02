@@ -290,29 +290,34 @@ Following Sleeper projection every week would have added +2.1.
   …
 ]`;
 
-const LAB_OUT = `mcp: sampleGames  { "seasons": [2023, 2024, 2025],
-                    "filter": { "homeDog": true, "played": true,
-                                "splits": [{ "market": "spread", "side": "home", "tickets": [50, 100] }] } }
-     → { "count": 82, "games": [ { "gameId": "2023_05_BAL_PIT", "spread": -4.5, "result": 7,
-                                   "splits": { "spread": { "home": { "tickets": 67, "money": 83 }, "away": { "tickets": 33, "money": 17 } } } }, … ] }
-mcp: evaluateBets { "bets": games.map(g => ({ gameId: g.gameId, market: "spread", side: "home" })) }
-mcp: summarizeRun { "bets": graded }
+const LAB_OUT = `── discover ──────────────────────────────────────────────────────────────
+mcp: sampleGames  { "seasons": [2023, 2024], "filter": { "homeDog": true, "played": true,
+                    "splits": [{ "market": "spread", "side": "home", "tickets": [50, 100] }] } }
+mcp: evaluateBets · summarizeRun
+     discovery 2023–24   27-18   roi +0.14   pBreakEven 0.19   n 45
 
-home dogs the public is ON (>50% of spread tickets), 2023–2025
-{ "bets": 82, "wins": 42, "losses": 36, "pushes": 4, "units": 2.27, "roi": 0.03, "winRate": 0.54,
-  "breakEven": 0.52, "maxDrawdown": 6.25,
-  "bySeason": { "2023": { "bets": 30, "units": 2.65, "roi": 0.09 },
-                "2024": { "bets": 19, "units": 4.0,  "roi": 0.21 },
-                "2025": { "bets": 33, "units": -4.38, "roi": -0.13 } } }
+mcp: sampleGames  { "seasons": [2025], … same filter, untouched }        ← the holdout, opened once
+mcp: evaluateBets · summarizeRun
+     holdout 2025        15-18   roi −0.13   pBreakEven 0.83   n 33
 
-the mirror — home dogs the public is FADING (<40% of tickets)
-{ "bets": 189, "wins": 87, "losses": 99, "pushes": 3, "units": -19.03, "roi": -0.1, "maxDrawdown": 29.86 }
+→ does not clear the holdout. The skill reports it and does NOT call freezeStrategy.
 
-all home dogs, no split condition
-{ "bets": 331, "wins": 156, "losses": 167, "pushes": 8, "units": -24.13, "roi": -0.07 }
+── what a bankroll would have done anyway ─────────────────────────────────
+mcp: simulateBankroll { "graded": [ …78 bets ], "bankroll": 1000, "policy": { "type": "percent", "pct": 1, "cap": 2 } }
+{ "final": 1019.40, "profit": 19.40, "roi": 0.02, "bets": 78,
+  "maxDrawdown": { "dollars": 66.62, "pct": 6.18 }, "longestLosingRun": { "bets": 3, "dollars": 31.99 },
+  "bootstrap": { "runs": 1000, "final": { "p5": 891.86, "p50": 1018.20, "p95": 1170.36 },
+                 "maxDrawdownPct": { "p5": 3.95, "p50": 7.81, "p95": 15.30 }, "probLoss": 0.43, "probBust": 0 } }
 
-home dogs of 3 or fewer, 2022–2025 (closing lines only, no splits needed)
-{ "bets": 206, "wins": 89, "losses": 108, "pushes": 9, "units": -25.26, "roi": -0.12, "maxDrawdown": 29.45 }`;
+mcp: simulateBankroll { …, "policy": { "type": "kelly", "fraction": 0.25, "cap": 3 } }
+{ "final": 1029.96, "winProbUsed": 0.54, "winProbSource": "history",   ← flagged: Kelly fed its own sample
+  "maxDrawdown": { "dollars": 132.42, "pct": 11.41 },
+  "bootstrap": { "final": { "p5": 892.82, "p50": 1037.11, "p95": 1190.57 }, "probLoss": 0.34 } }
+
+── all three seasons together, for the record ────────────────────────────
+home dogs the public is ON        42-36-4   +2.27u   roi +0.03   pBreakEven 0.44
+home dogs the public is FADING    87-99-3  −19.03u   roi −0.10
+all home dogs                    156-167-8 −24.13u   roi −0.07`;
 
 const BOARD_OUT = `GET /r/${L}?week=14
 
@@ -684,13 +689,14 @@ curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one c
         pain="Home dogs getting over half the tickets — is that a signal or a story? I have no way to check that isn’t a spreadsheet and a weekend."
         fix={
           <>
-            Six primitives and no opinions. <Inline>sampleGames</Inline> finds the cohort you
-            describe; <Inline>evaluateBets</Inline> grades a bet list against the closing line and
-            the result, at the odds taken; <Inline>summarizeRun</Inline> turns it into a record with
-            drawdown, streaks, and per-season splits; <Inline>getBettingSplits</Inline> adds the
-            public’s ticket and money share when you opt in. An agent composes them into any
-            strategy — and a Tuesday routine that re-runs it and writes you a digest is a prompt,
-            not a feature.
+            Two skills over thirteen verbs, and no opinions anywhere in the code.{" "}
+            <Inline>open-leagues-lab-discover</Inline> turns the sentence into a cohort, grades it
+            on some seasons, then opens a holdout it never tuned on; it freezes the rule only if the
+            holdout clears, and reports <Inline>pBreakEven</Inline> — how easily luck alone produces
+            that record. <Inline>open-leagues-lab-run</Inline> takes a frozen rule every Tuesday:
+            grades last week, stakes the season on paper with <Inline>simulateBankroll</Inline>,
+            appends the run, writes the digest, lists next week’s games. It cannot place a bet; the
+            verb is not in its vocabulary.
           </>
         }
         run={[
@@ -698,9 +704,17 @@ curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one c
             key: "agent",
             tab: "Agent",
             label: "over MCP · three calls",
-            body: `sampleGames  { "seasons": [2023, 2024, 2025], "filter": { "homeDog": true, "played": true, "splits": [{ "market": "spread", "side": "home", "tickets": [50, 100] }] } }
-evaluateBets { "bets": games.map(g => ({ "gameId": g.gameId, "market": "spread", "side": "home" })) }
-summarizeRun { "bets": graded }`,
+            body: `# discover: tune on 2023–24, verify on 2025, freeze only if it clears
+sampleGames      { "seasons": [2023, 2024], "filter": { "homeDog": true, "played": true, "splits": [{ "market": "spread", "side": "home", "tickets": [50, 100] }] } }
+evaluateBets · summarizeRun                       # read pBreakEven and n
+sampleGames      { "seasons": [2025], …same filter }   # the holdout, opened once
+evaluateBets · summarizeRun
+simulateBankroll { "graded": […], "bankroll": 1000, "policy": { "type": "percent", "pct": 1, "cap": 2 } }
+freezeStrategy   { "name": "…", "spec": { words, seasons, filter, bet, staking, bankroll } }   # only if it cleared
+
+# run, every Tuesday, on the frozen rule
+getStrategy → getLabRuns → sampleGames (last week) → evaluateBets → summarizeRun
+→ simulateBankroll (season) → recordLabRun → the digest`,
           },
           {
             key: "curl",
@@ -710,13 +724,15 @@ summarizeRun { "bets": graded }`,
           },
         ]}
         output={LAB_OUT}
-        outputLabel="four runs · real · half a second each once the feeds are cached"
-        outputLines={13}
+        outputLabel="the discover skill on your hunch · real · every number from summarizeRun or simulateBankroll"
+        outputLines={12}
         trust={[
           "Lines and results are nflverse’s closing numbers — the same table every public NFL model is built on. Missing prices default to −110 and the payload says which odds were used.",
           "Grading is tested against a real game (DAL–DET, week 14 2025: DET −3.5, 44–30) and reports closing-line value when you took a different number than the close.",
           "Ticket and money percentages come from Action Network’s consensus feed, the one free source that exists — undocumented, so it is opt-in (OPENLEAGUES_SPLITS_SOURCE=actionnetwork), reaches back to 2023, and every pulled week is kept on your box in case it goes away. Their “consensus” is an aggregate across tracked books, not one sportsbook’s ledger.",
-          "What it will not pretend to have: opening lines and line movement (free only for 2007–2021, not wired in). Eighty-two bets over three seasons with the sign flipping in the third is a story, not a signal — and the summary shows you exactly that rather than rounding it into advice.",
+          "The holdout is the whole point. Tuned on 2023–24 this looked like +14%; on 2025 it went −13%. pBreakEven says a 27-18 discovery happens by luck one time in five. The skill will not freeze it, and says why.",
+          "Staking is arithmetic, not opinion: the policy is the caller’s; simulateBankroll compounds it, reports drawdown in dollars, flags when Kelly was fed its own sample, and resamples the bets a thousand times so a +$19 result shows as a band from −$108 to +$170 with a 43% chance of a loss.",
+          "What it will not pretend to have: opening lines and line movement (free only for 2007–2021, not wired in). A frozen strategy is stored on your box, owned by you, and never touched by the run skill.",
         ]}
       />
     ),
@@ -916,7 +932,7 @@ startPlayer     { "leagueId": "lg_…", "playerId": "4866", "slot": "RB" }`}
         pain={`I don’t want to learn ${MCP_CATALOG} verbs to set a lineup.`}
         fix={
           <>
-            Four skills ship in the repo. Copy them into your host’s skills directory and one
+            Six skills ship in the repo. Copy them into your host’s skills directory and one
             sentence runs the whole chain, stopping where a human should say yes.
           </>
         }

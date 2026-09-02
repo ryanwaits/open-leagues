@@ -43,11 +43,14 @@ curl https://YOUR_HOST/api/wire/2025/14.json     # FAAB clearing prices: median,
 
 ## The lab
 
-Six primitives for testing a betting idea, no opinions attached: every NFL
+Thirteen verbs for testing a betting idea, no opinions attached: every NFL
 game's closing line since 1999 (`/api/lines/:season.json`), a cohort
-filter, a grader, a summarizer, and — if you opt in — the public's ticket
-and money share per side. Agents compose them; a weekly digest is a prompt,
-not a feature.
+filter, a grader with `pBreakEven`, a bankroll simulator (flat, percent,
+fractional Kelly; seeded bootstrap), frozen strategies with a run ledger,
+and — if you opt in — the public's ticket and money share per side. Two
+skills compose them: `lab-discover` tunes on some seasons and verifies on a
+holdout before it freezes anything; `lab-run` grades a frozen rule every
+Tuesday and writes the digest. Neither can place a bet.
 
 ```sh
 curl https://YOUR_HOST/api/lines/2025.json        # closing spread, total, moneylines, result, context
@@ -88,7 +91,7 @@ codex "set my lineup for the bye weeks"
 ```
 
 Walkthrough with real output: [Connecting an agent](docs/codex-demo.md).
-Four playbooks (migrate, lineup, book, week) live under
+Six playbooks (migrate, lineup, book, week, lab-discover, lab-run) live under
 `src/lib/agent/skills/`.
 
 ## Docs
