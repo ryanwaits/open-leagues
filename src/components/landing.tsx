@@ -25,7 +25,7 @@ const SAMPLE = {
   flip: "Took the lead for good at 3:41pm ET on a Trevor Lawrence completion, 78.8–78.6 · 78% to win at 3:11pm.",
   bench: "6.5 left on the bench — Omarion Hampton (13.7) started over Saquon Barkley (20.2).",
   sources: "Sleeper projection, Last 3 weeks, and Season average all said start Barkley.",
-  wire: "Wire: bid $26 on Stefon Diggs, lost.",
+  wire: "Wire: bid $26 on Stefon Diggs — 13% of a $200 budget — lost.",
 };
 
 const RECEIPT_LINES: { k: string; what: string; how: string }[] = [

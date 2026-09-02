@@ -344,7 +344,7 @@ Wire: bid $26 on Stefon Diggs — 13% of a $200 budget — lost.`}</Pre>
 
 const openData: DocsPage = {
   title: "Open data",
-  lede: "Two files every hobby tool rebuilds by hand, published once. Anonymous aggregates, CORS on, no key.",
+  lede: "The files every hobby tool rebuilds by hand, published once: the player-ID crosswalk, FAAB clearing prices, and every NFL game’s closing line since 1999. Anonymous, CORS on, no key.",
   sections: [
     {
       id: "players",
@@ -418,6 +418,42 @@ const openData: DocsPage = {
               bid never reads as “the market”.
             </li>
           </Bullets>
+        </>
+      ),
+    },
+    {
+      id: "lines",
+      heading: "/api/lines/:season.json",
+      body: () => (
+        <>
+          <P>
+            Every game of a season with its closing spread, total, moneylines, the prices on each
+            side, the result, and the context a strategy keys on: rest days, roof, surface, division
+            game, weekday, starting quarterbacks, referee. nflverse’s games table, 1999 to now,
+            refreshed every six hours. Closing lines only — free opening lines exist for 2007–2021
+            in the Sportsbook Review archive and are not wired in; public betting splits (ticket and
+            money percentages) are not free anywhere, so nothing here pretends to be.
+          </P>
+          <Pre label="shape · real">{`{
+  "source": "nflverse nfldata games.csv · closing lines", "season": 2025, "count": 272,
+  "games": [
+    { "gameId": "2025_14_DAL_DET", "season": 2025, "week": 14, "home": "DET", "away": "DAL",
+      "spread": 3.5,            // home-signed: DET favored by 3.5
+      "total": 55.5, "homeMoneyline": -192, "awayMoneyline": 160,
+      "homeSpreadOdds": -110, "awaySpreadOdds": -110, "overOdds": -110, "underOdds": -110,
+      "result": 14,             // home − away
+      "points": 74, "homeScore": 44, "awayScore": 30,
+      "divGame": false, "roof": "dome", "surface": "fieldturf", "homeRest": 7, "awayRest": 7,
+      "weekday": "Thursday", "gameday": "2025-12-04", "gametime": "20:15",
+      "homeQb": "Jared Goff", "awayQb": "Dak Prescott", "referee": "Shawn Hochuli" }
+  ]
+}`}</Pre>
+          <P>
+            The same rows drive four verbs over MCP — <Inline>getGameLines</Inline>,{" "}
+            <Inline>getGameContext</Inline>, <Inline>sampleGames</Inline>,{" "}
+            <Inline>evaluateBets</Inline> — and a fifth, <Inline>summarizeRun</Inline>, that turns a
+            graded list into a record. The <DocLink slug="guide">guide</DocLink> runs a real one.
+          </P>
         </>
       ),
     },

@@ -28,6 +28,7 @@ import { Route as LeagueLeagueIdRouteImport } from './routes/league/$leagueId'
 import { Route as ScoresGameIdRouteImport } from './routes/scores_.$gameId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiLeagueTickRouteImport } from './routes/api/league/tick'
+import { Route as ApiLinesSeasonDotjsonRouteImport } from './routes/api/lines/$season[.]json'
 import { Route as LeagueLeagueIdIndexRouteImport } from './routes/league/$leagueId/index'
 import { Route as LeagueLeagueIdActivityRouteImport } from './routes/league/$leagueId/activity'
 import { Route as LeagueLeagueIdDraftRouteImport } from './routes/league/$leagueId/draft'
@@ -140,6 +141,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 const ApiLeagueTickRoute = ApiLeagueTickRouteImport.update({
   id: '/api/league/tick',
   path: '/api/league/tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiLinesSeasonDotjsonRoute = ApiLinesSeasonDotjsonRouteImport.update({
+  id: '/api/lines/$season.json',
+  path: '/api/lines/$season.json',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeagueLeagueIdIndexRoute = LeagueLeagueIdIndexRouteImport.update({
@@ -258,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/docs/': typeof DocsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/league/tick': typeof ApiLeagueTickRoute
+  '/api/lines/$season.json': typeof ApiLinesSeasonDotjsonRoute
   '/league/$leagueId/activity': typeof LeagueLeagueIdActivityRoute
   '/league/$leagueId/draft': typeof LeagueLeagueIdDraftRoute
   '/league/$leagueId/matchups': typeof LeagueLeagueIdMatchupsRoute
@@ -295,6 +302,7 @@ export interface FileRoutesByTo {
   '/docs': typeof DocsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/league/tick': typeof ApiLeagueTickRoute
+  '/api/lines/$season.json': typeof ApiLinesSeasonDotjsonRoute
   '/league/$leagueId/activity': typeof LeagueLeagueIdActivityRoute
   '/league/$leagueId/draft': typeof LeagueLeagueIdDraftRoute
   '/league/$leagueId/matchups': typeof LeagueLeagueIdMatchupsRoute
@@ -335,6 +343,7 @@ export interface FileRoutesById {
   '/docs/': typeof DocsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/league/tick': typeof ApiLeagueTickRoute
+  '/api/lines/$season.json': typeof ApiLinesSeasonDotjsonRoute
   '/league/$leagueId/activity': typeof LeagueLeagueIdActivityRoute
   '/league/$leagueId/draft': typeof LeagueLeagueIdDraftRoute
   '/league/$leagueId/matchups': typeof LeagueLeagueIdMatchupsRoute
@@ -376,6 +385,7 @@ export interface FileRouteTypes {
     | '/docs/'
     | '/api/auth/$'
     | '/api/league/tick'
+    | '/api/lines/$season.json'
     | '/league/$leagueId/activity'
     | '/league/$leagueId/draft'
     | '/league/$leagueId/matchups'
@@ -413,6 +423,7 @@ export interface FileRouteTypes {
     | '/docs'
     | '/api/auth/$'
     | '/api/league/tick'
+    | '/api/lines/$season.json'
     | '/league/$leagueId/activity'
     | '/league/$leagueId/draft'
     | '/league/$leagueId/matchups'
@@ -452,6 +463,7 @@ export interface FileRouteTypes {
     | '/docs/'
     | '/api/auth/$'
     | '/api/league/tick'
+    | '/api/lines/$season.json'
     | '/league/$leagueId/activity'
     | '/league/$leagueId/draft'
     | '/league/$leagueId/matchups'
@@ -490,6 +502,7 @@ export interface RootRouteChildren {
   ScoresGameIdRoute: typeof ScoresGameIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiLeagueTickRoute: typeof ApiLeagueTickRoute
+  ApiLinesSeasonDotjsonRoute: typeof ApiLinesSeasonDotjsonRoute
   RLeagueIdIndexRoute: typeof RLeagueIdIndexRoute
   ApiWireSeasonWeekDotjsonRoute: typeof ApiWireSeasonWeekDotjsonRoute
   RLeagueIdWeekRosterIdRoute: typeof RLeagueIdWeekRosterIdRoute
@@ -629,6 +642,13 @@ declare module '@tanstack/react-router' {
       path: '/api/league/tick'
       fullPath: '/api/league/tick'
       preLoaderRoute: typeof ApiLeagueTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/lines/$season.json': {
+      id: '/api/lines/$season.json'
+      path: '/api/lines/$season.json'
+      fullPath: '/api/lines/$season.json'
+      preLoaderRoute: typeof ApiLinesSeasonDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/league/$leagueId/': {
@@ -829,6 +849,7 @@ const rootRouteChildren: RootRouteChildren = {
   ScoresGameIdRoute: ScoresGameIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiLeagueTickRoute: ApiLeagueTickRoute,
+  ApiLinesSeasonDotjsonRoute: ApiLinesSeasonDotjsonRoute,
   RLeagueIdIndexRoute: RLeagueIdIndexRoute,
   ApiWireSeasonWeekDotjsonRoute: ApiWireSeasonWeekDotjsonRoute,
   RLeagueIdWeekRosterIdRoute: RLeagueIdWeekRosterIdRoute,

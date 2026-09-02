@@ -310,6 +310,50 @@ async function run(
       const { buildWeekBoard } = await import("@/lib/receipts/receipt.server");
       return asJson(await buildWeekBoard(leagueId, optNum(args.week) ?? null, uid));
     }
+    case "getGameLines": {
+      const lines = await import("@/lib/lab/lines.server");
+      return asJson(
+        await lines.gameLines({
+          season: num(args.season, "season"),
+          week: optNum(args.week),
+          postseason: args.postseason === true,
+        }),
+      );
+    }
+    case "getGameContext": {
+      const lines = await import("@/lib/lab/lines.server");
+      return asJson(await lines.gameLine(str(args.gameId, "gameId")));
+    }
+    case "sampleGames": {
+      const seasons = args.seasons;
+      if (!Array.isArray(seasons) || seasons.length === 0) throw new Error("seasons is required");
+      const lines = await import("@/lib/lab/lines.server");
+      const lab = await import("@/lib/lab/bets");
+      const games = await lines.gameLinesRange(seasons.map((x) => Number(x)));
+      const filter = (
+        typeof args.filter === "object" && args.filter ? args.filter : {}
+      ) as import("@/lib/lab/bets").GameFilter;
+      const out = lab.sampleGames(games, filter);
+      return asJson({ count: out.length, games: out });
+    }
+    case "evaluateBets": {
+      const bets = args.bets;
+      if (!Array.isArray(bets) || bets.length === 0) throw new Error("bets is required");
+      const lines = await import("@/lib/lab/lines.server");
+      const lab = await import("@/lib/lab/bets");
+      const typed = bets as import("@/lib/lab/bets").Bet[];
+      const seasons = [
+        ...new Set(typed.map((b) => Number(String(b.gameId).slice(0, 4))).filter(Number.isFinite)),
+      ];
+      const games = await lines.gameLinesRange(seasons);
+      return asJson(lab.evaluateBets(games, typed));
+    }
+    case "summarizeRun": {
+      const bets = args.bets;
+      if (!Array.isArray(bets) || bets.length === 0) throw new Error("bets is required");
+      const lab = await import("@/lib/lab/bets");
+      return asJson(lab.summarize(bets as import("@/lib/lab/bets").GradedBet[]));
+    }
     case "getSourceLedger": {
       const leagueId = str(args.leagueId, "leagueId");
       if (isHosted(leagueId)) {

@@ -69,6 +69,11 @@ If it's not in this table, it is not a tool. Stop. Do not invent a table.
 | getLeagueBundle | spectator | read | League header, rosters, and users. |
 | getReceipt | spectator | read | One roster's week as facts: score, bench left, wire cost. Team names only. |
 | getWeekBoard | spectator | read | Every matchup in a week, each side linked to its receipt. |
+| getGameLines | spectator | read | Closing lines, prices, results, and context for every NFL game of a season or week, 1999 to now. |
+| getGameContext | spectator | read | One NFL game by nflverse id: lines, result, rest, roof, surface, division, QBs, referee. |
+| sampleGames | spectator | read | Games across seasons matching a cohort filter: home dog, spread band, total band, rest edge, roof, weekday. |
+| evaluateBets | spectator | read | Grade hypothetical bets against results: win/loss/push, units at the odds taken, closing-line value. |
+| summarizeRun | spectator | read | Record, ROI, break-even, drawdown, streaks, per-season splits for a graded run. |
 | getSourceLedger | spectator | read | Over a season, which open source would have set a better lineup than the roster did. |
 | getMatchups | spectator | read | Matchup cards for a week. |
 | getTicks | spectator | read | Per-minute projected finals / win % / spread samples for one matchup on a game day. |

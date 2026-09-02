@@ -65,6 +65,11 @@ export const AGENT_CORE: ReadonlySet<string> = new Set([
   "getReceipt",
   "getWeekBoard",
   "getSourceLedger",
+  "getGameLines",
+  "getGameContext",
+  "sampleGames",
+  "evaluateBets",
+  "summarizeRun",
   // zero to a league without a browser (094)
   "createLeague",
   "joinLeague",

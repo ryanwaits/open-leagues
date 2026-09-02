@@ -290,6 +290,24 @@ Following Sleeper projection every week would have added +2.1.
   …
 ]`;
 
+const LAB_OUT = `mcp: sampleGames   { "seasons": [2022, 2023, 2024, 2025], "filter": { "homeDog": true, "spreadAbs": [0.5, 3], "played": true } }
+     → { "count": 206, "games": [ … ] }
+mcp: evaluateBets  { "bets": [ { "gameId": "2025_14_DAL_DET", "market": "spread", "side": "home" }, … 206 ] }
+     → [ { "grade": "win", "units": 0.91, "oddsUsed": -110, "lineUsed": 3.5, "clv": 0, … }, … ]
+mcp: summarizeRun  { "bets": [ …graded ] }
+{
+  "bets": 206, "wins": 89, "losses": 108, "pushes": 9, "voids": 0,
+  "staked": 206, "units": -25.26, "roi": -0.12,
+  "winRate": 0.45, "breakEven": 0.52,
+  "maxDrawdown": 29.45, "longestWin": 4, "longestLoss": 7, "avgClv": 0,
+  "bySeason": {
+    "2022": { "bets": 49, "units": -2.65,  "roi": -0.05 },
+    "2023": { "bets": 60, "units": -10.82, "roi": -0.18 },
+    "2024": { "bets": 49, "units": -7.89,  "roi": -0.16 },
+    "2025": { "bets": 48, "units": -3.9,   "roi": -0.08 }
+  }
+}`;
+
 const BOARD_OUT = `GET /r/${L}?week=14
 
 { "league": { "id": "${L}", "name": "SDIFFL", "season": "2025", "hosted": false },
@@ -647,6 +665,50 @@ curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one c
             .
           </p>
         }
+      />
+    ),
+  },
+
+  {
+    id: "lab",
+    heading: "Test a betting hunch",
+    audience: ["builder", "agent"],
+    body: () => (
+      <UseCase
+        pain="I think small home dogs are undervalued. I have no way to check that isn’t a spreadsheet and a weekend."
+        fix={
+          <>
+            Five primitives and no opinions. <Inline>sampleGames</Inline> finds the cohort you
+            describe; <Inline>evaluateBets</Inline> grades a bet list against the closing line and
+            the result, at the odds taken; <Inline>summarizeRun</Inline> turns it into a record with
+            drawdown, streaks, and per-season splits. An agent composes them into any strategy — and
+            a Tuesday routine that re-runs it and writes you a digest is a prompt, not a feature.
+          </>
+        }
+        run={[
+          {
+            key: "agent",
+            tab: "Agent",
+            label: "over MCP · three calls",
+            body: `sampleGames  { "seasons": [2022, 2023, 2024, 2025], "filter": { "homeDog": true, "spreadAbs": [0.5, 3], "played": true } }
+evaluateBets { "bets": games.map(g => ({ "gameId": g.gameId, "market": "spread", "side": "home" })) }
+summarizeRun { "bets": graded }`,
+          },
+          {
+            key: "curl",
+            tab: "curl",
+            label: "the feed underneath · every game, every season since 1999",
+            body: `curl -s ${hostOrigin()}/api/lines/2025.json | jq '.games[] | select(.spread < 0 and .spread > -3.5)'`,
+          },
+        ]}
+        output={LAB_OUT}
+        outputLabel="home dogs of 3 or fewer, ATS, 2022–2025 · real"
+        outputLines={9}
+        trust={[
+          "Lines and results are nflverse’s closing numbers — the same table every public NFL model is built on. Missing prices default to −110 and the payload says which odds were used.",
+          "Grading is tested against a real game (DAL–DET, week 14 2025: DET −3.5, 44–30) and reports closing-line value when you took a different number than the close.",
+          "What it will not pretend to have: opening lines and line movement (free only for 2007–2021, not wired in), and public betting splits, which are not free anywhere. A strategy that needs them cannot be backtested honestly here yet, and the docs say so.",
+        ]}
       />
     ),
   },

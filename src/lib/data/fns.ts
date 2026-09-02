@@ -397,6 +397,83 @@ export const getReceipt = createServerFn({ method: "GET" })
     return receipt;
   });
 
+/* ── the lab: lines, cohorts, grading ─────────────────────────────────── */
+
+export const getGameLines = createServerFn({ method: "GET" })
+  .validator(
+    z.object({
+      season: z.number(),
+      week: z.number().optional(),
+      postseason: z.boolean().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const lines = await import("@/lib/lab/lines.server");
+    return lines.gameLines(data);
+  });
+
+export const getGameContext = createServerFn({ method: "GET" })
+  .validator(z.object({ gameId: z.string() }))
+  .handler(async ({ data }) => {
+    const lines = await import("@/lib/lab/lines.server");
+    return lines.gameLine(data.gameId);
+  });
+
+const gameFilter = z.object({
+  seasons: z.array(z.number()).optional(),
+  weeks: z.array(z.number()).optional(),
+  homeDog: z.boolean().optional(),
+  homeFavorite: z.boolean().optional(),
+  spreadAbs: z.tuple([z.number(), z.number()]).optional(),
+  total: z.tuple([z.number(), z.number()]).optional(),
+  divGame: z.boolean().optional(),
+  roof: z.array(z.string()).optional(),
+  surface: z.array(z.string()).optional(),
+  weekday: z.array(z.string()).optional(),
+  restEdge: z.tuple([z.number(), z.number()]).optional(),
+  teams: z.array(z.string()).optional(),
+  played: z.boolean().optional(),
+});
+
+export const sampleGames = createServerFn({ method: "GET" })
+  .validator(z.object({ seasons: z.array(z.number()).min(1), filter: gameFilter.optional() }))
+  .handler(async ({ data }) => {
+    const lines = await import("@/lib/lab/lines.server");
+    const { sampleGames: pick } = await import("@/lib/lab/bets");
+    const games = await lines.gameLinesRange(data.seasons);
+    const out = pick(games, data.filter ?? {});
+    return { count: out.length, games: out };
+  });
+
+const bet = z.object({
+  gameId: z.string(),
+  market: z.enum(["spread", "total", "moneyline"]),
+  side: z.enum(["home", "away", "over", "under"]),
+  line: z.number().nullable().optional(),
+  odds: z.number().nullable().optional(),
+  stake: z.number().optional(),
+  note: z.string().optional(),
+});
+
+export const evaluateBets = createServerFn({ method: "POST" })
+  .validator(z.object({ bets: z.array(bet).min(1) }))
+  .handler(async ({ data }) => {
+    const lines = await import("@/lib/lab/lines.server");
+    const lab = await import("@/lib/lab/bets");
+    const seasons = [
+      ...new Set(data.bets.map((b) => Number(b.gameId.slice(0, 4))).filter(Number.isFinite)),
+    ];
+    const games = await lines.gameLinesRange(seasons);
+    return lab.evaluateBets(games, data.bets);
+  });
+
+export const summarizeRun = createServerFn({ method: "POST" })
+  .validator(z.object({ bets: z.array(z.record(z.string(), z.unknown())).min(1) }))
+  .handler(async ({ data }) => {
+    const lab = await import("@/lib/lab/bets");
+    return lab.summarize(data.bets as unknown as import("@/lib/lab/bets").GradedBet[]);
+  });
+
 export const getSourceLedger = createServerFn({ method: "GET" })
   .middleware([optionalAuthMiddleware])
   .validator(z.object({ leagueId: z.string(), rosterId: z.number() }))
