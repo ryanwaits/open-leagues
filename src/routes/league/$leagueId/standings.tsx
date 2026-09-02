@@ -16,16 +16,13 @@ import {
   getActivity,
   getLeagueBundle,
   getMatchups,
-  getRecap,
   getWeekProjections,
   getWeekStats,
 } from "@/lib/data/fns";
 import { paintMatchups, pairPreviewScores } from "@/lib/data/matchup-view";
 import type { LeagueBundle } from "@/lib/data/types";
-import { overlayPreLivePairs } from "@/lib/demo/pre-live";
-import { usePreLiveFeed } from "@/lib/demo/use-pre-live-feed";
 import { getBook, getTrades, pullWager } from "@/lib/league/fns";
-import { bookFromLeague } from "@/lib/replay";
+import { bookFromLeague } from "@/lib/live/board";
 import { cn, fmtRecord, formatPts } from "@/lib/utils";
 
 export const Route = createFileRoute("/league/$leagueId/standings")({
@@ -45,13 +42,12 @@ function LeaguePage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const qc = useQueryClient();
-  const pre = usePreLiveFeed();
   const [weekOpen, setWeekOpen] = useState(false);
 
   const league = useQuery({
     queryKey: ["league", leagueId],
     queryFn: () => getLeagueBundle({ data: { leagueId } }),
-    refetchInterval: (q) => (q.state.data?.scoringLive || pre.on ? 15_000 : false),
+    refetchInterval: (q) => (q.state.data?.scoringLive ? 15_000 : false),
   });
   const week = search.week ?? league.data?.currentWeek ?? 1;
   const season = league.data?.league.season ?? "";
@@ -66,7 +62,7 @@ function LeaguePage() {
   const matchups = useQuery({
     queryKey: ["matchups", leagueId, week],
     queryFn: () => getMatchups({ data: { leagueId, week } }),
-    refetchInterval: () => (league.data?.scoringLive || pre.on ? 4_000 : false),
+    refetchInterval: () => (league.data?.scoringLive ? 4_000 : false),
   });
   const projections = useQuery({
     queryKey: ["week-projections", leagueId, week],
@@ -83,26 +79,17 @@ function LeaguePage() {
       getWeekStats({
         data: { season, week, kind: fantasyStatKind() },
       }),
-    enabled: Boolean(season) && !pre.on,
+    enabled: Boolean(season),
     refetchInterval: () => (league.data?.scoringLive ? 4_000 : false),
   });
   const scoringBook = bookFromLeague(league.data?.league.scoring_settings);
-  const slate = useMemo(() => {
-    const rows = matchups.data ?? [];
-    const overlaid = pre.on ? overlayPreLivePairs(rows, pre.games, pre.stats, scoringBook) : rows;
-    return paintMatchups(
-      overlaid,
-      projections.data ?? {},
-      pre.on ? pre.stats : (weekStats.data ?? {}),
-    );
-  }, [matchups.data, pre.on, pre.games, pre.stats, scoringBook, projections.data, weekStats.data]);
+  const slate = useMemo(
+    () => paintMatchups(matchups.data ?? [], projections.data ?? {}, weekStats.data ?? {}),
+    [matchups.data, projections.data, weekStats.data],
+  );
   const activity = useQuery({
     queryKey: ["activity", leagueId, week],
     queryFn: () => getActivity({ data: { leagueId, week } }),
-  });
-  const recap = useQuery({
-    queryKey: ["recap", leagueId, week],
-    queryFn: () => getRecap({ data: { leagueId, week } }),
   });
   const trades = useQuery({
     queryKey: ["trades", leagueId],
@@ -144,26 +131,6 @@ function LeaguePage() {
   return (
     <>
       <Deck>
-        <span className="flex items-center gap-0.5 rounded-pill bg-raised p-0.5">
-          <Link
-            to="/league/$leagueId/standings"
-            params={{ leagueId }}
-            search={{ week }}
-            aria-current="page"
-            className="inline-flex h-8 items-center rounded-pill bg-fg px-3 text-[13px] font-medium text-bg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-deep"
-          >
-            Table
-          </Link>
-          <Link
-            to="/league/$leagueId/recap"
-            params={{ leagueId }}
-            search={{ week, story: undefined }}
-            className="inline-flex h-8 items-center rounded-pill px-3 text-[13px] font-medium text-faint focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-deep"
-          >
-            Recap
-          </Link>
-        </span>
-        <span className="flex-1" />
         <button
           type="button"
           aria-label="Change week"
@@ -360,21 +327,6 @@ function LeaguePage() {
         </div>
 
         <div className="flex min-w-0 flex-col gap-5">
-          {recap.data ? (
-            <Link
-              to="/league/$leagueId/recap"
-              params={{ leagueId }}
-              search={{ week, story: undefined }}
-              className="block rounded-xl bg-surface px-5 py-5 ring-card transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 ring-card-h"
-            >
-              <p className="microlabel">{recap.data.kicker}</p>
-              <p className="mt-1.5 font-display text-xl font-bold leading-snug tracking-[-0.03em]">
-                <span className="hl">{recap.data.headline}</span>
-              </p>
-              <p className="mt-2.5 text-sm text-muted">{recap.data.dek}</p>
-            </Link>
-          ) : null}
-
           {league.data.hosted ? (
             <section className="rounded-xl bg-surface ring-card">
               <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">

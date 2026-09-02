@@ -21,19 +21,9 @@ import {
 } from "@/lib/data/matchup-view";
 import { useWarmRosterProfiles } from "@/lib/data/player-view";
 import { baseSlotLabel } from "@/lib/data/teams";
-import { overlayBookLine, overlayPreLivePairs } from "@/lib/demo/pre-live";
-import { useDemoStore, useSimPhase, useSimProgress } from "@/lib/demo/store";
-import { usePreLiveFeed } from "@/lib/demo/use-pre-live-feed";
 import { getBook, getClaims } from "@/lib/league/fns";
+import { bookFromLeague, LIVE_POLL_MS, pairingIsLive } from "@/lib/live/board";
 import { pairIsFinal } from "@/lib/live/matchup-series";
-import {
-  applyReplayPairs,
-  bookFromLeague,
-  LIVE_POLL_MS,
-  pairingIsLive,
-  replayStatMap,
-  seedPairsForReplay,
-} from "@/lib/replay";
 import { cn, formatPts } from "@/lib/utils";
 
 type Search = { week?: number; focus?: number };
@@ -51,13 +41,6 @@ function MatchupsPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   // The transport lives in the demo toolbar; this page only reads the clock.
-  // `phase` (integer) indexes REPLAY_PHASES for labels/game state; `progress`
-  // (fractional, same value rounded down when paused) drives the painted
-  // point totals so the matchup chart moves smoothly instead of in cliffs.
-  const phase = useSimPhase();
-  const progress = useSimProgress();
-  const pre = usePreLiveFeed();
-  const stopSim = useDemoStore((s) => s.stop);
   const [watch, setWatch] = useState<WatchTarget | null>(null);
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
   const [ticket, setTicket] = useState<TicketTarget | null>(null);
@@ -85,7 +68,7 @@ function MatchupsPage() {
   const league = useQuery({
     queryKey: ["league", leagueId],
     queryFn: () => getLeagueBundle({ data: { leagueId } }),
-    refetchInterval: (q) => (phase == null && q.state.data?.scoringLive ? LIVE_POLL_MS : false),
+    refetchInterval: (q) => (q.state.data?.scoringLive ? LIVE_POLL_MS : false),
   });
   const week = search.week ?? league.data?.currentWeek ?? 1;
   const playoffStart =
@@ -99,7 +82,6 @@ function MatchupsPage() {
     queryKey: ["matchups", leagueId, week],
     queryFn: () => getMatchups({ data: { leagueId, week } }),
     refetchInterval: (q) => {
-      if (phase != null) return false;
       const rows = q.state.data ?? [];
       const live = rows.some((pair) =>
         [pair.home, pair.away].some((side) => side?.starters.some((s) => s.game?.state === "in")),
@@ -161,40 +143,12 @@ function MatchupsPage() {
   const liveFinals = weekStats.data ?? {};
   const hasLiveStats = Object.keys(liveFinals).length > 0;
   const book = bookFromLeague(league.data?.league.scoring_settings);
-  const seeded = useMemo(() => {
-    const bags = hasLiveStats ? liveFinals : { ...(priorStats.data ?? {}) };
-    return seedPairsForReplay(matchups.data ?? [], week, bags, book);
-  }, [matchups.data, week, liveFinals, priorStats.data, hasLiveStats, book]);
-  const finals = seeded.finals;
-  const seededPairs = seeded.pairs;
-  const sourcePairs = useMemo(() => {
-    const rows = matchups.data ?? [];
-    if (!pre.on) return rows;
-    return overlayPreLivePairs(rows, pre.games, pre.stats, book);
-  }, [matchups.data, pre.on, pre.games, pre.stats, book]);
-  const rawShown = useMemo(() => {
-    if (pre.on) return sourcePairs;
-    if (!seededPairs.length) return [];
-    if (phase == null) return sourcePairs;
-    return applyReplayPairs(seededPairs, week, progress ?? phase, finals);
-  }, [pre.on, sourcePairs, seededPairs, phase, progress, week, finals]);
-
-  const displayStats = useMemo(() => {
-    if (pre.on) return pre.stats;
-    if (phase == null) return liveFinals;
-    return replayStatMap(finals, progress ?? phase, week);
-  }, [pre.on, pre.stats, phase, progress, liveFinals, finals, week]);
+  const sourcePairs = matchups.data ?? [];
 
   const shown = useMemo(
-    () => paintMatchups(rawShown, projections.data ?? {}, displayStats),
-    [rawShown, projections.data, displayStats],
+    () => paintMatchups(sourcePairs, projections.data ?? {}, liveFinals),
+    [sourcePairs, projections.data, liveFinals],
   );
-
-  const prevShown = useMemo(() => {
-    if (!seededPairs.length || progress == null || progress <= 0) return null;
-    const raw = applyReplayPairs(seededPairs, week, progress - 1, finals);
-    return paintMatchups(raw, projections.data ?? {}, replayStatMap(finals, progress - 1, week));
-  }, [seededPairs, progress, week, finals, projections.data]);
 
   // The page shows one matchup at a time. Yours is the default, but every game
   // in the week is one tap or one arrow key away.
@@ -285,19 +239,11 @@ function MatchupsPage() {
     el.scrollBy({ left: dir * Math.max(el.clientWidth * 0.8, 200), behavior: "smooth" });
   }
 
-  // A week already playing out for real has nothing to replay, and a fake Q3
-  // sitting on top of live scores is the worst thing this page could do.
-  const weekLive = sourcePairs.some(pairingIsLive);
-  useEffect(() => {
-    if (weekLive && phase != null) stopSim();
-  }, [weekLive, phase, stopSim]);
-
   return (
     <div>
-      {(league.data?.scoringLive || (pre.on && pre.live)) && phase == null ? (
+      {league.data?.scoringLive ? (
         <p className="mb-3 microlabel text-live">
-          {pre.on ? "Preseason overlay · display only · " : "Live unofficial · "}
-          ticks every {pre.on ? 4 : LIVE_POLL_MS / 1000}s
+          Live unofficial · ticks every {LIVE_POLL_MS / 1000}s
         </p>
       ) : null}
 
@@ -493,12 +439,12 @@ function MatchupsPage() {
                         }
                         home={pair.home}
                         away={pair.away ?? null}
-                        prevHome={prevShown?.[selected]?.home ?? null}
-                        prevAway={prevShown?.[selected]?.away ?? null}
-                        liveHome={rawShown[selected]?.home.points ?? 0}
-                        liveAway={rawShown[selected]?.away?.points ?? 0}
+                        prevHome={null}
+                        prevAway={null}
+                        liveHome={sourcePairs[selected]?.home.points ?? 0}
+                        liveAway={sourcePairs[selected]?.away?.points ?? 0}
                         leagueId={leagueId}
-                        stats={displayStats}
+                        stats={liveFinals}
                         onPlayer={openPlayer}
                         projections={projections.data ?? {}}
                         book={book}
@@ -510,15 +456,9 @@ function MatchupsPage() {
                             mineRosterId != null &&
                             (pair.home.rosterId === mineRosterId ||
                               pair.away?.rosterId === mineRosterId);
-                          const line =
-                            (pre.on
-                              ? overlayBookLine(
-                                  pair,
-                                  projections.data ?? {},
-                                  inIt ? mineRosterId : null,
-                                )
-                              : null) ??
-                            wagerBook.data.lines.find((l) => l.matchupId === pair.matchupId);
+                          const line = wagerBook.data.lines.find(
+                            (l) => l.matchupId === pair.matchupId,
+                          );
                           return line ? (
                             <LinePanel
                               className="mt-6"

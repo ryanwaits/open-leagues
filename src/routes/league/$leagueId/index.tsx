@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { LineupBoard } from "@/components/lineup-board";
@@ -15,7 +15,6 @@ import {
   getMatchups,
   getProjections,
   getPulse,
-  getRecap,
   getTeam,
   getWeekStats,
 } from "@/lib/data/fns";
@@ -24,15 +23,11 @@ import { prefetchPlayerProfile, useWarmRosterProfiles } from "@/lib/data/player-
 import { projectionRosterKey } from "@/lib/data/projection-key";
 import { baseSlotLabel } from "@/lib/data/teams";
 import type { Projection } from "@/lib/data/types";
-import { overlayPreLivePairs, overlayPreLiveRoster } from "@/lib/demo/pre-live";
-import { useDemoOn, usePreLive } from "@/lib/demo/store";
-import { usePreLiveFeed } from "@/lib/demo/use-pre-live-feed";
 import { planAutoFill } from "@/lib/league/autofill";
 import { sitPlayer, startPlayer } from "@/lib/league/fns";
 import { invalidateAfterLineup } from "@/lib/league/lineup-cache";
 import { lineupHealth, resolvePhase } from "@/lib/league/phase";
-import { applyPrototype } from "@/lib/league/prototype";
-import { bookFromLeague } from "@/lib/replay";
+import { bookFromLeague } from "@/lib/live/board";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/league/$leagueId/")({
@@ -53,14 +48,11 @@ function baselineOf(
 function MyTeamPage() {
   const { leagueId } = Route.useParams();
   const qc = useQueryClient();
-  const demoOn = useDemoOn();
-  const preOn = usePreLive();
-  const pre = usePreLiveFeed();
 
   const league = useQuery({
     queryKey: ["league", leagueId],
     queryFn: () => getLeagueBundle({ data: { leagueId } }),
-    refetchInterval: (q) => (q.state.data?.scoringLive || preOn ? 15_000 : false),
+    refetchInterval: (q) => (q.state.data?.scoringLive ? 15_000 : false),
   });
   const search = Route.useSearch();
   const week = search.week ?? league.data?.currentWeek ?? 1;
@@ -79,21 +71,17 @@ function MyTeamPage() {
     queryKey: ["team", leagueId, rosterId, week],
     queryFn: () => getTeam({ data: { leagueId, rosterId: Number(rosterId), week } }),
     enabled: rosterId != null,
-    refetchInterval: () => (league.data?.scoringLive || preOn ? 4_000 : false),
+    refetchInterval: () => (league.data?.scoringLive ? 4_000 : false),
   });
 
   const matchups = useQuery({
     queryKey: ["matchups", leagueId, week],
     queryFn: () => getMatchups({ data: { leagueId, week } }),
-    refetchInterval: () => (league.data?.scoringLive || preOn ? 4_000 : false),
+    refetchInterval: () => (league.data?.scoringLive ? 4_000 : false),
   });
 
   const book = bookFromLeague(league.data?.league.scoring_settings);
-  const pairs = useMemo(() => {
-    const rows = matchups.data ?? [];
-    if (!pre.on) return rows;
-    return overlayPreLivePairs(rows, pre.games, pre.stats, book);
-  }, [matchups.data, pre.on, pre.games, pre.stats, book]);
+  const pairs = matchups.data ?? [];
   const myPair = useMemo(() => {
     if (!pairs.length || rosterId == null) return null;
     return pairs.find((p) => p.home.rosterId === rosterId || p.away?.rosterId === rosterId) ?? null;
@@ -139,20 +127,16 @@ function MyTeamPage() {
 
   const cardPair = useMemo(() => {
     if (!myPair) return null;
-    return paintMatchup(myPair, projections.data ?? {}, pre.on ? pre.stats : {});
-  }, [myPair, projections.data, pre.on, pre.stats]);
+    return paintMatchup(myPair, projections.data ?? {}, {});
+  }, [myPair, projections.data]);
 
-  const recap = useQuery({
-    queryKey: ["recap", leagueId, week],
-    queryFn: () => getRecap({ data: { leagueId, week } }),
-  });
   const weekStats = useQuery({
     queryKey: ["week-stats", season, week],
     queryFn: () =>
       getWeekStats({
         data: { season, week, kind: fantasyStatKind() },
       }),
-    enabled: Boolean(season) && !preOn,
+    enabled: Boolean(season),
     refetchInterval: () => (league.data?.scoringLive ? 4_000 : false),
   });
 
@@ -248,23 +232,18 @@ function MyTeamPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Could not set the lineup"),
   });
 
-  const games = pre.on ? pre.games : pulse.data?.games;
+  const games = pulse.data?.games;
   const nflState = pulse.data?.state;
   const bundle = league.data;
   const phase = useMemo(
     () =>
       bundle
-        ? resolvePhase(bundle, games, pre.on ? { ...nflState, season_type: "regular" } : nflState)
+        ? resolvePhase(bundle, games, nflState)
         : { phase: "midweek" as const, nextKickoff: null, gamesInPlay: 0, gamesLeft: 0 },
-    [bundle, games, nflState, pre.on],
+    [bundle, games, nflState],
   );
 
-  const players = useMemo(() => {
-    const list = team.data?.players;
-    if (!list) return list;
-    if (!pre.on) return list;
-    return overlayPreLiveRoster(list, pre.games, pre.stats, book);
-  }, [team.data?.players, pre.on, pre.games, pre.stats, book]);
+  const players = team.data?.players;
   const rosterPositions = league.data?.league.roster_positions;
   const byeMap = byes.data;
   const realHealth = useMemo(
@@ -285,31 +264,14 @@ function MyTeamPage() {
     [players, rosterPositions, projMap, byeMap, week],
   );
 
-  // `?state=` swaps the derived inputs to the hero and nothing else, so the
-  // states it can be in are reviewable in August. Demo mode, dev builds only.
-  const hero = useMemo(
-    () =>
-      applyPrototype(demoOn ? search.state : undefined, {
-        phase: phase.phase,
-        health: realHealth,
-        draftStatus: bundle?.draftStatus ?? "none",
-        me: realMe,
-        them: realThem,
-        starters: (players ?? []).filter((p) => p.slot === "starter"),
-        fixable: realPlan.length,
-      }),
-    [
-      demoOn,
-      search.state,
-      phase.phase,
-      realHealth,
-      bundle?.draftStatus,
-      realMe,
-      realThem,
-      players,
-      realPlan,
-    ],
-  );
+  const hero = {
+    phase: phase.phase,
+    health: realHealth,
+    draftStatus: bundle?.draftStatus ?? "none",
+    me: realMe,
+    them: realThem,
+    fixable: realPlan.length,
+  };
 
   if (league.data == null && league.isPending) {
     return (
@@ -409,7 +371,7 @@ function MyTeamPage() {
               byes={byes.data}
               week={week}
               projections={projections.data}
-              stats={pre.on ? pre.stats : (weekStats.data ?? {})}
+              stats={weekStats.data ?? {}}
               onIntentPlayer={(p) => void prefetchPlayerProfile(qc, leagueId, p.player_id)}
               onOpenPlayer={(p) =>
                 setSheet({
@@ -434,11 +396,6 @@ function MyTeamPage() {
         </div>
 
         <div className="flex min-w-0 flex-col gap-5">
-          {/* The hero keeps the page's only full-width band — it earns it by
-              being stateful. The desk leads the rail instead, so an alert or
-              live week never stacks two banners before the lineup. */}
-          {recap.data ? <DeskCard leagueId={leagueId} week={week} recap={recap.data} /> : null}
-
           <div className="max-lg:hidden">
             <TeamMasthead
               leagueId={leagueId}
@@ -470,31 +427,5 @@ function MyTeamPage() {
 
       <PlayerSheet target={sheet} leagueId={leagueId} onClose={() => setSheet(null)} />
     </div>
-  );
-}
-
-/** The recap desk card — the editorial tile that leads the right rail. */
-function DeskCard({
-  leagueId,
-  week,
-  recap,
-}: {
-  leagueId: string;
-  week: number;
-  recap: { kicker: string; headline: string; dek: string };
-}) {
-  return (
-    <Link
-      to="/league/$leagueId/recap"
-      params={{ leagueId }}
-      search={{ week, story: undefined }}
-      className="block rounded-xl bg-surface px-5 py-5 ring-card transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-0.5 ring-card-h"
-    >
-      <p className="microlabel">{recap.kicker}</p>
-      <p className="mt-1.5 font-display text-xl font-bold leading-snug tracking-[-0.03em]">
-        <span className="hl">{recap.headline}</span>
-      </p>
-      <p className="mt-2.5 max-w-prose text-sm text-muted">{recap.dek}</p>
-    </Link>
   );
 }

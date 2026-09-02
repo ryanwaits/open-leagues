@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLeagueBundle } from "@/lib/data/fns";
-import { demoAvailable, useDemoStore } from "@/lib/demo/store";
 import {
   addAllowlistEmail,
   advanceWeek,
@@ -638,8 +637,6 @@ function SettingsPage() {
         </p>
       )}
 
-      <DemoMode />
-
       {q.data.isCommish ? <DownloadBackup leagueId={leagueId} /> : null}
 
       {q.data.isCommish && !q.data.locked ? (
@@ -690,64 +687,6 @@ function DownloadBackup({ leagueId }: { leagueId: string }) {
       >
         {busy ? "Preparing…" : "Download backup"}
       </Button>
-    </section>
-  );
-}
-
-/**
- * The one switch for everything the app can pretend.
- *
- * Not league state — a browser preference, sitting on the league settings page
- * because that is where people look for switches. Nobody else in the league is
- * affected by it, which is the point: forcing a phase or unfolding a fake
- * Sunday changes what you are looking at, not what the league is.
- *
- * Absent entirely from a production build.
- */
-function DemoMode() {
-  const enabled = useDemoStore((s) => s.enabled);
-  const hasHydrated = useDemoStore((s) => s.hasHydrated);
-  const setEnabled = useDemoStore((s) => s.setEnabled);
-  if (!demoAvailable) return null;
-  // The server always renders this off; wait for localStorage rather than
-  // paint the wrong pill and swap it under them.
-  const on = hasHydrated && enabled;
-
-  return (
-    <section className="border-t border-line pt-10">
-      <h2 className="font-display text-2xl">Demo mode</h2>
-      <p className="mt-1 max-w-prose text-sm text-muted">
-        Adds a toolbar in the corner: force a week phase, unfold a fake Sunday from last season, or
-        paint tonight&rsquo;s real preseason games onto your matchups (Pre live). Pre live is
-        display only &mdash; it never advances a week or writes scores. This browser only, and it
-        never reaches a deployed build.
-      </p>
-      {/* Deliberately below Save: this applies the instant you press it, and
-          sitting inside the form would promise otherwise. */}
-      <div className="mt-4 flex flex-wrap gap-1">
-        {(
-          [
-            [true, "On"],
-            [false, "Off"],
-          ] as const
-        ).map(([id, lab]) => (
-          <button
-            key={String(id)}
-            type="button"
-            disabled={!hasHydrated}
-            onClick={() => setEnabled(id)}
-            className={cn(
-              "h-10 rounded-sm px-4 font-mono text-sm disabled:opacity-50",
-              on === id ? "bg-accent text-accent-fg" : "bg-raised text-muted",
-            )}
-          >
-            {lab}
-          </button>
-        ))}
-      </div>
-      <p className="mt-3 text-xs text-faint">
-        Turning it off stops any simulation in progress and puts the real week back.
-      </p>
     </section>
   );
 }

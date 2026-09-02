@@ -10,14 +10,11 @@ import { useIsPhone } from "@/lib/breakpoint";
 import { getGameSummary } from "@/lib/data/fns";
 import { shortKickoff } from "@/lib/data/kickoff";
 import { playerPlays, playMentionsPlayer, situationIsRedZone } from "@/lib/data/player-plays";
-import { bagForPlayer, simulatePlayerGame } from "@/lib/data/sim-game";
 import { formatStatLine } from "@/lib/data/statline";
 import { baseSlotLabel, dstLabel, playerHeadshot, teamLogo } from "@/lib/data/teams";
 import type { GamePlay, GameSummary, SlimPlayer, StarterLine } from "@/lib/data/types";
-import { useSimPhase, useSimProgress } from "@/lib/demo/store";
 import type { ScoringBook } from "@/lib/league/scoring";
 import { EMPTY_BOOK, useProjectionSeries } from "@/lib/live/use-projection-series";
-import { REPLAY_PHASES, replayPts, replayStats } from "@/lib/replay";
 import { cn, formatPts } from "@/lib/utils";
 
 export type WatchTarget = {
@@ -134,12 +131,6 @@ export function PlayerWatch({
 
 function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => void }) {
   const [tab, setTab] = useState<"drive" | "plays">("drive");
-  // No transport of its own. If a simulated Sunday is running, this drawer is
-  // part of it; otherwise it shows whatever the real box says.
-  const simPhase = useSimPhase();
-  // Fractional twin of simPhase — drives only the shown points/stat line so
-  // they climb smoothly; the play-by-play below still builds off simPhase.
-  const simProgress = useSimProgress();
   const q = useQuery({
     queryKey: ["game", target.gameId],
     queryFn: () => getGameSummary({ data: { gameId: target.gameId! } }),
@@ -153,27 +144,12 @@ function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => vo
   });
   const liveHasPlays =
     Boolean(q.data?.drives.some((d) => d.plays.length)) && q.data?.state !== "pre";
-  const bag = bagForPlayer(target.player, target.stats);
-  // Real play-by-play always wins: a game that is actually being played does
-  // not get a made-up one drawn over it.
-  const phase = liveHasPlays ? null : simPhase;
-  const progress = liveHasPlays ? null : simProgress;
-
-  const sim =
-    phase != null
-      ? simulatePlayerGame({ player: target.player, bag, phase, base: q.data ?? null })
-      : null;
-  const g = sim ?? q.data ?? null;
+  const g = q.data ?? null;
   const his = g ? playerPlays(g, target.player) : [];
   const red = situationIsRedZone(g?.situation);
   const live = g?.state === "in";
-  const shownBag =
-    sim && progress != null ? replayStats(target.player.player_id, bag, progress, 1) : target.stats;
-  const shownLine = formatStatLine(target.player.position, shownBag) ?? target.line;
-  const shownPts =
-    sim && progress != null
-      ? replayPts(target.player.player_id, target.points ?? 0, progress, 1)
-      : target.points;
+  const shownLine = formatStatLine(target.player.position, target.stats) ?? target.line;
+  const shownPts = target.points;
   const name =
     target.player.position === "DEF" && target.player.team
       ? dstLabel(target.player.team)
@@ -228,17 +204,15 @@ function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => vo
           <ProjectionBlock
             s={series}
             kickoffLabel={shortKickoff(g?.detail)}
-            windowSecs={simPhase != null ? 150 : undefined}
+            windowSecs={undefined}
           />
         ) : null}
 
         {!liveHasPlays && !(target.gameId && q.isLoading) ? (
-          <p className="microlabel">
-            {phase != null ? `Sim · ${REPLAY_PHASES[phase]?.label ?? ""}` : "No kickoff yet"}
-          </p>
+          <p className="microlabel">No kickoff yet</p>
         ) : null}
 
-        {target.gameId && q.isLoading && !sim ? (
+        {target.gameId && q.isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-24" />
             <Skeleton className="h-48" />
@@ -247,7 +221,7 @@ function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => vo
           <p className="text-sm text-muted">Could not load that box. Try again in a moment.</p>
         ) : (
           <>
-            <GameStrip g={g} live={live} red={red} sim={Boolean(sim)} />
+            <GameStrip g={g} live={live} red={red} />
 
             <div className="flex gap-1.5">
               {(
@@ -288,17 +262,7 @@ function WatchBody({ target, onClose }: { target: WatchTarget; onClose: () => vo
   );
 }
 
-function GameStrip({
-  g,
-  live,
-  red,
-  sim,
-}: {
-  g: GameSummary;
-  live: boolean;
-  red: boolean;
-  sim?: boolean;
-}) {
+function GameStrip({ g, live, red }: { g: GameSummary; live: boolean; red: boolean }) {
   return (
     <section className={cn("rounded-md px-3 py-3", red ? "bg-live/15" : "bg-raised")}>
       <div className="flex items-center justify-between gap-2">
@@ -306,15 +270,7 @@ function GameStrip({
           {g.away.abbr} @ {g.home.abbr}
         </p>
         <Badge tone={live ? "live" : g.state === "post" ? "win" : "default"}>
-          {sim
-            ? live
-              ? "Sim live"
-              : g.state === "post"
-                ? "Sim final"
-                : "Sim"
-            : live
-              ? "Live"
-              : g.detail || "Scheduled"}
+          {live ? "Live" : g.detail || "Scheduled"}
         </Badge>
       </div>
       <p className="mt-1 font-display text-2xl tabular-nums tracking-tight">

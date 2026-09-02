@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
+  Link,
   Outlet,
   redirect,
   useNavigate,
@@ -9,29 +10,25 @@ import {
 import { BarChart3, House, Search, Shield, Swords } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { DemoToolbar } from "@/components/demo-toolbar";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WeekPicker } from "@/components/week-picker";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getLeagueBundle, getMatchups, getTeam, getWire } from "@/lib/data/fns";
 import { joinLeague } from "@/lib/league/fns";
-import { type PrototypeState, parsePrototypeState } from "@/lib/league/prototype";
 import { warmQuery } from "@/lib/query-client";
 import { useLeagueStore } from "@/lib/store";
 
 type LeagueSearch = {
   week?: number;
   focus?: number;
-  /** Dev-only week-phase override. See `lib/league/prototype`. */
-  state?: PrototypeState;
 };
 
 export const Route = createFileRoute("/league/$leagueId")({
   validateSearch: (s: Record<string, unknown>): LeagueSearch => ({
     week: s.week != null && Number.isFinite(Number(s.week)) ? Number(s.week) : undefined,
     focus: s.focus != null && Number.isFinite(Number(s.focus)) ? Number(s.focus) : undefined,
-    state: parsePrototypeState(s.state),
   }),
   loader: async ({ context, params, location }) => {
     try {
@@ -123,7 +120,7 @@ const TABS = [
     label: "League",
     end: false,
     when: "always",
-    owns: ["/trades", "/activity", "/team/", "/recap"],
+    owns: ["/trades", "/activity", "/team/"],
     Icon: BarChart3,
   },
   {
@@ -142,6 +139,7 @@ function LeagueLayout() {
   const search = useRouterState({ select: (s) => s.location.search as LeagueSearch });
   const navigate = useNavigate();
   const remember = useLeagueStore((s) => s.remember);
+  const { user } = useCurrentUserState();
   const q = useQuery({
     queryKey: ["league", leagueId],
     queryFn: () => getLeagueBundle({ data: { leagueId } }),
@@ -185,9 +183,9 @@ function LeagueLayout() {
    * to draw their own seventeen-button strip; now they share one control that
    * writes the same search param.
    */
-  const WEEKLY = ["/matchups", "/activity", "/recap", "/roster", "/standings"];
+  const WEEKLY = ["/matchups", "/activity", "/roster", "/standings"];
   const usesWeek = WEEKLY.some((seg) => pathname.startsWith(`/league/${leagueId}${seg}`));
-  const deckWeek = ["/matchups", "/standings", "/recap"].some((seg) =>
+  const deckWeek = ["/matchups", "/standings"].some((seg) =>
     pathname.startsWith(`/league/${leagueId}${seg}`),
   );
   const playoffStart =
@@ -233,13 +231,11 @@ function LeagueLayout() {
         </header>
       ) : null}
 
-      {q.data?.hosted && !q.data.myRosterId && !q.data.locked ? (
+      {q.data?.hosted && !q.data.myRosterId && !q.data.locked && user ? (
         <ClaimBanner leagueId={leagueId} inviteCode={q.data.inviteCode} />
       ) : null}
 
       <Outlet />
-
-      <DemoToolbar state={search.state} />
     </Shell>
   );
 }

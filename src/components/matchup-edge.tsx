@@ -4,7 +4,6 @@ import { getOutlooks, getTicks } from "@/lib/data/fns";
 import { pairHasStarted } from "@/lib/data/matchup-view";
 import { baseSlotLabel } from "@/lib/data/teams";
 import { isHostedLeague, type MatchupPair } from "@/lib/data/types";
-import { useSimPhase } from "@/lib/demo/store";
 import { type PlayerOutlook, winProbability } from "@/lib/league/win-probability";
 import { type EdgeView, useLiveProjPref } from "@/lib/live/prefs";
 import { swing } from "@/lib/live/series";
@@ -95,10 +94,6 @@ export function MatchupEdge({
   const setEdgeView = useLiveProjPref((st) => st.setEdgeView);
   const edgeWindow = useLiveProjPref((st) => st.edgeWindow);
   const setEdgeWindow = useLiveProjPref((st) => st.setEdgeWindow);
-  // A simulated Sunday plays out in ~96 real seconds (REPLAY_TICK_MS), so the
-  // real-time 1H/3H/DAY windows would compress the whole game into a sliver
-  // at the right edge — use a fixed short window and hide the chips instead.
-  const simOn = useSimPhase() != null;
 
   if (!away) return null;
 
@@ -184,8 +179,8 @@ export function MatchupEdge({
             }
             value={multi ? undefined : edgeView === "pct" ? s.last?.youPct : s.last?.margin}
             height={196}
-            windowSecs={simOn ? 150 : edgeWindow}
-            windows={simOn ? undefined : WINDOWS}
+            windowSecs={edgeWindow}
+            windows={WINDOWS}
             onWindowChange={setEdgeWindow}
             referenceLine={
               multi

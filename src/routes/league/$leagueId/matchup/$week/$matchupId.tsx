@@ -39,21 +39,8 @@ import type {
   StarterLine,
   TeamBundle,
 } from "@/lib/data/types";
-import { overlayPreLivePairs, overlayPreLiveRoster } from "@/lib/demo/pre-live";
-import { useDemoStore, useSimPhase, useSimProgress } from "@/lib/demo/store";
-import { usePreLiveFeed } from "@/lib/demo/use-pre-live-feed";
 import type { ScoringBook } from "@/lib/league/scoring";
-import {
-  applyReplaySide,
-  bookFromLeague,
-  LIVE_POLL_MS,
-  pairingIsLive,
-  REPLAY_PHASES,
-  REPLAY_TICK_MS,
-  replayPts,
-  replayStatMap,
-  seedPairForReplay,
-} from "@/lib/replay";
+import { bookFromLeague, LIVE_POLL_MS, pairingIsLive } from "@/lib/live/board";
 import { useSwipe } from "@/lib/swipe";
 import { cn, fmtRecord, formatPts } from "@/lib/utils";
 
@@ -67,13 +54,6 @@ function MatchupPage() {
   const week = Number(weekParam);
   const matchupId = Number(idParam);
   // The transport lives in the demo toolbar; this page only reads the clock.
-  // `phase` (integer) indexes REPLAY_PHASES for labels/game state; `progress`
-  // (fractional, same value rounded down when paused) drives the painted
-  // point totals so the matchup chart moves smoothly instead of in cliffs.
-  const phase = useSimPhase();
-  const progress = useSimProgress();
-  const pre = usePreLiveFeed();
-  const stopSim = useDemoStore((s) => s.stop);
   const [watch, setWatch] = useState<WatchTarget | null>(null);
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
 
@@ -109,14 +89,13 @@ function MatchupPage() {
   const league = useQuery({
     queryKey: ["league", leagueId],
     queryFn: () => getLeagueBundle({ data: { leagueId } }),
-    refetchInterval: (q) => (phase == null && q.state.data?.scoringLive ? LIVE_POLL_MS : false),
+    refetchInterval: (q) => (q.state.data?.scoringLive ? LIVE_POLL_MS : false),
   });
   const matchups = useQuery({
     queryKey: ["matchups", leagueId, week],
     queryFn: () => getMatchups({ data: { leagueId, week } }),
     enabled: Number.isFinite(week),
     refetchInterval: (q) => {
-      if (phase != null) return false;
       const rows = q.state.data ?? [];
       const live = rows.some((pair) =>
         [pair.home, pair.away].some((side) => side?.starters.some((s) => s.game?.state === "in")),
@@ -135,13 +114,13 @@ function MatchupPage() {
     queryKey: ["team", leagueId, rawPair?.home.rosterId, week],
     queryFn: () => getTeam({ data: { leagueId, rosterId: rawPair!.home.rosterId, week } }),
     enabled: Boolean(rawPair),
-    refetchInterval: () => (phase == null && league.data?.scoringLive ? LIVE_POLL_MS : false),
+    refetchInterval: () => (league.data?.scoringLive ? LIVE_POLL_MS : false),
   });
   const awayTeam = useQuery({
     queryKey: ["team", leagueId, rawPair?.away?.rosterId, week],
     queryFn: () => getTeam({ data: { leagueId, rosterId: rawPair!.away!.rosterId, week } }),
     enabled: Boolean(rawPair?.away),
-    refetchInterval: () => (phase == null && league.data?.scoringLive ? LIVE_POLL_MS : false),
+    refetchInterval: () => (league.data?.scoringLive ? LIVE_POLL_MS : false),
   });
   const weekStats = useQuery({
     queryKey: ["week-stats", league.data?.league.season, week],
@@ -154,7 +133,7 @@ function MatchupPage() {
         },
       }),
     enabled: Boolean(league.data?.league.season) && Number.isFinite(week),
-    refetchInterval: () => (phase == null && league.data?.scoringLive ? LIVE_POLL_MS : false),
+    refetchInterval: () => (league.data?.scoringLive ? LIVE_POLL_MS : false),
   });
   const finalsRaw = weekStats.data ?? {};
   const priorSeason = league.data?.league.season
@@ -182,46 +161,14 @@ function MatchupPage() {
     staleTime: 60_000,
   });
   const book = bookFromLeague(league.data?.league.scoring_settings);
-  const seeded = useMemo(() => {
-    if (!rawPair) return null;
-    const bags = Object.keys(finalsRaw).length ? finalsRaw : { ...(priorStats.data ?? {}) };
-    return seedPairForReplay(rawPair, week, bags, book);
-  }, [rawPair, week, finalsRaw, priorStats.data, book]);
-
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset the watched player whenever the week, matchup, or league changes, not just when its own value changes
   useEffect(() => {
     setWatch(null);
   }, [week, matchupId, leagueId]);
 
-  // A box already playing out for real has nothing to replay, and a fake Q3 on
-  // top of live scores is the worst thing this page could do.
-  useEffect(() => {
-    if (rawPair && pairingIsLive(rawPair) && phase != null) stopSim();
-  }, [rawPair, phase, stopSim]);
+  const livePair = rawPair;
 
-  const livePair = useMemo(() => {
-    if (pre.on && rawPair) {
-      return overlayPreLivePairs([rawPair], pre.games, pre.stats, book)[0] ?? rawPair;
-    }
-    if (!seeded) return null;
-    if (phase == null) return rawPair;
-    const at = progress ?? phase;
-    return {
-      ...seeded.pair,
-      home: applyReplaySide(seeded.pair.home, week, at, seeded.finals),
-      away: seeded.pair.away ? applyReplaySide(seeded.pair.away, week, at, seeded.finals) : null,
-    };
-  }, [pre.on, pre.games, pre.stats, book, rawPair, seeded, phase, progress, week]);
-
-  const stats = useMemo(
-    () =>
-      pre.on
-        ? pre.stats
-        : phase == null
-          ? finalsRaw
-          : replayStatMap(seeded?.finals ?? finalsRaw, progress ?? phase, week),
-    [pre.on, pre.stats, finalsRaw, seeded, phase, progress, week],
-  );
+  const stats = finalsRaw;
 
   const pair = useMemo(
     () => (livePair ? paintMatchup(livePair, projections.data ?? {}, stats) : null),
@@ -231,9 +178,8 @@ function MatchupPage() {
   const slate = useMemo(() => {
     const rows = matchups.data ?? [];
     if (!rows.length) return rows;
-    const overlaid = pre.on ? overlayPreLivePairs(rows, pre.games, pre.stats, book) : rows;
-    return paintMatchups(overlaid, projections.data ?? {}, stats);
-  }, [matchups.data, pre.on, pre.games, pre.stats, book, projections.data, stats]);
+    return paintMatchups(rows, projections.data ?? {}, stats);
+  }, [matchups.data, projections.data, stats]);
 
   // The score-card row moves by transform, never by free scrolling — so a
   // vertical page scroll can't drift it sideways. A deliberate sideways touch
@@ -270,38 +216,8 @@ function MatchupPage() {
     return () => obs.disconnect();
   }, [pair != null]);
 
-  const prevPair = useMemo(() => {
-    if (!seeded || progress == null || progress <= 0) return null;
-    const raw: MatchupPair = {
-      ...seeded.pair,
-      home: applyReplaySide(seeded.pair.home, week, progress - 1, seeded.finals),
-      away: seeded.pair.away
-        ? applyReplaySide(seeded.pair.away, week, progress - 1, seeded.finals)
-        : null,
-    };
-    return paintMatchup(
-      raw,
-      projections.data ?? {},
-      replayStatMap(seeded.finals, progress - 1, week),
-    );
-  }, [seeded, progress, week, projections.data]);
-
-  const viewHome = useMemo(() => {
-    const replayed = replayRoster(homeTeam.data, phase, progress, week);
-    if (!pre.on || !replayed) return replayed;
-    return {
-      ...replayed,
-      players: overlayPreLiveRoster(replayed.players, pre.games, pre.stats, book),
-    };
-  }, [homeTeam.data, phase, progress, week, pre.on, pre.games, pre.stats, book]);
-  const viewAway = useMemo(() => {
-    const replayed = replayRoster(awayTeam.data, phase, progress, week);
-    if (!pre.on || !replayed) return replayed;
-    return {
-      ...replayed,
-      players: overlayPreLiveRoster(replayed.players, pre.games, pre.stats, book),
-    };
-  }, [awayTeam.data, phase, progress, week, pre.on, pre.games, pre.stats, book]);
+  const viewHome = homeTeam.data;
+  const viewAway = awayTeam.data;
 
   if (!Number.isFinite(week) || !Number.isFinite(matchupId)) {
     return <p className="text-sm text-muted">That matchup link is broken.</p>;
@@ -330,15 +246,8 @@ function MatchupPage() {
   }
 
   const standings = league.data?.standings ?? [];
-  const lastPhase = REPLAY_PHASES.length - 1;
-  const status =
-    phase == null
-      ? statusOf(livePair ?? pair)
-      : {
-          label: REPLAY_PHASES[phase]?.label ?? "Replay",
-          tone: (phase >= lastPhase ? "win" : "live") as "live" | "muted" | "win",
-        };
-  const liveFlag = phase == null && Boolean(league.data?.scoringLive) && status.tone === "live";
+  const status = statusOf(livePair ?? pair);
+  const liveFlag = Boolean(league.data?.scoringLive) && status.tone === "live";
   const decided = isDecided(pair);
   const miniScores = pairPreviewScores(pair);
   const miniHomeLeads = !pair.away || miniScores.home >= miniScores.away;
@@ -481,8 +390,8 @@ function MatchupPage() {
                   key={homeLine.slot}
                   home={homeLine}
                   away={pair.away?.starters[i] ?? null}
-                  prevHome={prevPair?.home.starters[i] ?? null}
-                  prevAway={prevPair?.away?.starters[i] ?? null}
+                  prevHome={null}
+                  prevAway={null}
                   bye={!pair.away}
                   final={decided}
                   stats={stats}
@@ -713,14 +622,6 @@ function Scoreboard({
               ? `Decided by ${decidedSlot.slot} · +${formatPts(decidedSlot.margin, 1)}`
               : ""}
           </span>
-          <Link
-            to="/league/$leagueId/recap"
-            params={{ leagueId }}
-            search={{ week, story: undefined }}
-            className="microlabel text-accent-strong"
-          >
-            Recap →
-          </Link>
         </div>
       ) : (
         <div className="mt-4 flex items-center justify-between border-t border-line pt-3 microlabel-data">
@@ -1120,31 +1021,6 @@ function benchOf(team?: TeamBundle) {
  * game chip; `progress` (fractional, falls back to `phase`) drives the
  * points so bench totals climb smoothly along with the starters.
  */
-function replayRoster(
-  team: TeamBundle | undefined,
-  phase: number | null,
-  progress: number | null,
-  week: number,
-): TeamBundle | undefined {
-  if (!team || phase == null) return team;
-  const clock = REPLAY_PHASES[phase] ?? REPLAY_PHASES[0]!;
-  const at = progress ?? phase;
-  return {
-    ...team,
-    players: team.players.map((p) => ({
-      ...p,
-      weekPts: replayPts(p.player_id, p.weekPts ?? 0, at, week),
-      game: p.game
-        ? {
-            state: clock.state,
-            detail: clock.detail,
-            opp: p.game.opp,
-            gameId: p.game.gameId ?? null,
-          }
-        : { state: clock.state, detail: clock.detail, opp: null, gameId: null },
-    })),
-  };
-}
 
 function starterTotal(side: MatchupSide) {
   return side.starters.reduce((sum, line) => sum + (line.points ?? 0), 0);
