@@ -19,6 +19,9 @@
  *
  * Mutating catalog entries are refused from argv by default. Only
  * `placeWager` is dispatched, and only with an explicit `--write`.
+ *
+ * `mintToken` is not a catalog verb — it issues this box's own MCP bearer, so
+ * a self-hoster never has to open the browser app to go headless.
  */
 import { AGENT_TOOLS } from "../src/lib/agent/catalog.ts";
 
@@ -52,7 +55,7 @@ function parseArgs(argv) {
 
 function printHelp() {
   const lines = [
-    "Ledger CLI. Reads by default; writes need --write (placeWager only).",
+    "Ledger CLI. Reads by default; writes need --write (placeWager, mintToken).",
     "",
     "Usage:",
     "  bun scripts/ledger.mjs --help",
@@ -62,10 +65,13 @@ function printHelp() {
     "  bun scripts/ledger.mjs getAgentContext --league <id> --user <id>",
     "  bun scripts/ledger.mjs placeWager --write --user <id> --league <id> \\",
     "    --matchup <n> --kind spread|moneyline --side <rosterId> --line <n> --stake <n>",
+    "  bun scripts/ledger.mjs mintToken --write --user <id> [--name codex]",
     "",
     "Live reads/writes need DATABASE_URL (same Postgres as the app) or the running app.",
     "bun cannot boot the PGLite fallback (no import.meta.glob).",
     "--user is the seat holder's user id (dump is their purse; placeWager stakes as them).",
+    "mintToken issues an ol_ bearer for /api/mcp against THIS box's database — no browser",
+    "needed. The plaintext is printed once; only its hash is stored.",
     "",
     "Tools:",
   ];
@@ -89,6 +95,7 @@ function payloadOf(args) {
     sideRoster: args.side != null ? Number(args.side) : json.sideRoster,
     line: args.line != null ? Number(args.line) : json.line,
     stake: args.stake != null ? Number(args.stake) : json.stake,
+    name: args.name ?? json.name,
   };
 }
 
@@ -148,12 +155,40 @@ async function dispatchPlaceWager(args) {
   });
 }
 
+/**
+ * An agent token is the host's business, not the browser's. A self-hoster with
+ * a shell and a DATABASE_URL can issue one here rather than signing in to the
+ * app they may not be running at all.
+ */
+async function dispatchMintToken(args) {
+  const data = payloadOf(args);
+  if (!data.userId) fail("mintToken requires --user <id>");
+  const { mintToken } = await import("../src/lib/auth/tokens.server.ts");
+  const minted = await mintToken(data.userId, data.name ?? "codex");
+  return {
+    ...minted,
+    note: "Copy the token now — only its hash is stored. Revoke from /account or by id.",
+  };
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const id = args._[0];
   if (args.help || args.list || !id) {
     printHelp();
     process.exit(0);
+  }
+
+  if (id === "mintToken") {
+    if (args.write !== true) {
+      fail("mintToken issues a live credential and is not dispatched without --write.");
+    }
+    try {
+      console.log(JSON.stringify(await dispatchMintToken(args), null, 2));
+    } catch (err) {
+      fail(err instanceof Error ? err.message : String(err));
+    }
+    return;
   }
 
   const tool = AGENT_TOOLS.find((t) => t.id === id);

@@ -1,6 +1,9 @@
 /**
  * Hosted MCP over Streamable HTTP (JSON response mode — no SSE).
- * Auth: Authorization Bearer ol_… via lookupToken. Never cookie sessions.
+ *
+ * Identity comes from `resolveMcpUser` — a bearer token by default, or a header
+ * your own edge sets when OPENLEAGUES_MCP_AUTH=proxy. Never cookie sessions,
+ * and never from tool arguments.
  */
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
@@ -9,7 +12,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AGENT_TOOLS } from "@/lib/agent/catalog";
 import { AGENT_CORE } from "@/lib/agent/core";
 import { dispatch } from "@/lib/agent/dispatch";
-import { lookupToken } from "@/lib/auth/tokens.server";
+import { resolveMcpUser } from "@/lib/auth/mcp-identity.server";
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -29,14 +32,16 @@ function unauthorized(): Response {
   return Response.json({ error: "unauthorized" }, { status: 401, headers: CORS });
 }
 
-/** Resolve Bearer ol_… → userId, or 401. Cookie sessions are not accepted. */
-async function authorizeBearer(request: Request): Promise<string | Response> {
-  const header = request.headers.get("authorization") ?? "";
-  const raw = header.startsWith("Bearer ") ? header.slice("Bearer ".length).trim() : "";
-  if (!raw.startsWith("ol_")) return unauthorized();
-  const userId = await lookupToken(raw);
-  if (!userId) return unauthorized();
-  return userId;
+/** Resolve the caller → userId, or 401. Cookie sessions are not accepted. */
+async function authorize(request: Request): Promise<string | Response> {
+  try {
+    const userId = await resolveMcpUser(request);
+    return userId ?? unauthorized();
+  } catch (err) {
+    // A misconfigured identity mode is a closed door, not an open one.
+    console.error("[mcp] identity resolution failed:", err);
+    return unauthorized();
+  }
 }
 
 const inputSchema = {
@@ -67,7 +72,7 @@ function buildServer(userId: string): Server {
         ? (request.params.arguments as Record<string, unknown>)
         : {};
     try {
-      // userId from Bearer token only — never from tool arguments
+      // userId from the resolved identity only — never from tool arguments
       const result = await dispatch(name, userId, args);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -84,8 +89,13 @@ function buildServer(userId: string): Server {
   return server;
 }
 
-async function handleMcp(request: Request): Promise<Response> {
-  const auth = await authorizeBearer(request);
+/**
+ * Exported for tests: the whole request path, minus the router. `tools/list`
+ * never reaches the engine, so the protocol surface is testable without a
+ * database.
+ */
+export async function handleMcp(request: Request): Promise<Response> {
+  const auth = await authorize(request);
   if (typeof auth !== "string") return auth;
 
   const transport = new WebStandardStreamableHTTPServerTransport({
