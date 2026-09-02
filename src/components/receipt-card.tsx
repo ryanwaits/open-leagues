@@ -166,6 +166,27 @@ export function ReceiptCard({ receipt: r, permalink }: { receipt: Receipt; perma
                     </span>
                   ) : null}
                 </p>
+                {topMiss?.sources?.some((c) => c.pick !== "none") ? (
+                  <ul className="mt-2 divide-y divide-line border-y border-line">
+                    {topMiss.sources
+                      .filter((c) => c.pick !== "none")
+                      .map((c) => (
+                        <li
+                          key={c.source}
+                          className="flex items-baseline justify-between gap-3 py-1.5 text-[13px]"
+                        >
+                          <span className="text-muted">{c.label}</span>
+                          <span className="font-mono text-[12.5px] tabular-nums">
+                            {c.pick === "start" ? "start" : "hold"}{" "}
+                            <span className="text-faint">
+                              {c.best != null ? c.best.toFixed(1) : "—"} /{" "}
+                              {c.started != null ? c.started.toFixed(1) : "—"}
+                            </span>
+                          </span>
+                        </li>
+                      ))}
+                  </ul>
+                ) : null}
                 {r.bench.misses.length > 1 ? (
                   <ul className="mt-2 divide-y divide-line border-y border-line">
                     {r.bench.misses.map((m) => (
@@ -217,6 +238,31 @@ export function ReceiptCard({ receipt: r, permalink }: { receipt: Receipt; perma
           </div>
         ) : null}
       </div>
+
+      {r.agent.actions.length > 0 ? (
+        <div className="px-5 pb-4">
+          <div className="font-mono text-[10.5px] tracking-[0.08em] text-faint uppercase">
+            the agent
+          </div>
+          <ul className="mt-1 divide-y divide-line border-y border-line">
+            {r.agent.actions.map((a) => (
+              <li
+                key={`${a.at}-${a.tool}`}
+                className="flex items-baseline justify-between gap-3 py-1.5 text-[13px]"
+              >
+                <span className="min-w-0 truncate">
+                  <span className="font-medium">{a.actor}</span>
+                  <span className="text-muted"> · {a.tool}</span>
+                </span>
+                <span className="font-mono text-[11.5px] text-faint">{a.atLabel}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 text-[12px] text-faint">
+            Writes made through a credential, as the league logged them. Undo is the reverse verb.
+          </p>
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-band px-4 py-2 font-mono text-[11px] text-faint">
         <span className="min-w-0 truncate">{permalink.replace(/^https?:\/\//, "")}</span>

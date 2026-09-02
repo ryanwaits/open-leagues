@@ -2,6 +2,7 @@ import type { ActivityItem, LeagueBundle, MatchupPair, TeamBundle } from "@/lib/
 import { isHostedLeague } from "@/lib/data/types";
 import { type BenchReceipt, benchReceipt } from "./bench";
 import { computeFlip, type FlipSide, gameStatesAt, scoresAt, type TimelineEvent } from "./flip";
+import { agreementLine, callsFor } from "./sources";
 
 /**
  * A receipt is one roster's week, stated as facts: the score, what was left on
@@ -44,6 +45,9 @@ export type ReceiptFlip = {
   beforeLabel: string | null;
 };
 
+/** A write an agent ran on this roster this week, through a credential. */
+export type AgentAction = { tool: string; actor: string; at: string; atLabel: string };
+
 export type Receipt = {
   league: { id: string; name: string; season: string; hosted: boolean };
   week: number;
@@ -54,6 +58,8 @@ export type Receipt = {
   bench: BenchReceipt;
   wire: { moves: WireMove[]; spent: number };
   flip: ReceiptFlip | null;
+  /** Only a hosted league can know this; the passthrough has no ledger. */
+  agent: { actions: AgentAction[] };
   generatedAt: string;
 };
 
@@ -302,6 +308,27 @@ export async function buildReceipt(
   const positions = bundle.league.roster_positions ?? [];
   const bench = benchReceipt(team.players, positions);
 
+  // Name the sources on a settled week: what each would have called, and
+  // whether it was right. Open sources only; a paid source is never rendered.
+  if (outcome !== "pending" && bench.misses.length > 0) {
+    try {
+      const { sourceValues } = await import("./sources.server");
+      const ids = bench.misses.flatMap((m) => [m.best.playerId, m.started?.playerId ?? null]);
+      const values = await sourceValues({
+        leagueId,
+        season: String(bundle.league.season),
+        week,
+        playerIds: ids.filter((id): id is string => Boolean(id)),
+      });
+      for (const m of bench.misses) {
+        m.sources = callsFor(m.started?.playerId ?? null, m.best.playerId, values);
+        m.sourceLine = agreementLine(m.sources, m.best.name, m.started?.name ?? null);
+      }
+    } catch {
+      /* sources are a courtesy; the receipt stands without them */
+    }
+  }
+
   const moves: WireMove[] = activity
     .filter((a) => a.rosterIds.includes(rosterId))
     .map((a) => ({
@@ -316,6 +343,27 @@ export async function buildReceipt(
     .reduce((n, m) => n + (m.bid ?? 0), 0);
 
   const season = String(bundle.league.season);
+
+  // The receipt names the agent: every write that came through a credential.
+  let agentActions: AgentAction[] = [];
+  if (isHostedLeague(leagueId)) {
+    try {
+      const { readEvents } = await import("@/lib/league/events.server");
+      const events = await readEvents(leagueId, { sinceWeek: week, limit: 500 });
+      agentActions = events
+        .filter((e) => e.kind === "agent_action" && e.week === week && e.actorRoster === rosterId)
+        .map((e) => ({
+          tool: String(e.payload.tool ?? "unknown"),
+          actor: String(e.payload.actor ?? "agent"),
+          at: e.at,
+          atLabel: etLabel(e.at),
+        }))
+        .sort((a, b) => (a.at < b.at ? -1 : 1));
+    } catch {
+      agentActions = [];
+    }
+  }
+
   const flip =
     pair && outcome !== "pending"
       ? await flipFor({ leagueId, season, week, pair, mine: rosterId }).catch(() => null)
@@ -336,6 +384,7 @@ export async function buildReceipt(
     bench,
     wire: { moves, spent },
     flip,
+    agent: { actions: agentActions },
     generatedAt: new Date().toISOString(),
   };
 }

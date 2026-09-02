@@ -1,5 +1,6 @@
 import type { Projection, RosterPlayer } from "@/lib/data/types";
 import { fillLineup } from "@/lib/league/lineup-value";
+import type { SourceCall } from "./sources";
 
 /**
  * The bench receipt: what you started against the best lineup you could have
@@ -11,6 +12,10 @@ export type BenchMiss = {
   started: { playerId: string; name: string; points: number } | null;
   best: { playerId: string; name: string; points: number };
   cost: number;
+  /** What each pre-kickoff source would have called. Filled by the receipt. */
+  sources?: SourceCall[];
+  /** "Sleeper projection said start X; Last 3 weeks said hold Y." */
+  sourceLine?: string | null;
 };
 
 export type BenchReceipt = {

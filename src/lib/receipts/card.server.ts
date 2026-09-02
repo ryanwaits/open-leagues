@@ -47,7 +47,8 @@ function benchLine(r: Receipt): string {
   const detail = m
     ? ` ${m.best.name} ${fmt(m.best.points)} sat behind ${m.started ? `${m.started.name} ${fmt(m.started.points)}` : "an empty slot"}.`
     : "";
-  return `Left ${fmt(r.bench.left)} on the bench.${detail}`;
+  const said = m?.sourceLine ? ` ${m.sourceLine}` : "";
+  return `Left ${fmt(r.bench.left)} on the bench.${detail}${said}`;
 }
 
 function wireLine(r: Receipt): string | null {
@@ -120,6 +121,17 @@ export async function renderReceiptPng(r: Receipt, origin: string): Promise<Arra
   lines.push(
     el("div", { fontSize: 26, color: INK_2, display: "flex", marginTop: 10 }, benchLine(r)),
   );
+  if (r.agent.actions.length > 0) {
+    const a = r.agent.actions[0];
+    const more = r.agent.actions.length > 1 ? ` and ${r.agent.actions.length - 1} more` : "";
+    lines.push(
+      el(
+        "div",
+        { fontSize: 24, color: INK_2, display: "flex", marginTop: 10 },
+        `${a?.actor ?? "An agent"} ran ${a?.tool ?? "a write"} at ${a?.atLabel ?? ""}${more}.`,
+      ),
+    );
+  }
   const wire = wireLine(r);
   if (wire)
     lines.push(el("div", { fontSize: 24, color: INK_3, display: "flex", marginTop: 10 }, wire));
