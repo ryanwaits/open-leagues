@@ -138,3 +138,15 @@ test("a substrate box ignores a bearer token: there are no accounts to check it 
   const res = await handleMcp(rpc(LIST, { authorization: "Bearer ol_anything" }));
   assert.equal(res.status, 200);
 });
+
+test("tools/list carries real argument schemas, so clients send arrays as arrays", async () => {
+  process.env.OPENLEAGUES_MODE = "substrate";
+  const res = await handleMcp(rpc(LIST));
+  const body = await res.json();
+  const sample = body.result.tools.find((t) => t.name === "sampleGames");
+  assert.equal(sample.inputSchema.properties.seasons.type, "array");
+  assert.deepEqual(sample.inputSchema.required, ["seasons"]);
+  assert.equal(sample.inputSchema.properties.filter.properties.splits.type, "array");
+  const sim = body.result.tools.find((t) => t.name === "simulateBankroll");
+  assert.ok(Array.isArray(sim.inputSchema.properties.policy.oneOf));
+});

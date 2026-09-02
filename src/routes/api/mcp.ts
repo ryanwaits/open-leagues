@@ -12,6 +12,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AGENT_TOOLS } from "@/lib/agent/catalog";
 import { AGENT_CORE, PUBLIC_CORE } from "@/lib/agent/core";
 import { dispatch } from "@/lib/agent/dispatch";
+import { coerceArgs, schemaFor } from "@/lib/agent/schemas";
 import { type McpIdentity, resolveMcpIdentity } from "@/lib/auth/mcp-identity.server";
 import { isSubstrate, SUBSTRATE_REFUSAL } from "@/lib/box-mode";
 
@@ -78,12 +79,6 @@ async function authorize(request: Request): Promise<McpIdentity | Response> {
   }
 }
 
-const inputSchema = {
-  type: "object" as const,
-  properties: {},
-  additionalProperties: true,
-};
-
 function buildServer(who: McpIdentity): Server {
   const isPublic = who.label === "public";
   const allowed = isPublic ? PUBLIC_CORE : AGENT_CORE;
@@ -97,16 +92,18 @@ function buildServer(who: McpIdentity): Server {
     tools: coreTools.map((t) => ({
       name: t.id,
       description: t.description,
-      inputSchema,
+      inputSchema: schemaFor(t.id) as { type: "object"; [k: string]: unknown },
     })),
   }));
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const name = request.params.name;
-    const args =
+    // A client without a schema stringifies arrays and objects; take them anyway.
+    const args = coerceArgs(
       request.params.arguments && typeof request.params.arguments === "object"
         ? (request.params.arguments as Record<string, unknown>)
-        : {};
+        : {},
+    );
     try {
       if (isPublic && !PUBLIC_CORE.has(name)) throw new Error(`${name}: ${SUBSTRATE_REFUSAL}`);
       // Identity from the resolved credential only — never from tool arguments.

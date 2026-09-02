@@ -45,7 +45,10 @@ You will look at many cohorts. One of them will look good by luck. So:
    (market, side). If the words admit two readings, ask before running.
    If the filter needs ticket or money share, call `getBettingSplits` for one
    week first; an empty `games` object means the box has not opted into a
-   splits source — stop and say so.
+   splits source. Say so plainly. You may then run the same rule *without*
+   the splits condition as context — labelled "unconditioned; not the rule
+   you asked about" in every table it appears in — but it is not the answer,
+   and nothing from it is frozen.
 2. Call `sampleGames` on the discovery seasons. Build the bet list from the
    rule. Call `evaluateBets`, then `summarizeRun`. Read `decided`, `roi`,
    `pBreakEven`, `maxDrawdown`, `bySeason`.
