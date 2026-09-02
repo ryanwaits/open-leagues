@@ -277,6 +277,35 @@ export const PLAYBOOKS: Playbook[] = [
     ],
     skill: "open-leagues-book · whole dollars · cannot fade your own roster",
   },
+  {
+    say: "is there anything to home dogs the public is on?",
+    chain: [
+      { verb: "getBettingSplits" },
+      { verb: "sampleGames · discovery seasons" },
+      { verb: "evaluateBets" },
+      { verb: "summarizeRun" },
+      { verb: "sampleGames · holdout" },
+      { verb: "summarizeRun · pBreakEven" },
+      { verb: "simulateBankroll" },
+      { verb: "freezeStrategy", write: true },
+    ],
+    skill:
+      "open-leagues-lab-discover · tune on some seasons, verify on others · freezes only what clears the holdout · never a bet",
+  },
+  {
+    say: "run my lab for last week",
+    chain: [
+      { verb: "getStrategy" },
+      { verb: "getLabRuns" },
+      { verb: "sampleGames · last week" },
+      { verb: "evaluateBets" },
+      { verb: "summarizeRun" },
+      { verb: "simulateBankroll · season" },
+      { verb: "recordLabRun", write: true },
+    ],
+    skill:
+      "open-leagues-lab-run · frozen rule, paper stakes, a digest · placeWager is not in its vocabulary",
+  },
 ];
 
 export const IDENTITY_SNIPPETS: Snippet[] = [

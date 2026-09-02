@@ -32,10 +32,22 @@ function toolShapedBackticks(md) {
   return ids;
 }
 
-test("four open-leagues skills exist", () => {
+/** Field names the lab skills quote from summarizeRun / simulateBankroll payloads; not tools. */
+const LAB_FIELDS = new Set([
+  "pBreakEven",
+  "maxDrawdown",
+  "bySeason",
+  "probLoss",
+  "probBust",
+  "winProbSource",
+]);
+
+test("six open-leagues skills exist", () => {
   const names = readdirSync(skillsDir).sort();
   assert.deepEqual(names, [
     "open-leagues-book",
+    "open-leagues-lab-discover",
+    "open-leagues-lab-run",
     "open-leagues-lineup",
     "open-leagues-migrate",
     "open-leagues-week",
@@ -47,19 +59,28 @@ test("skill backtick tool ids ⊆ AGENT_CORE ∪ PWA_ONLY", () => {
     const md = readFileSync(file, "utf8");
     for (const id of toolShapedBackticks(md)) {
       assert.ok(
-        AGENT_CORE.has(id) || PWA_ONLY.has(id),
+        AGENT_CORE.has(id) || PWA_ONLY.has(id) || LAB_FIELDS.has(id),
         `${file}: unknown tool id \`${id}\` (not AGENT_CORE or PWA_ONLY)`,
       );
     }
   }
 });
 
-test("each skill has getAgentContext; none mention tickAllLeagues", () => {
+test("each league skill has getAgentContext; none mention tickAllLeagues", () => {
   for (const file of skillFiles()) {
     const md = readFileSync(file, "utf8");
-    assert.match(md, /getAgentContext/, file);
+    // The lab skills work on NFL games and a person's own strategies, not a league seat.
+    if (!file.includes("open-leagues-lab-")) assert.match(md, /getAgentContext/, file);
     assert.doesNotMatch(md, /tickAllLeagues/, file);
   }
+});
+
+test("the lab skills never place a bet and never edit a frozen rule from the run", () => {
+  const discover = readFileSync(join(skillsDir, "open-leagues-lab-discover/SKILL.md"), "utf8");
+  const run = readFileSync(join(skillsDir, "open-leagues-lab-run/SKILL.md"), "utf8");
+  for (const md of [discover, run]) assert.match(md, /Do \*\*not\*\* call `placeWager`/);
+  assert.match(run, /Do \*\*not\*\* call `freezeStrategy`/);
+  assert.match(discover, /Do \*\*not\*\* freeze a strategy that did not clear the holdout/);
 });
 
 test("migrate requires confirm: true; week does not mention sitPlayer", () => {
