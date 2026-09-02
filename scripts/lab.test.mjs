@@ -55,7 +55,9 @@ test("the lines feed is open data with CORS and a season guard", () => {
 test("splits are opt-in and every pulled week is kept", () => {
   const sp = read("src/lib/lab/splits.server.ts");
   assert.match(sp, /OPENLEAGUES_SPLITS_SOURCE/);
-  assert.match(sp, /raw === "actionnetwork" \? "actionnetwork" : "off"/);
+  assert.match(sp, /export function splitsSources\(\)/);
+  for (const src of ["actionnetwork", "dknetwork", "wiseguyteam"]) assert.match(sp, new RegExp(`"${src}"`), src);
+  assert.match(sp, /ol_live_splits_log/, "live sources keep their own refresh log");
   assert.match(sp, /ol_game_splits_log/);
   assert.match(read(".env.example"), /OPENLEAGUES_SPLITS_SOURCE=/);
   // filters can ask for a ticket share, so the user's own example runs unchanged
