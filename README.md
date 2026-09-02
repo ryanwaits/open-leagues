@@ -116,6 +116,7 @@ Six playbooks (migrate, lineup, book, week, lab-discover, lab-run) live under
 The full docs live in the app at `/docs`. Start with `/docs/guide`: every use
 case as pain, fix, what you run, and the real output. In the repo:
 
+- [The lab, end to end](docs/lab.md) — install the two skills, test a hunch, run it on Tuesday
 - [Migrating your league](docs/migrate.md) — Sleeper, ESPN, or a pasted recap
 - [Connecting an agent](docs/codex-demo.md) — a real MCP session, end to end
 - [Self-hosting in depth](docs/self-host.md) — env vars, Vercel, the tick clock

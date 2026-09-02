@@ -733,6 +733,7 @@ getStrategy → getLabRuns → sampleGames (last week) → evaluateBets → summ
           "The holdout is the whole point. Tuned on 2023–24 this looked like +14%; on 2025 it went −13%. pBreakEven says a 27-18 discovery happens by luck one time in five. The skill will not freeze it, and says why.",
           "Staking is arithmetic, not opinion: the policy is the caller’s; simulateBankroll compounds it, reports drawdown in dollars, flags when Kelly was fed its own sample, and resamples the bets a thousand times so a +$19 result shows as a band from −$108 to +$170 with a 43% chance of a loss.",
           "What it will not pretend to have: opening lines and line movement (free only for 2007–2021, not wired in). A frozen strategy is stored on your box, owned by you, and never touched by the run skill.",
+          "To follow this yourself, start to finish — box, agent, skills, the exact sentence to say — read docs/lab.md in the repo.",
         ]}
       />
     ),
