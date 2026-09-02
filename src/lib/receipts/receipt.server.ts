@@ -23,7 +23,7 @@ export type WireMove = {
   drop: string | null;
   bid: number | null;
   won: boolean;
-  /** Median winning bid across pasted leagues, when at least three had one. */
+  /** Median winning bid across pasted leagues, once another league has cleared one. */
   median: number | null;
   leagues: number | null;
 };
@@ -350,7 +350,7 @@ export async function buildReceipt(
       const byId = new Map(prices.prices.map((p) => [p.player_id, p]));
       for (const m of moves) {
         const p = m.addId ? byId.get(m.addId) : undefined;
-        if (p && p.n >= 3) {
+        if (p && p.n >= 2) {
           m.median = p.median;
           m.leagues = p.n;
         }

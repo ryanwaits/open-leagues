@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { showsFor, useAudience } from "@/lib/docs/guide-store";
 import { DOCS_GROUPS, type DocsSlug, isDocsSlug } from "@/lib/docs/nav";
 import { DOCS_PAGES } from "@/lib/docs/pages";
 import { cn } from "@/lib/utils";
@@ -127,7 +128,8 @@ export function DocsShell({ children }: { children: ReactNode }) {
 }
 
 function TableOfContents({ slug }: { slug: DocsSlug }) {
-  const sections = DOCS_PAGES[slug].sections;
+  const audience = useAudience();
+  const sections = DOCS_PAGES[slug].sections.filter((s) => showsFor(s.audience, audience));
   const [active, setActive] = useState(sections[0]?.id ?? "");
 
   useEffect(() => {

@@ -9,6 +9,8 @@ import {
   INSTALL_SNIPPETS,
   PLAYBOOKS,
 } from "./fixtures";
+import { guide } from "./guide";
+import { type Audience, showsFor, useAudience } from "./guide-store";
 import { type DocsSlug, docsNeighbours } from "./nav";
 import {
   Bullets,
@@ -30,7 +32,13 @@ import {
   TranscriptReplay,
 } from "./widgets";
 
-export type DocsSection = { id: string; heading: string; body: () => ReactNode };
+export type DocsSection = {
+  id: string;
+  heading: string;
+  body: () => ReactNode;
+  /** Who this section is for; unset means everyone. Filtered by the guide's chips. */
+  audience?: Audience[];
+};
 export type DocsPage = { title: string; lede: ReactNode; sections: DocsSection[] };
 
 const MCP_WIRED = AGENT_CORE.size;
@@ -246,7 +254,7 @@ const receipts: DocsPage = {
                   The wire
                 </strong>,
                 "Bids, results, and what the player cleared for elsewhere",
-                "The league’s transactions plus the wire clearing prices, once three leagues have one",
+                "The league’s transactions plus the wire clearing prices, once a second league has one",
               ],
               [
                 <strong key="a" className="font-medium text-fg">
@@ -376,8 +384,8 @@ const openData: DocsPage = {
               cached, so the file fills in as leagues arrive.
             </li>
             <li>
-              A team’s own receipt shows the median beside a won claim only once three or more
-              leagues have one, so a single league’s bid never reads as “the market”.
+              A team’s own receipt shows the median beside a won claim once a second league has one,
+              with the count, so a single league’s bid never reads as “the market”.
             </li>
           </Bullets>
         </>
@@ -1349,6 +1357,7 @@ bun run dev               # 0.0.0.0:8080`}</Pre>
 
 export const DOCS_PAGES: Record<DocsSlug, DocsPage> = {
   overview,
+  guide,
   receipts,
   "open-data": openData,
   quickstart,
@@ -1364,6 +1373,8 @@ export const DOCS_PAGES: Record<DocsSlug, DocsPage> = {
 export function DocsArticle({ slug }: { slug: DocsSlug }) {
   const page = DOCS_PAGES[slug];
   const { prev, next } = docsNeighbours(slug);
+  const audience = useAudience();
+  const visible = page.sections.filter((s) => showsFor(s.audience, audience));
 
   return (
     <article>
@@ -1372,7 +1383,7 @@ export function DocsArticle({ slug }: { slug: DocsSlug }) {
       </h1>
       <p className="mt-3.5 max-w-[640px] text-[15px] leading-relaxed text-muted">{page.lede}</p>
 
-      {page.sections.map((section) => {
+      {visible.map((section) => {
         const Body = section.body;
         return (
           <section key={section.id} className="mt-8 border-t border-line pt-7">

@@ -1,5 +1,6 @@
 export type DocsSlug =
   | "overview"
+  | "guide"
   | "receipts"
   | "open-data"
   | "quickstart"
@@ -30,6 +31,7 @@ export const DOCS_GROUPS: DocsNavGroup[] = [
     label: "Get started",
     items: [
       { slug: "overview", href: "/docs", label: "Overview", kicker: "What this is" },
+      { slug: "guide", href: "/docs/$slug", label: "Guide", kicker: "Pain, fix, proof" },
       { slug: "receipts", href: "/docs/$slug", label: "Receipts", kicker: "Your week, as facts" },
       {
         slug: "open-data",

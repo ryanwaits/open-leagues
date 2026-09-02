@@ -36,9 +36,9 @@ test("open data is anonymous and CORS-open", () => {
   assert.match(mod, /if \(leagueId\.startsWith\("lg_"\)\) return;/);
 });
 
-test("receipt shows a market median only with three or more leagues, raw Sleeper only", () => {
+test("receipt shows a market median only once two leagues have cleared a claim, raw Sleeper only", () => {
   const src = read("src/lib/receipts/receipt.server.ts");
-  assert.match(src, /p\.n >= 3/);
+  assert.match(src, /p\.n >= 2/);
   assert.match(src, /!isHostedLeague\(leagueId\) && moves\.some/);
 });
 

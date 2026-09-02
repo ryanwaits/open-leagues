@@ -79,7 +79,8 @@ Four playbooks (migrate, lineup, book, week) live under
 
 ## Docs
 
-The full docs live in the app at `/docs`. In the repo:
+The full docs live in the app at `/docs`. Start with `/docs/guide`: every use
+case as pain, fix, what you run, and the real output. In the repo:
 
 - [Migrating your league](docs/migrate.md) — Sleeper, ESPN, or a pasted recap
 - [Connecting an agent](docs/codex-demo.md) — a real MCP session, end to end

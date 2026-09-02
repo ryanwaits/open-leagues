@@ -47,7 +47,7 @@ const RECEIPT_LINES: { k: string; what: string; how: string }[] = [
   {
     k: "the wire",
     what: "What you bid, whether you won, and what the same player cleared for elsewhere.",
-    how: "Median winning bid across every league that has pasted, once three or more have.",
+    how: "Median winning bid across every league that has pasted, from the second league on.",
   },
 ];
 
@@ -204,6 +204,13 @@ export function Landing({
           the source of truth.
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line px-4 py-3 text-[13px]">
+          <Link
+            to="/docs/$slug"
+            params={{ slug: "guide" }}
+            className="underline underline-offset-4 hover:text-fg"
+          >
+            Guide
+          </Link>
           <Link
             to="/docs/$slug"
             params={{ slug: "quickstart" }}
