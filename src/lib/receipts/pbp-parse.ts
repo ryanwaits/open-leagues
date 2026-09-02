@@ -68,7 +68,13 @@ export const COLS = [
   "sack",
   "fumble_lost",
   "fumbled_1_player_id",
+  "fumbled_1_team",
   "fumble_recovery_1_team",
+  "fumbled_2_player_id",
+  "fumbled_2_team",
+  "fumble_recovery_2_team",
+  "forced_fumble_player_2_team",
+  "touchdown",
   "two_point_conv_result",
   "field_goal_result",
   "kick_distance",
@@ -129,16 +135,24 @@ export function deltasFor(
     if (r.complete_pass === "1") {
       d.pass_cmp = 1;
       d.pass_yd = n(r.passing_yards);
-    } else if (r.play_type === "pass" && r.sack !== "1") d.pass_inc = 1;
+    } else if (r.play_type === "pass" && r.sack !== "1" && !twoPt) d.pass_inc = 1;
     if (r.pass_touchdown === "1") d.pass_td = 1;
-    if (r.interception === "1") d.pass_int = 1;
+    if (r.interception === "1") {
+      d.pass_int = 1;
+      if (r.return_touchdown === "1") d.pass_int_td = 1;
+    }
     if (r.sack === "1") d.pass_sack = 1;
     if (twoPt && r.play_type === "pass") d.pass_2pt = 1;
     add(r.passer_player_id, d);
   }
-  if (r.receiver_player_id && r.complete_pass === "1") {
-    const d: Record<string, number> = { rec: 1, rec_yd: n(r.receiving_yards) };
-    if (r.pass_touchdown === "1") d.rec_td = 1;
+  if (r.receiver_player_id) {
+    const d: Record<string, number> = {};
+    if (r.complete_pass === "1") {
+      d.rec = 1;
+      d.rec_yd = n(r.receiving_yards);
+      if (r.pass_touchdown === "1") d.rec_td = 1;
+    }
+    // A two-point catch is not a completion in the feed; it still scores.
     if (twoPt && r.play_type === "pass") d.rec_2pt = 1;
     add(r.receiver_player_id, d);
   }
@@ -148,8 +162,11 @@ export function deltasFor(
     if (twoPt && r.play_type === "run") d.rush_2pt = 1;
     add(r.rusher_player_id, d);
   }
-  if (r.fumble_lost === "1" && r.fumbled_1_player_id)
-    add(r.fumbled_1_player_id, { fum_lost: 1, fum: 1 });
+  if (r.fumble_lost === "1") {
+    if (r.fumbled_1_player_id) add(r.fumbled_1_player_id, { fum_lost: 1, fum: 1 });
+    if (r.fumbled_2_player_id && r.fumbled_2_team !== r.fumble_recovery_2_team)
+      add(r.fumbled_2_player_id, { fum_lost: 1, fum: 1 });
+  }
 
   if (r.kicker_player_id) {
     const d: Record<string, number> = {};
@@ -164,7 +181,6 @@ export function deltasFor(
     else if (r.extra_point_result && r.extra_point_result !== "good") d.xpmiss = 1;
     add(r.kicker_player_id, d);
   }
-  const kickReturn = Boolean(r.kickoff_returner_player_id || r.punt_returner_player_id);
   if (r.kickoff_returner_player_id) {
     const d: Record<string, number> = { kr_yd: n(r.return_yards) };
     if (r.return_touchdown === "1") d.kr_td = 1;
@@ -176,32 +192,66 @@ export function deltasFor(
     add(r.punt_returner_player_id, d);
   }
 
-  // Defence / special teams: a DEF "player" is the team abbreviation.
+  // Defence / special teams. A DEF "player" is the team abbreviation. On a
+  // kickoff, punt, or kick attempt the coverage unit's plays land on Sleeper's
+  // `def_st_*` keys, which most books pay differently from the scrimmage keys.
+  const st =
+    r.play_type === "kickoff" ||
+    r.play_type === "punt" ||
+    r.play_type === "field_goal" ||
+    r.play_type === "extra_point";
+  const def: Record<string, Record<string, number>> = {};
+  const credit = (abbr: string | undefined, key: string, v = 1) => {
+    if (!abbr) return;
+    const bag = def[abbr] ?? {};
+    bag[key] = (bag[key] ?? 0) + v;
+    def[abbr] = bag;
+  };
   if (r.defteam) {
-    const d: Record<string, number> = {};
-    if (r.sack === "1") d.sack = 1;
-    if (r.interception === "1") d.int = 1;
-    if (r.fumble_forced === "1" && r.forced_fumble_player_1_team === r.defteam) d.ff = 1;
-    if (r.fumble_lost === "1" && r.fumble_recovery_1_team === r.defteam) d.fum_rec = 1;
-    if (r.safety === "1") d.safe = 1;
-    if (r.fourth_down_failed === "1") d.def_4_and_stop = 1;
+    if (r.sack === "1") credit(r.defteam, "sack");
+    if (r.interception === "1") credit(r.defteam, "int");
+    if (r.safety === "1") credit(r.defteam, "safe");
+    if (r.fourth_down_failed === "1") credit(r.defteam, "def_4_and_stop");
     if (
       r.field_goal_result === "blocked" ||
       r.extra_point_result === "blocked" ||
       r.punt_blocked === "1"
     ) {
-      d.blk_kick = 1;
+      credit(r.defteam, "blk_kick");
     }
-    if (r.return_touchdown === "1" && r.td_team === r.defteam && !kickReturn) d.def_td = 1;
-    // Points allowed, as a delta the reader sums. Only what the offence scored
-    // counts against a defence: a pick-six or a kick return is charged to no
-    // DEF, which is how Sleeper's own `pts_allow` reads.
-    const allowed = n(r.posteam_score_post) - n(r.posteam_score);
-    if (r.sp === "1" && allowed > 0 && r.td_team !== r.defteam && !kickReturn) {
-      d.pts_allow = allowed;
-    }
-    if (Object.keys(d).length) out.push({ p: team(r.defteam), d });
   }
+  // Forced fumbles belong to the unit on defence: the defence of record on a
+  // scrimmage play, the coverage unit on a kick. A ball-carrier stripped by
+  // the offence on an interception return is nobody's DEF stat, and Sleeper
+  // credits the strip whether or not the ball was recovered.
+  const unit = r.play_type === "punt" ? r.posteam : r.defteam;
+  for (const t of [r.forced_fumble_player_1_team, r.forced_fumble_player_2_team]) {
+    if (t && t === unit) credit(t, st ? "def_st_ff" : "ff");
+  }
+  const takeaway = (rec: string, fumbled: string) =>
+    rec && (fumbled ? rec !== fumbled : r.fumble_lost === "1");
+  if (takeaway(r.fumble_recovery_1_team, r.fumbled_1_team))
+    credit(r.fumble_recovery_1_team, st ? "def_st_fum_rec" : "fum_rec");
+  if (takeaway(r.fumble_recovery_2_team, r.fumbled_2_team))
+    credit(r.fumble_recovery_2_team, st ? "def_st_fum_rec" : "fum_rec");
+  // A touchdown by anyone but the offence of record is the defence's. On a
+  // kick, every touchdown is the unit's — Sleeper pays a returner's hundred
+  // yards to the DEF/ST slot as well as to him.
+  if (r.touchdown === "1" && r.td_team) {
+    if (st) credit(r.td_team, "def_st_td");
+    else if (r.td_team !== r.posteam) credit(r.td_team, "def_td");
+  }
+  // Points allowed, as deltas the reader sums. Sleeper's `pts_allow` is the
+  // opponent's score minus what the opponent's defence scored: a pick-six
+  // against your offence is not charged to your DEF, but a kick return is.
+  if (r.sp === "1") {
+    const byPos = n(r.posteam_score_post) - n(r.posteam_score);
+    const byDef = n(r.defteam_score_post) - n(r.defteam_score);
+    if (byPos > 0) credit(r.defteam, "pts_allow", byPos);
+    if (byDef > 0 && st) credit(r.posteam, "pts_allow", byDef);
+  }
+  for (const [abbr, d] of Object.entries(def)) out.push({ p: team(abbr), d });
+
   // One event per player per play: a rusher who also fumbled is one line.
   const merged = new Map<string, Record<string, number>>();
   for (const { p, d } of out) {

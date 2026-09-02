@@ -35,7 +35,7 @@ const CROSSWALK_AFTER_MS = 24 * 60 * 60 * 1000;
  * Bump when the crosswalk's sources or the parser's stat semantics change;
  * every stored timeline re-ingests once on its next read.
  */
-const INGEST_VERSION = 3;
+const INGEST_VERSION = 6;
 
 let ready = false;
 async function ensure(): Promise<void> {

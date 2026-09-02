@@ -167,10 +167,25 @@ const LINEAR_SKIP = new Set([
   "yds_allow_400_449",
   "yds_allow_450p",
   "bonus_pass_yd_300",
+  "bonus_pass_yd_400",
   "bonus_rush_yd_100",
+  "bonus_rush_yd_200",
   "bonus_rec_yd_100",
+  "bonus_rec_yd_200",
   "bonus_rush_rec_yd_100",
 ]);
+
+/**
+ * Yardage bonuses are tiers, not stacks: Sleeper pays the 200-yard bonus
+ * instead of the 100-yard one, never both. Computed from the yards so a bag
+ * with or without Sleeper's own bonus flags scores the same.
+ */
+function tieredBonus(book: ScoringBook, yards: number, tiers: [number, string][]): number {
+  for (const [at, key] of tiers) {
+    if (yards >= at && (book[key] ?? 0)) return book[key] ?? 0;
+  }
+  return 0;
+}
 
 function dstAllow(book: ScoringBook, allowed: number | undefined): number {
   if (typeof allowed !== "number") return 0;
@@ -207,9 +222,18 @@ export function applyBook(
   }
   if (typeof stats.pts_allow === "number") pts += dstAllow(book, stats.pts_allow);
   if (typeof stats.yds_allow === "number") pts += dstYards(book, stats.yds_allow);
-  if ((book.bonus_pass_yd_300 ?? 0) && (stats.pass_yd ?? 0) >= 300) pts += book.bonus_pass_yd_300;
-  if ((book.bonus_rush_yd_100 ?? 0) && (stats.rush_yd ?? 0) >= 100) pts += book.bonus_rush_yd_100;
-  if ((book.bonus_rec_yd_100 ?? 0) && (stats.rec_yd ?? 0) >= 100) pts += book.bonus_rec_yd_100;
+  pts += tieredBonus(book, stats.pass_yd ?? 0, [
+    [400, "bonus_pass_yd_400"],
+    [300, "bonus_pass_yd_300"],
+  ]);
+  pts += tieredBonus(book, stats.rush_yd ?? 0, [
+    [200, "bonus_rush_yd_200"],
+    [100, "bonus_rush_yd_100"],
+  ]);
+  pts += tieredBonus(book, stats.rec_yd ?? 0, [
+    [200, "bonus_rec_yd_200"],
+    [100, "bonus_rec_yd_100"],
+  ]);
   if ((book.bonus_rush_rec_yd_100 ?? 0) && (stats.rush_yd ?? 0) + (stats.rec_yd ?? 0) >= 100) {
     pts += book.bonus_rush_rec_yd_100;
   }

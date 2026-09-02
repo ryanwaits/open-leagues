@@ -52,13 +52,14 @@ test("a completed touchdown pass credits passer and receiver, and the defence's 
   assert.equal(by.KC, undefined, "the scoring offence's own DEF is untouched");
 });
 
-test("a pick-six is charged to no defence; the defence that scored gets the TD", () => {
+test("a pick-six scores for the defence and counts against the offence's own DEF, as Sleeper does", () => {
   const d = deltasFor(
     row({
       play_type: "pass",
       passer_player_id: "00-0033873",
       interception: "1",
       return_touchdown: "1",
+      touchdown: "1",
       td_team: "LA",
       sp: "1",
       posteam_score: "0",
@@ -70,7 +71,104 @@ test("a pick-six is charged to no defence; the defence that scored gets the TD",
   );
   const by = Object.fromEntries(d.map((x) => [x.p, x.d]));
   assert.deepEqual(by.LAR, { int: 1, def_td: 1 });
-  assert.equal(by.KC, undefined);
+  assert.equal(by.KC, undefined, "a defensive score is not charged to the offence's DEF");
+  assert.deepEqual(by["4046"], { pass_inc: 1, pass_int: 1, pass_int_td: 1 });
+});
+
+test("a kick return touchdown counts against the kicking team's DEF; a blocked kick run back is def_st_td", () => {
+  const kr = deltasFor(
+    row({
+      play_type: "kickoff",
+      posteam: "KC",
+      defteam: "LA",
+      kickoff_returner_player_id: "00-0036322",
+      return_yards: "98",
+      return_touchdown: "1",
+      touchdown: "1",
+      td_team: "KC",
+      sp: "1",
+      posteam_score: "0",
+      posteam_score_post: "6",
+      defteam_score: "0",
+      defteam_score_post: "0",
+    }),
+    gsis,
+  );
+  const by = Object.fromEntries(kr.map((x) => [x.p, x.d]));
+  assert.deepEqual(by["6794"], { kr_yd: 98, kr_td: 1 });
+  assert.deepEqual(by.LAR, { pts_allow: 6 });
+  assert.deepEqual(by.KC, { def_st_td: 1 }, "Sleeper pays a return TD to the DEF/ST slot too");
+  const blk = deltasFor(
+    row({
+      play_type: "field_goal",
+      posteam: "KC",
+      defteam: "LA",
+      kicker_player_id: "00-0031234",
+      field_goal_result: "blocked",
+      kick_distance: "44",
+      touchdown: "1",
+      return_touchdown: "1",
+      td_team: "LA",
+      sp: "1",
+      posteam_score: "0",
+      posteam_score_post: "0",
+      defteam_score: "0",
+      defteam_score_post: "6",
+    }),
+    gsis,
+  );
+  const b2 = Object.fromEntries(blk.map((x) => [x.p, x.d]));
+  assert.deepEqual(b2.LAR, { blk_kick: 1, def_st_td: 1 });
+  assert.deepEqual(b2.KC, { pts_allow: 6 }, "a special-teams score is charged, unlike a pick-six");
+});
+
+test("a two-point catch scores without a completion; special-teams plays use the st keys", () => {
+  const two = deltasFor(
+    row({
+      play_type: "pass",
+      passer_player_id: "00-0033873",
+      receiver_player_id: "00-0036322",
+      complete_pass: "0",
+      two_point_conv_result: "success",
+    }),
+    gsis,
+  );
+  const by = Object.fromEntries(two.map((x) => [x.p, x.d]));
+  assert.deepEqual(by["6794"], { rec_2pt: 1 });
+  assert.deepEqual(by["4046"], { pass_2pt: 1 });
+  const punt = deltasFor(
+    row({
+      play_type: "punt",
+      fumble_lost: "1",
+      fumbled_1_player_id: "00-0036322",
+      fumbled_1_team: "KC",
+      forced_fumble_player_1_team: "LA",
+      fumble_recovery_1_team: "LA",
+    }),
+    gsis,
+  );
+  // On a punt the punting team is the offence of record, so LA's coverage
+  // unit is the posteam here.
+  assert.deepEqual(Object.fromEntries(punt.map((x) => [x.p, x.d])).LAR, {
+    def_st_fum_rec: 1,
+  });
+  const cover = deltasFor(
+    row({
+      play_type: "punt",
+      posteam: "LA",
+      defteam: "KC",
+      fumble_lost: "1",
+      fumbled_1_player_id: "00-0036322",
+      fumbled_1_team: "KC",
+      forced_fumble_player_1_team: "LA",
+      fumble_recovery_1_team: "LA",
+    }),
+    gsis,
+  );
+  assert.deepEqual(Object.fromEntries(cover.map((x) => [x.p, x.d])).LAR, {
+    def_st_ff: 1,
+    def_st_fum_rec: 1,
+  });
 });
 
 test("fourth-down stops, forced fumbles, and blocked kicks credit the defence", () => {
@@ -82,11 +180,12 @@ test("fourth-down stops, forced fumbles, and blocked kicks credit the defence", 
       fourth_down_failed: "1",
       fumble_forced: "1",
       forced_fumble_player_1_team: "LA",
+      fumbled_1_team: "KC",
     }),
     gsis,
   );
   const by = Object.fromEntries(d.map((x) => [x.p, x.d]));
-  assert.deepEqual(by.LAR, { ff: 1, def_4_and_stop: 1 });
+  assert.deepEqual(by.LAR, { def_4_and_stop: 1, ff: 1 });
   const blk = deltasFor(
     row({ kicker_player_id: "00-0031234", field_goal_result: "blocked", kick_distance: "44" }),
     gsis,
