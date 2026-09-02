@@ -146,6 +146,10 @@ export default defineConfig(({ command }) => ({
     strictPort: true,
   },
   resolve: { tsconfigPaths: true },
+  // Native addons stay out of the dev-time dependency optimizer; rolldown
+  // cannot read a .node binary as a module and refuses to start.
+  optimizeDeps: { exclude: ["@resvg/resvg-js", "@electric-sql/pglite"] },
+  ssr: { external: ["@resvg/resvg-js"] },
   build: {
     rollupOptions: {
       output: {
