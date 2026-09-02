@@ -21,6 +21,7 @@ Open `http://YOUR_HOST:8080` → `/login` → `/new` → invite friends.
 | `OPENLEAGUES_MCP_AUTH` | Optional. `token` (default) — this box mints and checks its own `ol_` bearers. `proxy` — your edge authenticated the caller and passes their user id on a header. |
 | `OPENLEAGUES_MCP_USER_HEADER` | Optional, `proxy` only. Header carrying the user id (default `x-openleagues-user`). |
 | `OPENLEAGUES_MCP_PROXY_SECRET` | Optional, `proxy` only. Value your proxy sends as `x-openleagues-proxy-secret` to prove the request came through it. Unset = the box warns once and trusts the header — only safe when nothing else can reach the origin. |
+| `OPENLEAGUES_SPLITS_SOURCE` | Optional, off by default. `actionnetwork` opts the lab into public betting splits (ticket % / money %) from Action Network's undocumented web endpoint, 2023 season onward. Every pulled week is kept on this box. Leave unset and `getBettingSplits` returns no games. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Optional. This app's own Google OAuth client (not the Grok broker). Both required. See [Google sign-in](google-sign-in.md). |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | Optional. Web Push. Both key vars required or the toggle stays hidden. See [Notifications](notifications.md). |
 

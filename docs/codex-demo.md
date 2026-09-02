@@ -103,7 +103,7 @@ Postgres already has running.
 
 ## Playbooks
 
-Four skills (migrate, lineup, book, week) live under
+Six skills (migrate, lineup, book, week, lab-discover, lab-run) live under
 `src/lib/agent/skills/` — copy or symlink into `~/.codex/skills/` (or
 `~/.claude/skills/`) so a prompt like "migrate my league from Sleeper" or
 "set my lineup for the bye weeks" runs the whole playbook, not just one

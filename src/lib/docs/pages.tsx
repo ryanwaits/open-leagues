@@ -101,6 +101,13 @@ const overview: DocsPage = {
               ],
               [
                 <strong key="a" className="font-medium text-fg">
+                  The lab
+                </strong>,
+                "Real NFL lines, cohorts, grading, staking · 13 verbs",
+                <Mono key="c">/api/lines/:season.json · two skills</Mono>,
+              ],
+              [
+                <strong key="a" className="font-medium text-fg">
                   Browser app
                 </strong>,
                 "Everything",
@@ -453,8 +460,13 @@ const openData: DocsPage = {
           <P>
             The same rows drive the lab’s verbs over MCP — <Inline>getGameLines</Inline>,{" "}
             <Inline>getGameContext</Inline>, <Inline>getBettingSplits</Inline>,{" "}
-            <Inline>sampleGames</Inline>, <Inline>evaluateBets</Inline> — and{" "}
-            <Inline>summarizeRun</Inline>, which turns a graded list into a record. The{" "}
+            <Inline>sampleGames</Inline>, <Inline>evaluateBets</Inline>,{" "}
+            <Inline>summarizeRun</Inline> (with <Inline>pBreakEven</Inline>), and{" "}
+            <Inline>simulateBankroll</Inline> — plus a person’s frozen strategies and their run
+            ledger (<Inline>freezeStrategy</Inline>, <Inline>recordLabRun</Inline>,{" "}
+            <Inline>getLabRuns</Inline>). Two skills compose them: <Inline>lab-discover</Inline>{" "}
+            holds out a season before it freezes anything; <Inline>lab-run</Inline> grades a frozen
+            rule each week and writes the digest. Neither can place a bet. The{" "}
             <DocLink slug="guide">guide</DocLink> runs a real one.
           </P>
         </>
@@ -1374,6 +1386,12 @@ bun run dev               # 0.0.0.0:8080`}</Pre>
                 <Pill key="b">optional</Pill>,
                 <Pill key="c">optional</Pill>,
                 "token (default) or proxy — who /api/mcp trusts.",
+              ],
+              [
+                <Mono key="a">OPENLEAGUES_SPLITS_SOURCE</Mono>,
+                <Pill key="b">optional</Pill>,
+                <Pill key="c">optional</Pill>,
+                "off (default) or actionnetwork — opts the lab into public betting splits, 2023 on. Every pulled week is kept.",
               ],
             ]}
           />
