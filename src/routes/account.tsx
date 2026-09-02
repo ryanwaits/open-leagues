@@ -176,8 +176,8 @@ function AiSettingsPanel() {
     <div className="mt-8 max-w-lg">
       <h2 className="microlabel">AI</h2>
       <p className="mt-1 text-sm text-muted">
-        Your key powers AI features on desks you run — imports, news, recaps. Stored encrypted;
-        never shown again.
+        Your key powers AI features on desks you run — imports for now. Stored encrypted; never
+        shown again.
       </p>
 
       <div

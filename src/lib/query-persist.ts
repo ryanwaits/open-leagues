@@ -6,7 +6,6 @@ export const PERSIST_ROOTS = new Set<string>([
   "my-leagues",
   "byes",
   "activity",
-  "recap",
   "desk",
   "trades",
   "claims",
@@ -39,7 +38,6 @@ export const PERSIST_STALE_ON_RESTORE = new Set<string>([
   "claims",
   "wire",
   "activity",
-  "recap",
   "desk",
 ]);
 
