@@ -27,7 +27,6 @@ import {
 } from "./scoring";
 import { leagueWaiversOpen, playerAvailability } from "./waivers";
 
-export const DEMO_HOSTED_ID = "lg_backyard";
 var DEFAULT_SLOTS = [
   "QB",
   "RB",
@@ -340,82 +339,6 @@ async function getSpots(id) {
 export async function ensureDemo(): Promise<void> {
   (await import("./ops.server")).startLeagueClock();
   // Demo league seed is off — a local run should start empty until WIFFL is imported.
-}
-async function seedDemo() {
-  const sql = await getSql();
-  if ((await sql`select id from ol_leagues where id = ${"lg_backyard"}`)[0]) return;
-  try {
-    await seedDemoBody();
-  } catch (err) {
-    await sql`delete from ol_leagues where id = ${DEMO_HOSTED_ID}`;
-    throw err;
-  }
-}
-async function seedDemoBody() {
-  const sql = await getSql();
-  if ((await sql`select id from ol_leagues where id = ${"lg_backyard"}`)[0]) return;
-  const slots = DEFAULT_SLOTS;
-  const rounds = slots.length;
-  const teams = 10;
-  await sql`
-    insert into ol_leagues (
-      id, name, season, invite_code, commish_id, status, team_count,
-      scoring, roster_slots, playoff_teams, current_week, locked
-    ) values (
-      ${DEMO_HOSTED_ID}, ${"The Backyard"}, ${"2025"}, ${"YARD26"}, ${"house"},
-      ${"complete"}, ${teams}, ${"ppr"}, ${JSON.stringify(slots)}, ${4}, ${14}, ${1}
-    )
-  `;
-  await sql`
-    insert into ol_draft (league_id, status, pick_no)
-    values (${DEMO_HOSTED_ID}, ${"complete"}, ${teams * rounds + 1})
-  `;
-  for (let i = 1; i <= teams; i++)
-    await sql`
-      insert into ol_rosters (league_id, roster_id, team_name, owner_id)
-      values (${DEMO_HOSTED_ID}, ${i}, ${HOUSE_NAMES[i - 1] ?? `Seat ${i}`}, ${null})
-    `;
-  const order = snakeOrder(teams, rounds);
-  const ranked = rankPool();
-  const taken = /* @__PURE__ */ new Set();
-  const byRoster = /* @__PURE__ */ new Map();
-  const now = /* @__PURE__ */ new Date().toISOString();
-  for (const step of order) {
-    const player = nextAutopick(step.roster, byRoster, ranked, taken);
-    if (!player) break;
-    taken.add(player.player_id);
-    const list = byRoster.get(step.roster) ?? [];
-    list.push(player.player_id);
-    byRoster.set(step.roster, list);
-    await sql`
-      insert into ol_picks (league_id, pick_no, round, roster_id, player_id, picked_at)
-      values (${DEMO_HOSTED_ID}, ${step.pick}, ${step.round}, ${step.roster}, ${player.player_id}, ${now})
-    `;
-  }
-  const pts = pprMap();
-  for (const [rosterId, ids] of byRoster) {
-    const lined = applyLineup(
-      ids.map((player_id) => ({
-        league_id: DEMO_HOSTED_ID,
-        roster_id: rosterId,
-        player_id,
-        slot: "bench",
-        starter_slot: null,
-      })),
-      slots,
-      pts,
-    );
-    for (const s of lined)
-      await sql`
-        insert into ol_spots (league_id, roster_id, player_id, slot, starter_slot)
-        values (${DEMO_HOSTED_ID}, ${s.roster_id}, ${s.player_id}, ${s.slot}, ${s.starter_slot})
-      `;
-  }
-  for (const m of makeSchedule(teams, 14))
-    await sql`
-      insert into ol_matchups (league_id, week, matchup_id, home_roster, away_roster)
-      values (${DEMO_HOSTED_ID}, ${m.week}, ${m.id}, ${m.home}, ${m.away})
-    `;
 }
 function rankPool() {
   const out = [];
@@ -2172,6 +2095,7 @@ export async function importRebuild(input: {
   season: string;
   scoring: "ppr" | "half" | "std";
   claimRosterId: number | null;
+  leagueId?: string;
 }): Promise<{ leagueId: string; inviteCode: string }> {
   const key = `${input.userId}:${input.known ?? `${input.name.trim().toLowerCase()}:${input.season}`}`;
   const pending = rebuildInflight.get(key);
@@ -2200,6 +2124,7 @@ async function importRebuildOnce(input: {
   season: string;
   scoring: "ppr" | "half" | "std";
   claimRosterId: number | null;
+  leagueId?: string;
 }): Promise<{ leagueId: string; inviteCode: string }> {
   await ensureDemo();
   const { parseImportSource } = await import("./recap");
@@ -2228,6 +2153,7 @@ async function importRebuildOnce(input: {
     userId: input.userId,
     pack,
     claimRosterId: input.claimRosterId,
+    leagueId: input.leagueId,
   });
 }
 export async function loadSettings(

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { authMiddleware, optionalAuthMiddleware } from "@/lib/auth/middleware";
 
+/** Seed the exhibition sandbox if needed and sit the caller on a team. */
 export const listMyLeagues = createServerFn({ method: "GET" })
   .middleware([optionalAuthMiddleware])
   .handler(async ({ context }) => {
@@ -136,6 +137,7 @@ export const getDraft = createServerFn({ method: "GET" })
   .validator(z.object({ leagueId: z.string(), position: z.string(), query: z.string() }))
   .handler(async ({ context, data }) => {
     const eng = await import("./engine.server");
+    // Viewer, not reader: this GET writes house picks. Public demo stays gated.
     await eng.assertLeagueViewer(data.leagueId, context.userId);
     await eng.ensureDemo();
     await eng.flushHousePicks(data.leagueId);

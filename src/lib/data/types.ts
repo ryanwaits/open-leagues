@@ -415,8 +415,6 @@ export const DEMO_LEAGUE_ID = "1180228818907533312";
 export const DEMO_LEAGUE_NAME = "Schwabbies (Year 13)";
 export const LIVE_2026_LEAGUE_ID = "1383225688680583168";
 export const LIVE_2026_LEAGUE_NAME = "#SFB16 — Forza";
-export const DEMO_HOSTED_ID = "lg_backyard";
-export const DEMO_HOSTED_NAME = "The Backyard";
 
 export type Projection = {
   points: number;
