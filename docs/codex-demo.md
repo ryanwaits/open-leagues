@@ -8,16 +8,27 @@ protocol both sides already speak.
 This works the same way for Claude Code, a Claude Connector, or a ChatGPT
 custom connector — Codex is just the one this walkthrough uses.
 
-The live host is `https://leagues.waits.dev`. Every read of a hosted
-(`lg_`) league needs a seat, so MCP always needs a member token. Raw
-Sleeper ids pass through Sleeper's public data read-only and need none. The transcript below is a real preseason-2026 run
-against that host (team `hands`, opponent `Butterbean`, record `0-0-0`).
+Two doors. The public box at `https://leagues.waits.dev` runs in substrate
+mode: no account, no token, and every read verb that needs no person —
+receipts, week boards, the season ledger, lines, cohorts, grading, staking.
+Add the URL and go:
 
-## 1. Mint a token
+```sh
+claude mcp add --transport http open-leagues https://leagues.waits.dev/api/mcp
+codex  mcp add open-leagues --url https://leagues.waits.dev/api/mcp
+```
 
-Sign in at `/account` (any member can do this — no commissioner gate).
-Under **Agent tokens**, name one (e.g. `codex`) and click **Create**. The
-raw value is shown once — copy it now, it can't be viewed again (you can
+A league box — the same code run by you, `OPENLEAGUES_MODE=league` — has
+accounts, your league, and tokens. The rest of this page is that path; swap
+`YOUR_BOX` for your host. The transcript in step 3 was captured against
+`leagues.waits.dev` before it became a substrate, when it still had a league
+and a token; the verbs and the shape of the answer are unchanged.
+
+## 1. Mint a token on your league box
+
+Sign in at `https://YOUR_BOX/account` (any member can do this — no commissioner
+gate). Under **Agent tokens**, name one (e.g. `codex`), pick `read` or `act`.
+The raw value is shown once — copy it now, it can't be viewed again (you can
 always revoke it and mint a new one).
 
 No browser on the box? The CLI issues the same credential against the same
@@ -36,7 +47,7 @@ tokens entirely with `OPENLEAGUES_MCP_AUTH=proxy` and pass the user id on
 
 ```sh
 export OPENLEAGUES_TOKEN=ol_…    # the value from step 1
-codex mcp add open-leagues --url https://leagues.waits.dev/api/mcp --bearer-token-env-var OPENLEAGUES_TOKEN
+codex mcp add open-leagues --url https://YOUR_BOX/api/mcp --bearer-token-env-var OPENLEAGUES_TOKEN
 codex mcp list
 ```
 
@@ -45,7 +56,7 @@ Name          Url                                     Bearer Token Env Var  Stat
 open-leagues  https://leagues.waits.dev/api/mcp       OPENLEAGUES_TOKEN      enabled  Bearer token
 ```
 
-On your own box, swap the URL for `https://YOUR_HOST/api/mcp`.
+
 
 ## 3. Ask it something
 

@@ -30,7 +30,7 @@ Monday morning, phone in one hand, the group chat already going. A card unfurls:
 ## Strategic principles
 1. A receipt is a fact, not an opinion. Every line traces to a box score, a play-by-play row, or a transaction log — with a timestamp. Projections appear only as what a source said before kickoff.
 2. Open sources only. Sleeper's projection, last three weeks, season average. A paid source never renders, even as a comparison.
-3. Team names, never people. Public Sleeper data passes through by id; a manager's name is replaced with the roster number when it would identify them. Hosted (`lg_`) leagues are seat-gated on every surface.
+3. Team names, never people. Public Sleeper data passes through by id; a manager's name is replaced with the roster number when it would identify them. Leagues on a league box (`lg_` ids) are seat-gated on every surface; the public box hosts none.
 4. Every paste makes the commons richer. Leagues that ask for a receipt contribute anonymously to the wire clearing prices. No league id, manager, or roster appears in an aggregate.
 5. The engine is the product's floor, not its headline. One FAAB purse, one scoring book, confirm-gated season ops, read/act agent scopes. The browser app is client zero.
 6. Leagues run themselves. The tick advances weeks and clears waivers; the commissioner is idle by design.

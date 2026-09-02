@@ -227,9 +227,9 @@ const receipts: DocsPage = {
             <Inline>Roster N</Inline>.
           </P>
           <Callout>
-            Hosted (<Inline>lg_</Inline>) leagues have receipts too, but behind the same seat check
-            as everything else on the box — and no public card. The anonymous path is for public
-            Sleeper data only.
+            A league on your own box (an <Inline>lg_</Inline> id) has receipts too, behind the same
+            seat check as everything else there — and no public card. The anonymous path is for
+            public Sleeper data only; the public box hosts no leagues at all.
           </Callout>
         </>
       ),
@@ -533,9 +533,9 @@ bun run dev`}</Pre>
           </Step>
           <Step n={4} title="Mint an agent token">
             <P>
-              Open <Inline>/account</Inline> — any member, no commissioner gate. Under{" "}
-              <strong className="font-medium text-fg">Agent tokens</strong>, name one and create it.
-              The raw <Inline>ol_…</Inline> value is shown once.
+              On your league box, open <Inline>/account</Inline> — any member, no commissioner gate.
+              Under <strong className="font-medium text-fg">Agent tokens</strong>, name one and
+              create it. The raw <Inline>ol_…</Inline> value is shown once.
             </P>
             <Note>
               Never opening the browser? The CLI issues the same credential against the same box:{" "}
@@ -570,7 +570,7 @@ bun run dev`}</Pre>
 open-leagues  ${hostOrigin()}/api/mcp   OPENLEAGUES_TOKEN     enabled  Bearer token`}</Pre>
           <Callout tone="warn">
             Your token must belong to someone with a seat in the league you are asking about. Every
-            call on a hosted league (an <Inline>lg_</Inline> id) runs{" "}
+            call on a league-box league (an <Inline>lg_</Inline> id) runs{" "}
             <Inline>assertLeagueViewer</Inline> — commissioner or seat holder, or the call returns{" "}
             <Inline>Unauthorized</Inline>. A raw Sleeper league id is different: it is
             Sleeper&apos;s own public data, passed through read-only, and needs no seat.
@@ -865,11 +865,11 @@ const agents: DocsPage = {
             halfway.
           </P>
           <Callout tone="warn">
-            Hosted leagues have no looser path. Every read of an <Inline>lg_</Inline> league —
-            browser, CLI, or agent — goes through the same seat check, so a box you self-host
-            exposes nothing it holds to a stranger who happens to know the id. Raw Sleeper ids are
-            the one exception, by design: that data is already public on Sleeper, and passing it
-            through is how you look at a league before you move it.
+            A league box has no looser path. Every read of an <Inline>lg_</Inline> league — browser,
+            CLI, or agent — goes through the same seat check, so a box you self-host exposes nothing
+            it holds to a stranger who happens to know the id. Raw Sleeper ids are the one
+            exception, by design: that data is already public on Sleeper, and passing it through is
+            how you look at a league before you move it.
           </Callout>
         </>
       ),
@@ -925,7 +925,7 @@ const agents: DocsPage = {
           />
           <P>
             Every write an act token makes is logged as an <Inline>agent_action</Inline> event
-            carrying the token’s name, so a hosted league’s receipt can show the agent’s line —
+            carrying the token’s name, so a receipt on a league box can show the agent’s line —
             “codex started X over Y at 11:52am” — next to the human’s. In proxy mode the edge
             narrows a caller with <Inline>x-openleagues-scope: read</Inline>; it cannot widen
             anything, because act is already the ceiling.

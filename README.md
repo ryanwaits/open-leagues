@@ -90,7 +90,7 @@ running without Docker: [docs/self-host.md](docs/self-host.md).
 
 ## Connect an agent
 
-Any signed-in member mints their own token from `/account`, or from a shell:
+On your league box, any signed-in member mints their own token from `/account`, or from a shell:
 
 ```sh
 bun scripts/ledger.mjs mintToken --write --user usr_… --name codex --scope read   # or act

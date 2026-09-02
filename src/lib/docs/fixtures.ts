@@ -105,20 +105,20 @@ codex  mcp add open-leagues --url https://leagues.waits.dev/api/mcp
     {
       key: "codex",
       tab: "Codex",
-      label: "codex — hosted MCP over HTTP",
-      body: `export OPENLEAGUES_TOKEN=ol_…    # minted at ${origin}/account
+      label: "codex — your league box over HTTP",
+      body: `export OPENLEAGUES_TOKEN=ol_…    # minted at https://YOUR_BOX/account
 codex mcp add open-leagues \\
-  --url ${origin}/api/mcp \\
+  --url https://YOUR_BOX/api/mcp \\
   --bearer-token-env-var OPENLEAGUES_TOKEN
 codex mcp list`,
     },
     {
       key: "claude-code",
       tab: "Claude Code",
-      label: "claude — hosted MCP over HTTP",
-      body: `export OPENLEAGUES_TOKEN=ol_…
+      label: "claude — your league box over HTTP",
+      body: `export OPENLEAGUES_TOKEN=ol_…    # minted at https://YOUR_BOX/account
 claude mcp add --transport http open-leagues \\
-  ${origin}/api/mcp \\
+  https://YOUR_BOX/api/mcp \\
   --header "Authorization: Bearer $OPENLEAGUES_TOKEN"`,
     },
     {
@@ -134,7 +134,11 @@ codex mcp add open-leagues -- bun scripts/mcp.mjs`,
       tab: "Connector",
       label: "connector — Claude Cowork, ChatGPT, Grok",
       body: `# Settings → Connectors → Add custom connector
-url:   ${origin}/api/mcp
+# the public box: no auth
+url:   https://leagues.waits.dev/api/mcp
+
+# your league box: bearer
+url:   https://YOUR_BOX/api/mcp
 auth:  Bearer  ol_…
 
 # tools appear under: open-leagues`,
@@ -324,7 +328,7 @@ export const IDENTITY_SNIPPETS: Snippet[] = [
     tab: "token (default)",
     label: "OPENLEAGUES_MCP_AUTH=token — this box issues the credential",
     body: `# nothing to set; token is the default
-# mint from /account, or headless:
+# on your league box: mint from /account, or headless:
 bun scripts/ledger.mjs mintToken --write --user usr_…
 
 # the client sends it

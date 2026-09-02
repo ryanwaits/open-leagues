@@ -374,7 +374,7 @@ importLeague without confirm
 asking the clock to run
   → Error: tick is a cron clock, not a tool
 
-reading a hosted league without a seat
+reading a league-box league without a seat
   → Unauthorized · 401`;
 
 const CLOCK_OUT = `advanceWeek without confirm
@@ -850,7 +850,7 @@ importLeague   { "leagueId": "${L}", "confirm": true }`,
             key: "app",
             tab: "Browser",
             label: "the account page",
-            body: `${hostOrigin()}/account → Agent tokens → New token → read | act`,
+            body: `https://YOUR_BOX/account → Agent tokens → New token → read | act`,
           },
         ]}
         output={MINT_OUT}
@@ -882,7 +882,7 @@ importLeague   { "leagueId": "${L}", "confirm": true }`,
         }
         run={connectSnippets(hostOrigin())}
         output={CODEX_LIST_OUT}
-        outputLabel="codex mcp list · real"
+        outputLabel="codex mcp list · real · captured when leagues.waits.dev was still a league box; the public box needs no token"
         after={
           <>
             <p className="mt-4 max-w-[640px] text-[13.5px] leading-relaxed text-muted">
@@ -909,7 +909,7 @@ importLeague   { "leagueId": "${L}", "confirm": true }`,
         fix={
           <>
             Every write an act token makes is logged as an event carrying the token’s name, and a
-            hosted league’s receipt shows the agent’s line next to yours. Anything it should not do
+            receipt on a league box shows the agent’s line next to yours. Anything it should not do
             fails whole, with the reason in plain text.
           </>
         }
