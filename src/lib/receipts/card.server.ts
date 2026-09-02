@@ -109,7 +109,11 @@ export async function renderReceiptPng(r: Receipt, origin: string): Promise<Arra
   const lines: El[] = [el("div", { fontSize: 30, color: INK, display: "flex" }, outcomeLine(r))];
   if (r.flip) {
     const took = r.flip.to === r.roster.rosterId;
-    const who = r.flip.by ? ` on ${r.flip.by}` : "";
+    const who = r.flip.settled
+      ? ` on the final box score${r.flip.by ? ` (${r.flip.by})` : ""}`
+      : r.flip.by
+        ? ` on ${r.flip.by}`
+        : "";
     const prob =
       r.flip.probBefore != null && r.flip.beforeLabel
         ? ` You were ${Math.round(r.flip.probBefore * 100)}% at ${r.flip.beforeLabel}.`

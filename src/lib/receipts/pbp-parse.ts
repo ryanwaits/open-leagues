@@ -4,6 +4,8 @@
  * I/O, so it is testable on its own; `pbp.server.ts` streams and stores.
  */
 
+import { SCORING_FIELDS } from "@/lib/league/scoring";
+
 /** nflverse abbreviations that differ from Sleeper's DEF ids. */
 const TEAM_ALIAS: Record<string, string> = {
   LA: "LAR",
@@ -260,4 +262,40 @@ export function deltasFor(
     merged.set(p, cur);
   }
   return [...merged.entries()].map(([p, d]) => ({ p, d }));
+}
+
+/* ── settlement ──────────────────────────────────────────────────────── */
+
+/**
+ * Keys a book can score and a play log can under-count: every scoring field
+ * except the tier flags and bonus markers Sleeper derives, plus the two DEF
+ * levels the flip sums. `pts_allow` is settled as a delta like everything else.
+ */
+export const SETTLE_KEYS: ReadonlySet<string> = new Set([
+  ...SCORING_FIELDS.map((f) => f.key).filter((k) => !/^(pts_allow_|yds_allow_|bonus_)/.test(k)),
+  "pts_allow",
+  "yds_allow",
+]);
+
+/**
+ * What the official box score says the play log missed. Sleeper's weekly bag
+ * is the gamebook after corrections; nflverse is one row per play. Where they
+ * differ — a re-spotted catch, a Thursday stat correction — the difference is
+ * booked as one settlement event at the final whistle, so finals always match
+ * the box score and the play log still supplies the minute.
+ */
+export function settlementFor(
+  ours: Record<string, number>,
+  official: Record<string, number> | undefined,
+  keys: ReadonlySet<string> = SETTLE_KEYS,
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (!official) return out; // no official line for this player: the log stands
+  const all = new Set([...Object.keys(ours), ...Object.keys(official)]);
+  for (const k of all) {
+    if (!keys.has(k)) continue;
+    const delta = Math.round(((official[k] ?? 0) - (ours[k] ?? 0)) * 100) / 100;
+    if (Math.abs(delta) >= 0.005) out[k] = delta;
+  }
+  return out;
 }

@@ -3,7 +3,7 @@ import { Readable } from "node:stream";
 import { createGunzip } from "node:zlib";
 import { getSql } from "@/lib/db";
 import type { TimelineEvent } from "./flip";
-import { COLS, type Col, deltasFor, n, type Row, splitCsv, team } from "./pbp-parse";
+import { COLS, type Col, deltasFor, n, type Row, settlementFor, splitCsv, team } from "./pbp-parse";
 
 /**
  * Play-by-play, from nflverse, turned into per-game fantasy timelines.
@@ -35,7 +35,7 @@ const CROSSWALK_AFTER_MS = 24 * 60 * 60 * 1000;
  * Bump when the crosswalk's sources or the parser's stat semantics change;
  * every stored timeline re-ingests once on its next read.
  */
-const INGEST_VERSION = 6;
+const INGEST_VERSION = 7;
 
 let ready = false;
 async function ensure(): Promise<void> {
@@ -349,6 +349,8 @@ export async function ensureTimelines(
   }
   lastT = {};
 
+  await settleToBoxScore(season, games);
+
   const sql = await getSql();
   for (const [gameId, g] of games) {
     await sql`
@@ -366,6 +368,63 @@ export async function ensureTimelines(
       at = now(), games = excluded.games, crosswalk = excluded.crosswalk
   `;
   return { skipped: false, games: games.size };
+}
+
+/**
+ * Book the difference between the play log and Sleeper's official weekly stats
+ * as one event per player at each game's final whistle. Only players who
+ * appear in the game (and both DEFs) can be placed; a player the crosswalk
+ * missed entirely has no game to settle into and stays a gap.
+ */
+async function settleToBoxScore(
+  season: string,
+  games: Map<string, { week: number; kickoff: string | null; events: TimelineEvent[] }>,
+): Promise<void> {
+  const live = await import("@/lib/data/live.server");
+  const byWeek = new Map<number, string[]>();
+  for (const [id, g] of games) {
+    const list = byWeek.get(g.week) ?? [];
+    list.push(id);
+    byWeek.set(g.week, list);
+  }
+  for (const [week, ids] of byWeek) {
+    let official: Record<string, Record<string, number>>;
+    try {
+      official = await live.fetchWeekStats(season, week, "regular");
+    } catch {
+      continue; // no box score yet; the play log stands on its own
+    }
+    if (!official || Object.keys(official).length === 0) continue;
+    for (const id of ids) {
+      const g = games.get(id);
+      if (!g || g.events.length === 0) continue;
+      const bags = new Map<string, Record<string, number>>();
+      let last = g.events[0] as TimelineEvent;
+      for (const e of g.events) {
+        if (e.t > last.t) last = e;
+        const bag = bags.get(e.p) ?? {};
+        for (const [k, v] of Object.entries(e.d)) bag[k] = (bag[k] ?? 0) + v;
+        bags.set(e.p, bag);
+      }
+      const [, , away, home] = id.split("_");
+      for (const abbr of [away, home]) if (abbr && !bags.has(team(abbr))) bags.set(team(abbr), {});
+      for (const [p, ours] of bags) {
+        const d = settlementFor(ours, official[p]);
+        if (Object.keys(d).length === 0) continue;
+        g.events.push({
+          t: last.t,
+          g: id,
+          q: last.q,
+          clock: "0:00",
+          s: 0,
+          p,
+          d,
+          desc: "Settled on the final box score.",
+          settled: true,
+        });
+      }
+    }
+  }
 }
 
 /** Every event for a week, across games. Empty when nothing has been ingested. */

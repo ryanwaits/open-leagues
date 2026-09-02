@@ -41,6 +41,8 @@ export type ReceiptFlip = {
   play: string | null;
   /** The player whose stat line moved the lead, by name. */
   by: string | null;
+  /** The lead moved on a box-score settlement at the final whistle, not a play. */
+  settled: boolean;
   scores: [number, number];
   /** Lead changes across the whole week. */
   changes: number;
@@ -262,6 +264,7 @@ async function flipFor(input: {
           .trim()
       : null,
     by: byName,
+    settled: d.settled,
     scores: input.mine === home.rosterId ? d.scores : [d.scores[1], d.scores[0]],
     changes: flip.changes.length,
     probBefore,

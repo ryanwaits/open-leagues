@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { COLS, deltasFor, fgKey, splitCsv, team } from "./pbp-parse.ts";
+import { COLS, deltasFor, fgKey, SETTLE_KEYS, settlementFor, splitCsv, team } from "./pbp-parse.ts";
 
 const gsis = new Map([
   ["00-0033873", "4046"], // Mahomes
@@ -264,4 +264,27 @@ test("a lost fumble charges the fumbler and credits a recovering defence", () =>
   const by = Object.fromEntries(d.map((x) => [x.p, x.d]));
   assert.deepEqual(by["9509"], { rush_yd: 3, fum_lost: 1, fum: 1 });
   assert.deepEqual(by.LAR, { fum_rec: 1 });
+});
+
+test("settlement books only what the box score says the log missed, on scoreable keys", () => {
+  const ours = { rec: 3, rec_yd: 57, rush_yd: 8, fum_lost: 1, fum: 1 };
+  const official = {
+    rec: 3,
+    rec_yd: 68,
+    rush_yd: 8,
+    fum_lost: 1,
+    fum: 1,
+    rush_att: 3,
+    pts_half_ppr: 7.1,
+  };
+  assert.deepEqual(settlementFor(ours, official), { rec_yd: 11 });
+  // no official line for the player → the log stands, nothing is booked
+  assert.deepEqual(settlementFor(ours, undefined), {});
+  // a player the log never saw but the box score did is booked whole
+  assert.deepEqual(settlementFor({}, { rec: 2, rec_yd: 14, rush_att: 1 }), { rec: 2, rec_yd: 14 });
+  // tier flags and bonus markers are derived by the book, never settled
+  assert.ok(!SETTLE_KEYS.has("pts_allow_14_20"));
+  assert.ok(!SETTLE_KEYS.has("bonus_rec_yd_100"));
+  assert.ok(SETTLE_KEYS.has("pts_allow"));
+  assert.ok(SETTLE_KEYS.has("rec_yd"));
 });

@@ -108,3 +108,19 @@ test("scores at a moment replay only what had happened", () => {
   assert.deepEqual(scoresAt({ home, away, events, book: BOOK }, "2025-12-07T20:00:00Z"), [5, 0]);
   assert.deepEqual(scoresAt({ home, away, events, book: BOOK }, "2025-12-07T22:00:00Z"), [11, 0]);
 });
+
+test("a settlement that decides the week is marked, so the receipt can say so", () => {
+  const f = computeFlip({
+    home,
+    away,
+    book: BOOK,
+    events: [
+      ev("2025-12-07T18:05:00Z", "g1", "h1", { rush_td: 1 }),
+      ev("2025-12-07T18:25:00Z", "g1", "a1", { rec_td: 1, rec: 1 }),
+      { ...ev("2025-12-07T21:20:00Z", "g1", "h1", { rush_yd: 30 }), settled: true },
+    ],
+  });
+  assert.equal(f.changes.length, 2);
+  assert.equal(f.changes[0]?.settled, false, "the catch was a play");
+  assert.equal(f.decided?.settled, true, "the correction was booked at the whistle");
+});

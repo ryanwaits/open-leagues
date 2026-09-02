@@ -410,7 +410,7 @@ const sections: DocsSection[] = [
         outputLines={6}
         trust={[
           "Reconstructed from nflverse play-by-play, replayed under your league’s own scoring settings, to the second.",
-          "Checked against Sleeper’s box scores across 84 team-weeks of this league: 81 match to the cent, 3 differ by under a point where the two stat feeds disagree on yardage.",
+          "Settled to the box score: where the play log and Sleeper’s official stats disagree, the difference is booked at the final whistle, so finals match Sleeper to the cent — 84 of 84 team-weeks checked on this league. A correction that decides a week is named as one.",
           "The current week appears once the play log publishes. Until then the receipt says so, rather than guessing.",
         ]}
       />

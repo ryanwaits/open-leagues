@@ -118,7 +118,16 @@ export function ReceiptCard({ receipt: r, permalink }: { receipt: Receipt; perma
                 ? "Took the lead for good"
                 : "Lost the lead for good"}{" "}
               at <b className="font-mono font-semibold tabular-nums">{r.flip.atLabel}</b>
-              {r.flip.by ? <span className="text-muted"> on {r.flip.by}.</span> : "."}
+              {r.flip.settled ? (
+                <span className="text-muted">
+                  {" "}
+                  on the final box score{r.flip.by ? ` — a stat correction on ${r.flip.by}` : ""}.
+                </span>
+              ) : r.flip.by ? (
+                <span className="text-muted"> on {r.flip.by}.</span>
+              ) : (
+                "."
+              )}
               {r.flip.probBefore != null && r.flip.beforeLabel ? (
                 <span className="text-muted">
                   {" "}

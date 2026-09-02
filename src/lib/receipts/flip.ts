@@ -27,6 +27,8 @@ export type TimelineEvent = {
   d: Record<string, number>;
   /** Play description, kept only for scoring plays. */
   desc?: string;
+  /** A box-score settlement at the final whistle, not a play. */
+  settled?: boolean;
 };
 
 export type FlipSide = { rosterId: number; name: string; starters: string[] };
@@ -38,6 +40,8 @@ export type LeadChange = {
   scores: [number, number];
   desc: string | null;
   playerId: string | null;
+  /** The lead moved on a stat correction booked at the final whistle, not on a play. */
+  settled: boolean;
 };
 
 export type Flip = {
@@ -98,6 +102,7 @@ export function computeFlip(input: {
         scores: [home, away],
         desc: e.desc ?? null,
         playerId: e.p,
+        settled: e.settled === true,
       });
     }
     if (now !== null) leader = now;
