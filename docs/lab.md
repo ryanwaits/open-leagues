@@ -90,12 +90,18 @@ tuned on, and lost 13% on the one it was not.
 ## 4. Freeze one that clears
 
 On a box with no accounts (the substrate, or your local one above), the skill
-writes the frozen spec to your workspace:
+writes the frozen spec under your home directory — never into the folder you
+happen to be in, so it is the same ledger from any project and any agent:
 
 ```
-labs/<name>/strategy.json        # words, seasons, filter, bet, staking, bankroll
-labs/<name>/runs/discover.json   # the holdout record and the simulation
+~/.open-leagues/labs/<name>/strategy.json        # words, seasons, filter, bet, staking, bankroll
+~/.open-leagues/labs/<name>/runs/discover.json   # the holdout record and the simulation
+# set OPENLEAGUES_HOME to move the whole tree
 ```
+
+A rule that did *not* clear the holdout can still be written there as a
+`candidate`: the definition is pinned before a forward paper test, and every
+digest says it is not frozen.
 
 On a league box (`OPENLEAGUES_MODE=league`, signed in, token in hand) it calls
 `freezeStrategy` and `recordLabRun` instead, and any agent with your token can

@@ -68,9 +68,18 @@ You will look at many cohorts. One of them will look good by luck. So:
    policy, bankroll, and both season lists, then `recordLabRun` with kind
    `discover`, the holdout summary, the simulation, and the bets. On the
    public substrate (no accounts; `freezeStrategy` is not offered), write the
-   same spec to `labs/<name>/strategy.json` in the user's workspace and the
-   run to `labs/<name>/runs/discover.json` — same shape, same rule: frozen
-   means frozen.
+   same spec to `~/.open-leagues/labs/<name>/strategy.json` (honour `OPENLEAGUES_HOME` if set)
+   and the run to `~/.open-leagues/labs/<name>/runs/discover.json` — never into
+   the current working directory. Same shape, same rule: frozen means frozen.
+
+## Where files go
+
+A person's ledger is theirs, not a project's. On a box with no accounts, write
+under `~/.open-leagues/labs/<name>/` (or `$OPENLEAGUES_HOME/labs/<name>/`),
+never into the current working directory. A candidate that did not clear the
+holdout may be written there too, marked `"status": "candidate"`, so its
+definition is pinned before a forward test — it is not a freeze and the run
+skill must say so.
 
 ## Output
 

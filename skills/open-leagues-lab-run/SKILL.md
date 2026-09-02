@@ -30,12 +30,15 @@ Ceiling and invariants: [CATALOG.md](../../src/lib/agent/CATALOG.md),
 ## Steps
 
 1. Load the frozen strategy: `getStrategy` (or `listStrategies` and ask
-   which) on a box with accounts; `labs/<name>/strategy.json` in the user's
-   workspace on the public substrate, where those verbs are not offered.
+   which) on a box with accounts; on the public substrate, where those verbs
+   are not offered, `~/.open-leagues/labs/<name>/strategy.json` (honour
+   `$OPENLEAGUES_HOME` if set). Never look in, or write to, the current
+   working directory. If the file says `"status": "candidate"`, say so in
+   every digest: a candidate is on a forward paper test, not frozen.
    Read the filter, bet rule, staking policy, bankroll, and holdout seasons.
    Do not alter any of them.
-2. Load the ledger so far: `getLabRuns`, or `labs/<name>/runs/*.json`. The
-   most recent `weekly` run tells you the last week graded.
+2. Load the ledger so far: `getLabRuns`, or `~/.open-leagues/labs/<name>/runs/*.json`.
+   The most recent `weekly` run tells you the last week graded.
 3. For the week just played: call `sampleGames` with the frozen filter,
    `seasons: [thisSeason]`, `weeks: [lastWeek]`, `played: true`. Build the
    bets from the frozen rule. `evaluateBets`, `summarizeRun`.
@@ -47,8 +50,8 @@ Ceiling and invariants: [CATALOG.md](../../src/lib/agent/CATALOG.md),
    current closing line from `getGameLines`. This is a list, not advice.
 6. Write the digest (format below). Append the run: `recordLabRun` with kind
    `weekly`, the week's summary, the season simulation, the week's bets, and
-   the digest text — or `labs/<name>/runs/<season>-w<week>.json` on the
-   substrate.
+   the digest text — or `~/.open-leagues/labs/<name>/runs/<season>-w<week>.json`
+   on the substrate.
 
 ## Digest
 
