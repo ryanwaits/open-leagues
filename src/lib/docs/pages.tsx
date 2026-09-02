@@ -103,7 +103,7 @@ const overview: DocsPage = {
                 <strong key="a" className="font-medium text-fg">
                   The public box
                 </strong>,
-                "The default shape: receipts, open data, the lab, public MCP · no accounts, no leagues",
+                "The default shape: public MCP for any Sleeper league, the game, and the lab, plus the open-data files · no accounts, no leagues",
                 <Mono key="c">OPENLEAGUES_MODE unset · league for the whole product</Mono>,
               ],
               [

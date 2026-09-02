@@ -411,9 +411,9 @@ const sections: DocsSection[] = [
       <>
         <P>
           Every use case below is one pain, one fix, the exact thing to type, and what came back.
-          Every output was captured from this app against a real Sleeper league — SDIFFL, 2025, week
-          14 — and is shown verbatim. Filter to the seat you sit in, or read straight down: the
-          order is the order the pain shows up in a season.
+          Every output was captured from this app against a real Sleeper league, SDIFFL, 2025, week
+          14, or a real lab run, and is shown verbatim. Filter to the seat you sit in, or read
+          straight down: agents first, then the season in the order the pain shows up.
         </P>
         <AudienceChips />
       </>
