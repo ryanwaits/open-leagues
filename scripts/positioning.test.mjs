@@ -8,7 +8,7 @@ const read = (p) => readFileSync(join(root, p), "utf8");
 
 test("the landing is a quickstart: what it is, how to add it, what to ask", () => {
   const landing = read("src/components/landing.tsx");
-  assert.match(landing, /Fantasy football and NFL data for agents, over MCP\./);
+  assert.match(landing, /NFL and fantasy football data for your agent\./);
   assert.match(landing, /claude mcp add --transport http open-leagues/);
   assert.match(landing, /codex mcp add open-leagues/);
   // the door comes before the examples; examples before the files; no widgets, no essays

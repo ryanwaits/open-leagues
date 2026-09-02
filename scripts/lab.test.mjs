@@ -56,7 +56,8 @@ test("splits are opt-in and every pulled week is kept", () => {
   const sp = read("src/lib/lab/splits.server.ts");
   assert.match(sp, /OPENLEAGUES_SPLITS_SOURCE/);
   assert.match(sp, /export function splitsSources\(\)/);
-  for (const src of ["actionnetwork", "dknetwork", "wiseguyteam"]) assert.match(sp, new RegExp(`"${src}"`), src);
+  for (const src of ["actionnetwork", "dknetwork", "wiseguyteam"])
+    assert.match(sp, new RegExp(`"${src}"`), src);
   assert.match(sp, /ol_live_splits_log/, "live sources keep their own refresh log");
   assert.match(sp, /ol_game_splits_log/);
   assert.match(read(".env.example"), /OPENLEAGUES_SPLITS_SOURCE=/);

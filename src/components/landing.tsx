@@ -133,12 +133,12 @@ export function Landing({
       ) : null}
 
       <h1 className="mt-12 text-balance text-[30px] font-medium leading-[1.25] tracking-[-0.01em]">
-        Fantasy football and NFL data for agents, over MCP.
+        NFL and fantasy football data for your agent.
       </h1>
       <p className="mt-3 text-[15px] leading-relaxed text-muted">
-        An MCP server for fantasy football and NFL data. Any Sleeper league by id, NFL stats and
-        open projections, and every closing line since 1999. No account. It does not rank players or
-        pick sides; that part is your agent&apos;s.
+        An open-source MCP server. It reads any Sleeper league by id, NFL stats, open projections,
+        and the closing line for every game since 1999. Each answer carries a timestamp and a
+        source. No account is needed. It does not rank players, pick sides, or place bets.
       </p>
 
       <div className="mt-8 overflow-hidden rounded-lg border border-line-strong bg-surface">
