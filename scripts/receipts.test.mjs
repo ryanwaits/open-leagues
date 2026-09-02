@@ -55,3 +55,30 @@ test("metrics are five counters and nothing that identifies a person", () => {
   assert.match(m, /"paste" \| "card" \| "unfurl" \| "import" \| "token"/);
   assert.doesNotMatch(m, /user_id|email|display_name|ip\b/);
 });
+
+test("the flip is reconstructed from play-by-play, never sampled live at launch", () => {
+  const server = read("src/lib/receipts/receipt.server.ts");
+  assert.match(server, /computeFlip\(/);
+  assert.match(server, /ensureTimelines\(/);
+  assert.match(server, /winProbability\(/);
+  const pbp = read("src/lib/receipts/pbp.server.ts");
+  assert.match(pbp, /nflverse-data\/releases\/download\/pbp/);
+  assert.match(
+    pbp,
+    /REFRESH_AFTER_MS = 12 \* 60 \* 60 \* 1000/,
+    "a season is re-read at most twice a day",
+  );
+  assert.match(pbp, /createGunzip\(\)/, "streamed, never held in memory");
+});
+
+test("the play-by-play parser has no I/O — it is testable on its own", () => {
+  const parse = read("src/lib/receipts/pbp-parse.ts");
+  assert.doesNotMatch(parse, /from "@\/lib\/db"/);
+  assert.doesNotMatch(parse, /fetch\(/);
+  assert.doesNotMatch(parse, /node:/);
+});
+
+test("flip times are stated in Eastern, the clock fantasy keeps", () => {
+  const server = read("src/lib/receipts/receipt.server.ts");
+  assert.match(server, /timeZone: "America\/New_York"/);
+});

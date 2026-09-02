@@ -101,10 +101,25 @@ export async function renderReceiptPng(r: Receipt, origin: string): Promise<Arra
     ],
   );
 
-  const lines: El[] = [
-    el("div", { fontSize: 30, color: INK, display: "flex" }, outcomeLine(r)),
+  const lines: El[] = [el("div", { fontSize: 30, color: INK, display: "flex" }, outcomeLine(r))];
+  if (r.flip) {
+    const took = r.flip.to === r.roster.rosterId;
+    const who = r.flip.by ? ` on ${r.flip.by}` : "";
+    const prob =
+      r.flip.probBefore != null && r.flip.beforeLabel
+        ? ` You were ${Math.round(r.flip.probBefore * 100)}% at ${r.flip.beforeLabel}.`
+        : "";
+    lines.push(
+      el(
+        "div",
+        { fontSize: 28, color: INK, display: "flex", marginTop: 10 },
+        `${took ? "Took the lead for good" : "Lost the lead for good"} at ${r.flip.atLabel}${who}.${prob}`,
+      ),
+    );
+  }
+  lines.push(
     el("div", { fontSize: 26, color: INK_2, display: "flex", marginTop: 10 }, benchLine(r)),
-  ];
+  );
   const wire = wireLine(r);
   if (wire)
     lines.push(el("div", { fontSize: 24, color: INK_3, display: "flex", marginTop: 10 }, wire));

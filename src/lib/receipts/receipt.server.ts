@@ -1,6 +1,7 @@
 import type { ActivityItem, LeagueBundle, MatchupPair, TeamBundle } from "@/lib/data/types";
 import { isHostedLeague } from "@/lib/data/types";
 import { type BenchReceipt, benchReceipt } from "./bench";
+import { computeFlip, type FlipSide, gameStatesAt, scoresAt, type TimelineEvent } from "./flip";
 
 /**
  * A receipt is one roster's week, stated as facts: the score, what was left on
@@ -22,6 +23,27 @@ export type WireMove = {
   won: boolean;
 };
 
+/** The minute the matchup was decided, reconstructed from play-by-play. */
+export type ReceiptFlip = {
+  /** Wall clock of the last lead change, ISO. */
+  at: string;
+  /** "4:07pm ET" */
+  atLabel: string;
+  /** Roster that took the lead for good. */
+  to: number;
+  toName: string;
+  /** The play, when it was a scoring play. */
+  play: string | null;
+  /** The player whose stat line moved the lead, by name. */
+  by: string | null;
+  scores: [number, number];
+  /** Lead changes across the whole week. */
+  changes: number;
+  /** This roster's win probability half an hour before the flip, 0–1. Null when unmodelled. */
+  probBefore: number | null;
+  beforeLabel: string | null;
+};
+
 export type Receipt = {
   league: { id: string; name: string; season: string; hosted: boolean };
   week: number;
@@ -31,8 +53,7 @@ export type Receipt = {
   outcome: "win" | "loss" | "tie" | "pending";
   bench: BenchReceipt;
   wire: { moves: WireMove[]; spent: number };
-  /** The minute the lead changed. Filled by the flip reconstruction. */
-  flip: null;
+  flip: ReceiptFlip | null;
   generatedAt: string;
 };
 
@@ -110,6 +131,138 @@ function moveKind(type: string): WireMove["kind"] {
   return "other";
 }
 
+/** Kickoff-time convention: fantasy talks in Eastern. */
+export function etLabel(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).formatToParts(d);
+  const h = parts.find((p) => p.type === "hour")?.value ?? "";
+  const m = parts.find((p) => p.type === "minute")?.value ?? "";
+  const ap = (parts.find((p) => p.type === "dayPeriod")?.value ?? "").toLowerCase();
+  return `${h}:${m}${ap} ET`;
+}
+
+const HALF_HOUR_MS = 30 * 60 * 1000;
+
+/** "2025_14_KC_LAC" → the two teams, as Sleeper knows them. */
+function teamsOfGame(gameId: string): string[] {
+  const parts = gameId.split("_");
+  return parts.length >= 4
+    ? [parts[2] ?? "", parts[3] ?? ""].map((t) => (t === "LA" ? "LAR" : t))
+    : [];
+}
+
+async function flipFor(input: {
+  leagueId: string;
+  season: string;
+  week: number;
+  pair: MatchupPair;
+  mine: number;
+}): Promise<ReceiptFlip | null> {
+  const { pair } = input;
+  if (!pair.away) return null;
+  const pbp = await import("./pbp.server");
+  if (!(await pbp.hasTimeline(input.season, input.week))) {
+    // First receipt for this season pulls the whole play log once; every later
+    // request finds it in the table. Past seasons never change.
+    try {
+      const r = await pbp.ensureTimelines(input.season);
+      console.info(
+        `[receipts] pbp ${input.season}: ${r.skipped ? "throttled" : `${r.games} games`}`,
+      );
+    } catch (err) {
+      console.warn(`[receipts] pbp ${input.season} ingest failed:`, err);
+      return null;
+    }
+    if (!(await pbp.hasTimeline(input.season, input.week))) return null;
+  }
+  const events: TimelineEvent[] = await pbp.timelineFor(input.season, input.week);
+  if (events.length === 0) return null;
+
+  const { scoringBookFor } = await import("@/lib/data/projections.server");
+  const book = await scoringBookFor(input.leagueId);
+  const side = (m: MatchupPair["home"]): FlipSide => ({
+    rosterId: m.rosterId,
+    name: publicName(m.teamName, m.manager, m.rosterId),
+    starters: m.starters.map((l) => l.playerId).filter((id): id is string => Boolean(id)),
+  });
+  const home = side(pair.home);
+  const away = side(pair.away);
+  const flip = computeFlip({ home, away, events, book });
+  if (!flip.decided) return null;
+  const d = flip.decided;
+
+  const sleeper = await import("@/lib/data/sleeper.server");
+  const byName = d.playerId ? (sleeper.getPlayer(d.playerId)?.full_name ?? null) : null;
+
+  // Win probability, from this roster's side, half an hour before the flip.
+  let probBefore: number | null = null;
+  let beforeLabel: string | null = null;
+  try {
+    const beforeAt = new Date(new Date(d.at).getTime() - HALF_HOUR_MS).toISOString();
+    const states = gameStatesAt(events, beforeAt);
+    const gameOfTeam = new Map<string, string>();
+    for (const g of Object.keys(states)) for (const t of teamsOfGame(g)) gameOfTeam.set(t, g);
+    const { outlooksFor } = await import("@/lib/data/projections.server");
+    const ids = [...home.starters, ...away.starters];
+    const outlooks = await outlooksFor({
+      leagueId: input.leagueId,
+      season: input.season,
+      playerIds: ids,
+    });
+    const toOutlook = (ids: string[]) =>
+      ids.map((id) => {
+        const p = sleeper.getPlayer(id);
+        const team = p?.team ?? (p?.position === "DEF" ? id : null);
+        const g = team ? gameOfTeam.get(team) : undefined;
+        const st = g ? states[g] : undefined;
+        const o = outlooks[id];
+        return {
+          playerId: id,
+          team,
+          position: p?.position ?? null,
+          mean: o?.mean ?? 0,
+          sd: o?.sd ?? 0,
+          game: st ? { state: st.state, detail: st.detail, opp: null, gameId: g ?? null } : null,
+        };
+      });
+    const { winProbability } = await import("@/lib/league/win-probability");
+    const scores = scoresAt({ home, away, events, book }, beforeAt);
+    const wp = winProbability({
+      scores,
+      starters: [toOutlook(home.starters), toOutlook(away.starters)],
+    });
+    const pHome = wp.probability;
+    probBefore = input.mine === home.rosterId ? pHome : 1 - pHome;
+    beforeLabel = etLabel(beforeAt);
+  } catch {
+    probBefore = null;
+  }
+
+  return {
+    at: d.at,
+    atLabel: etLabel(d.at),
+    to: d.to,
+    toName: d.to === home.rosterId ? home.name : away.name,
+    play: d.desc
+      ? d.desc
+          .replace(/^\([^)]*\)\s*/, "")
+          .replace(/\s+/g, " ")
+          .trim()
+      : null,
+    by: byName,
+    scores: input.mine === home.rosterId ? d.scores : [d.scores[1], d.scores[0]],
+    changes: flip.changes.length,
+    probBefore,
+    beforeLabel,
+  };
+}
+
 export async function buildReceipt(
   leagueId: string,
   week: number,
@@ -162,11 +315,17 @@ export async function buildReceipt(
     .filter((m) => m.kind === "waiver" && m.won && m.bid != null)
     .reduce((n, m) => n + (m.bid ?? 0), 0);
 
+  const season = String(bundle.league.season);
+  const flip =
+    pair && outcome !== "pending"
+      ? await flipFor({ leagueId, season, week, pair, mine: rosterId }).catch(() => null)
+      : null;
+
   return {
     league: {
       id: leagueId,
       name: bundle.league.name,
-      season: String(bundle.league.season),
+      season,
       hosted: isHostedLeague(leagueId),
     },
     week,
@@ -176,7 +335,7 @@ export async function buildReceipt(
     outcome,
     bench,
     wire: { moves, spent },
-    flip: null,
+    flip,
     generatedAt: new Date().toISOString(),
   };
 }

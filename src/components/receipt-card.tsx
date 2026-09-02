@@ -107,6 +107,40 @@ export function ReceiptCard({ receipt: r, permalink }: { receipt: Receipt; perma
                 : `${won ? "Beat" : "Lost to"} ${opp.name} by ${fmt(Math.abs(r.roster.points - opp.points))}.`}
         </div>
 
+        {r.flip ? (
+          <div className="mt-4">
+            <div className="font-mono text-[10.5px] tracking-[0.08em] text-faint uppercase">
+              the flip
+            </div>
+            <p className="mt-1 text-[14px]">
+              {r.flip.to === r.roster.rosterId
+                ? "Took the lead for good"
+                : "Lost the lead for good"}{" "}
+              at <b className="font-mono font-semibold tabular-nums">{r.flip.atLabel}</b>
+              {r.flip.by ? <span className="text-muted"> on {r.flip.by}.</span> : "."}
+              {r.flip.probBefore != null && r.flip.beforeLabel ? (
+                <span className="text-muted">
+                  {" "}
+                  You were{" "}
+                  <b className="font-mono font-semibold tabular-nums text-fg">
+                    {Math.round(r.flip.probBefore * 100)}%
+                  </b>{" "}
+                  to win at {r.flip.beforeLabel}.
+                </span>
+              ) : null}
+            </p>
+            {r.flip.play ? (
+              <p className="mt-1 font-mono text-[11.5px] leading-relaxed text-faint">
+                {r.flip.play}
+              </p>
+            ) : null}
+            <p className="mt-1 font-mono text-[11px] text-faint">
+              {r.flip.changes} lead change{r.flip.changes === 1 ? "" : "s"} this week ·{" "}
+              {r.flip.scores[0].toFixed(1)}–{r.flip.scores[1].toFixed(1)} at the flip
+            </p>
+          </div>
+        ) : null}
+
         {r.outcome !== "pending" ? (
           <div className="mt-4">
             <div className="font-mono text-[10.5px] tracking-[0.08em] text-faint uppercase">
