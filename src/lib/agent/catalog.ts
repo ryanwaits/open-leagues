@@ -341,6 +341,13 @@ export const AGENT_TOOLS: AgentTool[] = [
     "spectator",
     "read",
   ),
+  tool(
+    "getSourceLedger",
+    "Get source ledger",
+    "Over a season: the lineup each open source would have set, scored on the box score, beside the roster's own. Which source to trust in this league.",
+    "spectator",
+    "read",
+  ),
   tool("getMatchups", "Get matchups", "Matchup cards for a week.", "spectator", "read"),
   tool(
     "getTicks",

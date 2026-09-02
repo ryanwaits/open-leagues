@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import type { SourceLedger } from "@/lib/receipts/ledger.server";
 import type { Receipt, WeekBoard } from "@/lib/receipts/receipt.server";
 import { cn } from "@/lib/utils";
 
@@ -332,5 +333,81 @@ export function WeekBoardList({ board }: { board: WeekBoard }) {
         ))}
       </ul>
     </div>
+  );
+}
+
+/**
+ * The season ledger: what each open source's lineup would have scored, beside
+ * what the roster actually set. Counts over weeks, never a verdict.
+ */
+export function SourceLedgerCard({ ledger }: { ledger: SourceLedger }) {
+  const n = ledger.weeks.length;
+  const best = [...ledger.sources].sort((a, b) => b.delta - a.delta)[0];
+  return (
+    <section
+      id="ledger"
+      className="overflow-hidden rounded-lg border border-line-strong bg-surface font-sans text-fg"
+    >
+      <div className="flex items-center justify-between border-b border-line bg-band px-4 py-2 font-mono text-[11px] tracking-[0.06em] text-faint uppercase">
+        <span>season ledger · {n} weeks</span>
+        <span>{ledger.league.season}</span>
+      </div>
+      <div className="px-4 pt-4 pb-3">
+        <p className="text-[14.5px] leading-snug">
+          You set lineups worth <b className="font-mono tabular-nums">{ledger.totals.you}</b> and
+          left <b className="font-mono tabular-nums">{ledger.totals.left}</b> on the bench across{" "}
+          {n} weeks.
+          {best && best.weeks > 0 ? (
+            <>
+              {" "}
+              {best.delta > 0 ? (
+                <>
+                  Following <b>{best.label}</b> every week would have added{" "}
+                  <b className="font-mono tabular-nums">+{best.delta}</b>.
+                </>
+              ) : (
+                <>
+                  No open source would have beaten you over the season; the closest,{" "}
+                  <b>{best.label}</b>, finishes{" "}
+                  <b className="font-mono tabular-nums">{best.delta}</b>.
+                </>
+              )}
+            </>
+          ) : null}
+        </p>
+        <table className="mt-3 w-full text-[13px]">
+          <thead>
+            <tr className="font-mono text-[10.5px] tracking-[0.06em] text-faint uppercase">
+              <th className="py-1 text-left font-semibold">source</th>
+              <th className="py-1 text-right font-semibold">beat · tied · lost</th>
+              <th className="py-1 text-right font-semibold">vs you</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ledger.sources.map((src) => (
+              <tr key={src.source} className="border-t border-line">
+                <td className="py-1.5">
+                  {src.label}
+                  <span className="ml-1.5 font-mono text-[11px] text-faint">{src.weeks} wks</span>
+                </td>
+                <td className="py-1.5 text-right font-mono tabular-nums text-muted">
+                  {src.beat} · {src.tied} · {src.lost}
+                </td>
+                <td
+                  className={`py-1.5 text-right font-mono tabular-nums ${src.delta > 0 ? "text-fg" : "text-muted"}`}
+                >
+                  {src.delta > 0 ? "+" : ""}
+                  {src.delta}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="mt-2.5 font-mono text-[11px] text-faint">
+          Each source's lineup is the one it would have set before kickoff, scored on the box score.
+          Open sources only; the count is labeled with how many weeks it holds.
+        </p>
+      </div>
+    </section>
   );
 }

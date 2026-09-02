@@ -88,7 +88,7 @@ type Loaders = {
   activity: (week: number) => Promise<ActivityItem[]>;
 };
 
-async function loadersFor(leagueId: string, userId: string | null): Promise<Loaders> {
+export async function loadersFor(leagueId: string, userId: string | null): Promise<Loaders> {
   if (isHostedLeague(leagueId)) {
     const eng = await import("@/lib/league/engine.server");
     return {

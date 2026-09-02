@@ -258,6 +258,13 @@ const receipts: DocsPage = {
               ],
               [
                 <strong key="a" className="font-medium text-fg">
+                  The season ledger
+                </strong>,
+                "Which open source would have set a better lineup than you did, week by week, over the season",
+                "Each source’s pre-kickoff lineup scored on the box score; counts labeled with weeks",
+              ],
+              [
+                <strong key="a" className="font-medium text-fg">
                   The agent’s line
                 </strong>,
                 "Which lineup moves a token made, by name and time",

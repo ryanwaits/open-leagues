@@ -397,6 +397,18 @@ export const getReceipt = createServerFn({ method: "GET" })
     return receipt;
   });
 
+export const getSourceLedger = createServerFn({ method: "GET" })
+  .middleware([optionalAuthMiddleware])
+  .validator(z.object({ leagueId: z.string(), rosterId: z.number() }))
+  .handler(async ({ data, context }) => {
+    if (isHostedLeague(data.leagueId)) {
+      const eng = await import("@/lib/league/engine.server");
+      await eng.assertLeagueViewer(data.leagueId, context.userId);
+    }
+    const { buildSourceLedger } = await import("@/lib/receipts/ledger.server");
+    return buildSourceLedger(data.leagueId, data.rosterId, context.userId);
+  });
+
 export const getWeekBoard = createServerFn({ method: "GET" })
   .middleware([optionalAuthMiddleware])
   .validator(z.object({ leagueId: z.string(), week: z.number().nullable().optional() }))

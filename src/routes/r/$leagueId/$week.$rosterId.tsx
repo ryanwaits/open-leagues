@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { PublicShell, ReceiptCard } from "@/components/receipt-card";
-import { getReceipt } from "@/lib/data/fns";
+import { PublicShell, ReceiptCard, SourceLedgerCard } from "@/components/receipt-card";
+import { getReceipt, getSourceLedger } from "@/lib/data/fns";
 import { publicOrigin, useConsoleSkin } from "@/lib/use-console-skin";
 
 /** One roster's week, with its own og:image so the link unfurls as the card. */
@@ -38,6 +38,12 @@ function ReceiptPage() {
     staleTime: 60_000,
   });
   const permalink = `${publicOrigin()}/r/${leagueId}/${w}/${rid}`;
+  const ledger = useQuery({
+    queryKey: ["receipts", "ledger", leagueId, rid],
+    queryFn: () => getSourceLedger({ data: { leagueId, rosterId: rid } }),
+    staleTime: 10 * 60_000,
+    enabled: Boolean(q.data),
+  });
 
   return (
     <PublicShell>
@@ -91,6 +97,15 @@ function ReceiptPage() {
           <p className="mt-4 text-[13px] text-faint">
             Copy the link. It unfurls as the card in iMessage, Sleeper chat, Discord, and X.
           </p>
+          <div className="mt-8">
+            {ledger.isPending ? (
+              <p className="font-mono text-[11.5px] text-faint">
+                Adding up the season… the first time for a team takes about half a minute.
+              </p>
+            ) : ledger.data && ledger.data.weeks.length > 0 ? (
+              <SourceLedgerCard ledger={ledger.data} />
+            ) : null}
+          </div>
         </>
       )}
     </PublicShell>

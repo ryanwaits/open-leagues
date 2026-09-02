@@ -88,3 +88,15 @@ test("team loader reads the week's roster from the matchup, not today's /rosters
   // A December starter who was dropped in March must still be on December's receipt.
   assert.match(src, /match\?\.players\?\.length \? match\.players/);
 });
+
+test("the season ledger is a verb on MCP and a section on the receipt", () => {
+  assert.ok(existsSync(join(root, "src/lib/receipts/ledger.server.ts")));
+  assert.match(read("src/lib/agent/catalog.ts"), /"getSourceLedger"/);
+  assert.match(read("src/lib/agent/core.ts"), /"getSourceLedger"/);
+  assert.match(read("src/lib/agent/dispatch.ts"), /case "getSourceLedger"/);
+  assert.match(read("src/routes/r/$leagueId/$week.$rosterId.tsx"), /SourceLedgerCard/);
+  // open sources only, and settled weeks are cached, never recomputed
+  const ledger = read("src/lib/receipts/ledger.server.ts");
+  assert.match(ledger, /ol_source_ledger/);
+  assert.doesNotMatch(ledger, /fantasypros|espn_proj|paid/i);
+});

@@ -1,9 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
+import { AGENT_TOOLS } from "@/lib/agent/catalog";
+import { AGENT_CORE } from "@/lib/agent/core";
 import { connectSnippets, INSTALL_SNIPPETS, PLAYBOOKS, type Snippet } from "./fixtures";
 import { AUDIENCES, setAudience, useAudience } from "./guide-store";
 import type { DocsPage, DocsSection } from "./pages";
 import { Inline, P, PlaybookList, TabbedCode, TranscriptReplay } from "./widgets";
+
+const MCP_WIRED = AGENT_CORE.size;
+const MCP_CATALOG = AGENT_TOOLS.length;
 
 /**
  * The guide: every use case as pain → fix → what you run → what comes back.
@@ -264,6 +269,24 @@ GET /api/wire/2025/14.json
   ]
 }`;
 
+const LEDGER_OUT = `GET ${RECEIPT_URL}  →  season ledger, below the receipt
+mcp: getSourceLedger { "leagueId": "${L}", "rosterId": 9 }
+
+NateBot · 2025 · 16 weeks
+You set lineups worth 1874.3 and left 151.0 on the bench.
+Following Sleeper projection every week would have added +2.1.
+
+  source               beat · tied · lost     vs you
+  Sleeper projection      5  ·  5  ·  6         +2.1
+  Last 3 weeks            1  ·  1  · 13       -236.4
+  Season average          4  ·  0  · 11       -261.9
+
+"weeks": [
+  { "week": 14, "you": 129.0, "optimal": 135.5, "sources": { "sleeper_proj": 127.6, "last3": 112.1, "season_avg": 131.0 } },
+  { "week": 15, "you": 123.1, "optimal": 159.3, "sources": { "sleeper_proj": 112.6, "last3": 118.6, "season_avg": 142.8 } },
+  …
+]`;
+
 const BOARD_OUT = `GET /r/${L}?week=14
 
 { "league": { "id": "${L}", "name": "SDIFFL", "season": "2025", "hosted": false },
@@ -478,6 +501,33 @@ const sections: DocsSection[] = [
         trust={[
           "Only leagues that have asked for a receipt contribute; nothing is crawled. No league id, manager, or roster appears in the file.",
           "n is the number of winning bids behind a price. With one league it is one bid; the receipt shows a median only once a second league has cleared a claim.",
+        ]}
+      />
+    ),
+  },
+  {
+    id: "trust",
+    heading: "Which source to trust",
+    audience: ["manager", "agent"],
+    body: () => (
+      <UseCase
+        pain="Every site tells me who to start. None of them tell me if they were right."
+        fix={
+          <>
+            Below every receipt is the season ledger: the lineup each open source would have set,
+            week by week, scored on the box score, beside the one you set. Over a season it says
+            which source to trust in your league, about your calls — as a count, never a verdict.
+          </>
+        }
+        run={`${hostOrigin()}${RECEIPT_URL}#ledger`}
+        runLabel="any receipt, below the card · also getSourceLedger over MCP"
+        output={LEDGER_OUT}
+        outputLabel="the season ledger · real · NateBot, 2025"
+        outputLines={10}
+        trust={[
+          "Each source’s lineup is filled the same way yours is, from that source’s pre-kickoff numbers under your league’s book, then scored on what actually happened.",
+          "Settled weeks are computed once and kept. The first ask for a team takes about half a minute; every later one is instant.",
+          "Two of the three sources lose to this manager by a wide margin. The ledger says so. It would say the opposite just as plainly.",
         ]}
       />
     ),
@@ -729,7 +779,7 @@ importLeague   { "leagueId": "${L}", "confirm": true }`,
         fix={
           <>
             One URL and the token. We publish no plugin for anyone; the protocol your client already
-            speaks is the surface. 67 of 78 verbs are on it.
+            speaks is the surface. {MCP_WIRED} of {MCP_CATALOG} verbs are on it.
           </>
         }
         run={connectSnippets(hostOrigin())}
@@ -784,7 +834,7 @@ startPlayer     { "leagueId": "lg_…", "playerId": "4866", "slot": "RB" }`}
     audience: ["agent"],
     body: () => (
       <UseCase
-        pain="I don’t want to learn 78 verbs to set a lineup."
+        pain={`I don’t want to learn ${MCP_CATALOG} verbs to set a lineup.`}
         fix={
           <>
             Four skills ship in the repo. Copy them into your host’s skills directory and one
