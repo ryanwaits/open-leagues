@@ -91,7 +91,7 @@ export function LineupBoard({
   const liveProj = useLiveProjPref((s) => s.liveProjections);
   const setLiveProj = useLiveProjPref((s) => s.setLiveProjections);
   const total = starters.reduce((sum, p) => {
-    const disp = slotDisplay(p.game, p.weekPts, projections?.[p.player_id]);
+    const disp = slotDisplay(p.game, p.weekPts, projFor(p, projections?.[p.player_id]));
     return sum + (disp.points ?? 0);
   }, 0);
   const questionable = bench.filter((p) => /^q/i.test(p.injury_status ?? "")).length;
@@ -349,7 +349,7 @@ export function LineupBoard({
                 <span className="min-w-0 flex-1 text-sm font-semibold text-loss">Empty</span>
               )}
               {bye ? <Badge tone="loss">Bye</Badge> : null}
-              <Points player={p} projection={projections?.[p?.player_id ?? ""]} />
+              <Points player={p} projection={projFor(p, projections?.[p?.player_id ?? ""])} />
             </li>
           );
         })}
@@ -439,7 +439,7 @@ export function LineupBoard({
                   />
                 </button>
                 {onBye(p, byes, week) ? <Badge tone="loss">Bye</Badge> : null}
-                <Points player={p} projection={projections?.[p.player_id]} />
+                <Points player={p} projection={projFor(p, projections?.[p.player_id])} />
               </li>
             );
           })}
@@ -598,6 +598,20 @@ function LockedMark({ name }: { name: string }) {
       <span className="sr-only">{name} is locked — game started</span>
     </span>
   );
+}
+
+/**
+ * A starter who cannot play does not get a forecast. The feed can still carry
+ * a number for someone the roster already knows is NA — showing it next to an
+ * "NA" badge reads as "he might play for 15.8", which is the opposite of true.
+ */
+function projFor(
+  p: RosterPlayer | undefined,
+  projection: Projection | undefined,
+): Projection | undefined {
+  if (!p || !projection) return projection;
+  if (projection.reason === "bye" || !isOut(p)) return projection;
+  return { points: 0, reason: "out" };
 }
 
 const OUT = new Set(["out", "ir", "doubtful", "suspended", "pup", "na"]);
