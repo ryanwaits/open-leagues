@@ -1,5 +1,5 @@
 import type { GameChip, LeagueBundle, RosterPlayer, ScoreGame } from "@/lib/data/types";
-import { labeledStartSlots, slotAccepts } from "./roster";
+import { invertSlotKey, labeledStartSlots, slotAccepts } from "./roster";
 
 /**
  * The four moods of a fantasy week. Everything phase-aware reads from here so
@@ -124,4 +124,34 @@ export function benchFor(slotLabel: string, players: RosterPlayer[]): RosterPlay
   return players
     .filter((p) => p.slot === "bench" && slotAccepts(p.position, slotLabel))
     .sort((a, b) => (b.weekPts ?? 0) - (a.weekPts ?? 0));
+}
+
+/** Wire position chips — matches `/league/$leagueId/wire` search.pos. */
+export type WirePos = "QB" | "RB" | "WR" | "TE" | "K" | "DEF" | "ALL";
+
+/** Map a starter slot label (`DST`, `RB2`, `FLX`) onto the Players filter. */
+export function wirePosForSlot(slot: string): WirePos {
+  const key = invertSlotKey(slot);
+  if (key === "QB" || key === "RB" || key === "WR" || key === "TE" || key === "K") return key;
+  if (key === "DEF") return "DEF";
+  return "ALL";
+}
+
+const SEEK_LABEL: Record<WirePos, string> = {
+  QB: "Find a quarterback",
+  RB: "Find a running back",
+  WR: "Find a receiver",
+  TE: "Find a tight end",
+  K: "Find a kicker",
+  DEF: "Find a defense",
+  ALL: "Find a replacement",
+};
+
+/**
+ * Where "Find a replacement" should land when the bench cannot cover a hole.
+ * First broken slot wins — that's the one the banner is shouting about.
+ */
+export function seekReplacement(issues: LineupIssue[]): { pos: WirePos; label: string } {
+  const pos = issues[0] ? wirePosForSlot(issues[0].slot) : "ALL";
+  return { pos, label: SEEK_LABEL[pos] };
 }

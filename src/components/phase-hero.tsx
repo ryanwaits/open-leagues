@@ -1,6 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import type { MatchupSide } from "@/lib/data/types";
-import type { LineupHealth, Phase } from "@/lib/league/phase";
+import {
+  type LineupHealth,
+  type LineupIssue,
+  type Phase,
+  seekReplacement,
+  wirePosForSlot,
+} from "@/lib/league/phase";
 import { cn, formatPts } from "@/lib/utils";
 
 /**
@@ -61,19 +67,19 @@ export function PhaseHero(props: {
   // be fixed.
   const needsFixing = editable && !health.ok && phase !== "live" && phase !== "settled";
   if (needsFixing) {
-    const empty = health.issues.filter((i) => i.kind === "empty").length;
-    const inactive = health.issues.filter((i) => i.kind === "inactive").length;
-    const bye = health.issues.filter((i) => i.kind === "bye").length;
+    const copy = alarmCopy(health.issues, fixable > 0);
+    const seek = seekReplacement(health.issues);
     return (
       <Shell tone="alarm">
         <Body
           kicker={phase === "gameday" ? "Games have started" : "Before kickoff"}
-          title={`${health.issues.length} ${health.issues.length === 1 ? "slot needs" : "slots need"} you`}
-          body={describeIssues(empty, inactive, bye)}
+          title={copy.title}
+          body={copy.body}
           tone="alarm"
         />
         {/* Only offer to do it for them when there is actually somebody on the
-            bench who can fill the hole. Otherwise send them to the wire. */}
+            bench who can fill the hole. Otherwise send them to the wire,
+            already filtered to the slot that is empty. */}
         {fixable > 0 ? (
           <button
             type="button"
@@ -87,9 +93,10 @@ export function PhaseHero(props: {
           <Link
             to="/league/$leagueId/wire"
             params={{ leagueId }}
+            search={seek.pos === "ALL" ? undefined : { pos: seek.pos }}
             className="inline-flex h-11 shrink-0 items-center rounded-pill border border-line-strong px-5 text-sm font-semibold hover:bg-raised"
           >
-            Find a replacement
+            {seek.label}
           </Link>
         )}
       </Shell>
@@ -113,14 +120,6 @@ export function PhaseHero(props: {
           }
           body={`${me.teamName} ${formatPts(me.points, 1)} against ${them.teamName} ${formatPts(them.points, 1)}.`}
         />
-        <Link
-          to="/league/$leagueId/recap"
-          params={{ leagueId }}
-          search={{ week, story: undefined }}
-          className="inline-flex h-10 shrink-0 items-center rounded-pill bg-fg px-4 text-sm font-medium text-bg hover:opacity-90"
-        >
-          Read the desk
-        </Link>
       </Shell>
     );
   }
@@ -129,6 +128,38 @@ export function PhaseHero(props: {
   // waiver window: all real, none of them a thing you have to do. The wire and
   // the lineup both have permanent tabs; they do not need a banner as well.
   return null;
+}
+
+function alarmCopy(issues: LineupIssue[], onBench: boolean): { title: string; body: string } {
+  const n = issues.length;
+  const first = issues[0];
+  const title = n === 1 && first ? oneIssueTitle(first) : `${n} slots need you`;
+  if (onBench) {
+    const empty = issues.filter((i) => i.kind === "empty").length;
+    const inactive = issues.filter((i) => i.kind === "inactive").length;
+    const bye = issues.filter((i) => i.kind === "bye").length;
+    return { title, body: describeIssues(empty, inactive, bye) };
+  }
+  const slot = first ? slotPhrase(first.slot) : "that slot";
+  return {
+    title,
+    body: `Nobody on the bench can take ${slot}. That slot will not score.`,
+  };
+}
+
+function oneIssueTitle(issue: LineupIssue): string {
+  const name = issue.player?.full_name;
+  if (issue.kind === "bye" && name) return `${name} is on a bye`;
+  if (issue.kind === "inactive" && name) return `${name} is ${issue.reason}`;
+  if (issue.kind === "empty") return `No one at ${slotPhrase(issue.slot)}`;
+  return "1 slot needs you";
+}
+
+function slotPhrase(slot: string): string {
+  const pos = wirePosForSlot(slot);
+  if (pos === "DEF") return "D/ST";
+  if (pos === "ALL") return "that slot";
+  return pos;
 }
 
 function describeIssues(empty: number, inactive: number, bye: number): string {

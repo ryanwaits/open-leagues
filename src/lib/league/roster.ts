@@ -237,7 +237,7 @@ export function invertSlotKey(label: string | null | undefined): string {
   if (!label) return "FLEX";
   const stripped = String(label).replace(/\d+$/, "");
   if (stripped === "FLX") return "FLEX";
-  if (stripped === "DST") return "DEF";
+  if (stripped === "DST" || stripped === "D/ST") return "DEF";
   if (stripped === "SF") return "SUPER_FLEX";
   if (stripped === "W/R") return "WRRB_FLEX";
   if (stripped === "W/T") return "REC_FLEX";
