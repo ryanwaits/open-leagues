@@ -70,7 +70,7 @@ test("events for players who did not start are ignored", () => {
   assert.equal(f.games, 0);
 });
 
-test("pts_allow is a level, not a delta", () => {
+test("pts_allow deltas sum to a level the book buckets once", () => {
   const dst = { rosterId: 1, name: "h", starters: ["PHI"] };
   const f = computeFlip({
     home: dst,
@@ -79,10 +79,10 @@ test("pts_allow is a level, not a delta", () => {
     events: [
       ev("2025-12-07T18:05:00Z", "g1", "PHI", { pts_allow: 0 }),
       ev("2025-12-07T18:25:00Z", "g1", "PHI", { pts_allow: 7 }),
-      ev("2025-12-07T18:45:00Z", "g1", "PHI", { pts_allow: 10 }),
+      ev("2025-12-07T18:45:00Z", "g1", "PHI", { pts_allow: 3 }),
     ],
   });
-  // three plays, but the book scores the 7–13 bucket once, not cumulatively
+  // kickoff seed scores the shutout bucket (10); 7 then 10 allowed lands on 7–13
   assert.deepEqual(f.final, [4, 0]);
 });
 

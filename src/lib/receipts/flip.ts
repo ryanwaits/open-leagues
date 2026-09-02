@@ -23,7 +23,7 @@ export type TimelineEvent = {
   s: number;
   /** Sleeper player id (a team abbreviation for DEF). */
   p: string;
-  /** Stat deltas in Sleeper keys; `pts_allow` is absolute, not a delta. */
+  /** Stat deltas in Sleeper keys. Every key is a delta, `pts_allow` included. */
   d: Record<string, number>;
   /** Play description, kept only for scoring plays. */
   desc?: string;
@@ -50,9 +50,6 @@ export type Flip = {
   /** How many distinct games contributed events. */
   games: number;
 };
-
-/** Keys whose value is an absolute level, not an increment. */
-const ABSOLUTE = new Set(["pts_allow"]);
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -82,7 +79,7 @@ export function computeFlip(input: {
     games.add(e.g);
     const bag = bags.get(e.p) ?? {};
     for (const [k, v] of Object.entries(e.d)) {
-      bag[k] = ABSOLUTE.has(k) ? v : (bag[k] ?? 0) + v;
+      bag[k] = (bag[k] ?? 0) + v;
     }
     bags.set(e.p, bag);
     const before = pts.get(e.p) ?? 0;

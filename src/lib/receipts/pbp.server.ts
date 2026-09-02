@@ -3,7 +3,7 @@ import { Readable } from "node:stream";
 import { createGunzip } from "node:zlib";
 import { getSql } from "@/lib/db";
 import type { TimelineEvent } from "./flip";
-import { COLS, type Col, deltasFor, n, type Row, splitCsv } from "./pbp-parse";
+import { COLS, type Col, deltasFor, n, type Row, splitCsv, team } from "./pbp-parse";
 
 /**
  * Play-by-play, from nflverse, turned into per-game fantasy timelines.
@@ -22,7 +22,20 @@ import { COLS, type Col, deltasFor, n, type Row, splitCsv } from "./pbp-parse";
 const PBP_URL = (season: string) =>
   `https://github.com/nflverse/nflverse-data/releases/download/pbp/play_by_play_${season}.csv.gz`;
 const PLAYERS_URL = "https://api.sleeper.app/v1/players/nfl";
+/**
+ * Sleeper's file carries a GSIS id for only a fraction of active players (none
+ * drafted since about 2021). dynastyprocess's id table — what nflreadr ships as
+ * load_ff_playerids() — maps every Sleeper id to its GSIS id, so it fills the
+ * gaps. Sleeper still wins on name, team, and position, which it keeps current.
+ */
+const FF_PLAYERIDS_URL = "https://github.com/dynastyprocess/data/raw/master/files/db_playerids.csv";
 const REFRESH_AFTER_MS = 12 * 60 * 60 * 1000;
+const CROSSWALK_AFTER_MS = 24 * 60 * 60 * 1000;
+/**
+ * Bump when the crosswalk's sources or the parser's stat semantics change;
+ * every stored timeline re-ingests once on its next read.
+ */
+const INGEST_VERSION = 3;
 
 let ready = false;
 async function ensure(): Promise<void> {
@@ -57,6 +70,14 @@ async function ensure(): Promise<void> {
   at timestamptz not null default now(),
   games int not null default 0
 )`);
+  await sql.query(
+    `alter table ol_pbp_log add column if not exists crosswalk int not null default 0`,
+  );
+  await sql.query(`create table if not exists ol_crosswalk_log (
+  version int primary key,
+  at timestamptz not null default now(),
+  rows int not null default 0
+)`);
   ready = true;
 }
 
@@ -76,39 +97,117 @@ type SleeperPlayer = {
   position?: string | null;
 };
 
-/** gsis → sleeper, refreshed from Sleeper's player file and persisted. */
-async function gsisMap(): Promise<Map<string, string>> {
-  await ensure();
-  const sql = await getSql();
-  const cached = await sql<{ gsis_id: string; sleeper_id: string }>`
-    select gsis_id, sleeper_id from ol_player_ids where gsis_id is not null
-  `;
-  if (cached.length > 1000) return new Map(cached.map((r) => [r.gsis_id, r.sleeper_id]));
+type IdRow = {
+  sleeper_id: string;
+  gsis_id: string | null;
+  espn_id: string | null;
+  yahoo_id: string | null;
+  rotowire_id: string | null;
+  sportradar_id: string | null;
+  name: string | null;
+  team: string | null;
+  position: string | null;
+};
 
-  const res = await fetch(PLAYERS_URL, { headers: { accept: "application/json" } });
-  if (!res.ok) throw new Error(`Sleeper players ${res.status}`);
-  const all = (await res.json()) as Record<string, SleeperPlayer>;
-  const map = new Map<string, string>();
-  const rows: SleeperPlayer[] = [];
+function idOf(v: string | number | null | undefined): string | null {
+  if (v == null) return null;
+  const s = String(v).trim();
+  return s && s !== "NA" ? s : null;
+}
+
+async function crosswalkFresh(): Promise<boolean> {
+  const sql = await getSql();
+  const row = (
+    await sql<{ at: string }>`select at from ol_crosswalk_log where version = ${INGEST_VERSION}`
+  )[0];
+  return row != null && Date.now() - new Date(row.at).getTime() < CROSSWALK_AFTER_MS;
+}
+
+/** Rebuild ol_player_ids from Sleeper's file plus the dynastyprocess id table. */
+async function buildCrosswalk(): Promise<void> {
+  const sql = await getSql();
+  const [sleeperRes, ffRes] = await Promise.all([
+    fetch(PLAYERS_URL, { headers: { accept: "application/json" } }),
+    fetch(FF_PLAYERIDS_URL, { redirect: "follow" }),
+  ]);
+  if (!sleeperRes.ok) throw new Error(`Sleeper players ${sleeperRes.status}`);
+  const all = (await sleeperRes.json()) as Record<string, SleeperPlayer>;
+
+  const rows = new Map<string, IdRow>();
   for (const p of Object.values(all)) {
     if (!p.player_id) continue;
-    if (p.gsis_id) map.set(p.gsis_id, p.player_id);
-    if (p.gsis_id || p.espn_id || p.yahoo_id || p.rotowire_id || p.sportradar_id) rows.push(p);
+    rows.set(p.player_id, {
+      sleeper_id: p.player_id,
+      gsis_id: idOf(p.gsis_id),
+      espn_id: idOf(p.espn_id),
+      yahoo_id: idOf(p.yahoo_id),
+      rotowire_id: idOf(p.rotowire_id),
+      sportradar_id: idOf(p.sportradar_id),
+      name: p.full_name ?? ([p.first_name, p.last_name].filter(Boolean).join(" ") || null),
+      team: p.team ?? null,
+      position: p.position ?? null,
+    });
   }
+
+  // Fill what Sleeper leaves blank. Never overwrite a Sleeper value with one
+  // from the id table; Sleeper is the authority on its own ids.
+  if (ffRes.ok) {
+    const text = await ffRes.text();
+    const lines = text.split(/\r?\n/);
+    const header = splitCsv(lines[0] ?? "");
+    const col = (name: string) => header.indexOf(name);
+    const c = {
+      sleeper: col("sleeper_id"),
+      gsis: col("gsis_id"),
+      espn: col("espn_id"),
+      yahoo: col("yahoo_id"),
+      rotowire: col("rotowire_id"),
+      sportradar: col("sportradar_id"),
+      name: col("name"),
+      position: col("position"),
+    };
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line) continue;
+      const f = splitCsv(line);
+      const sid = idOf(f[c.sleeper]);
+      if (!sid) continue;
+      const cur = rows.get(sid) ?? {
+        sleeper_id: sid,
+        gsis_id: null,
+        espn_id: null,
+        yahoo_id: null,
+        rotowire_id: null,
+        sportradar_id: null,
+        name: idOf(f[c.name]),
+        team: null,
+        position: idOf(f[c.position]),
+      };
+      cur.gsis_id ??= idOf(f[c.gsis]);
+      cur.espn_id ??= idOf(f[c.espn]);
+      cur.yahoo_id ??= idOf(f[c.yahoo]);
+      cur.rotowire_id ??= idOf(f[c.rotowire]);
+      cur.sportradar_id ??= idOf(f[c.sportradar]);
+      rows.set(sid, cur);
+    }
+  } else {
+    console.warn(`[receipts] ff_playerids ${ffRes.status}; crosswalk is Sleeper-only this pass`);
+  }
+
+  const list = [...rows.values()].filter(
+    (r) => r.gsis_id || r.espn_id || r.yahoo_id || r.rotowire_id || r.sportradar_id,
+  );
   // Persist in chunks; this is a few thousand rows once a day at most.
-  for (let i = 0; i < rows.length; i += 200) {
-    const chunk = rows.slice(i, i + 200);
+  for (let i = 0; i < list.length; i += 200) {
+    const chunk = list.slice(i, i + 200);
     await Promise.all(
       chunk.map(
         (p) => sql`
           insert into ol_player_ids
             (sleeper_id, gsis_id, espn_id, yahoo_id, rotowire_id, sportradar_id, name, team, position, updated_at)
           values (
-            ${p.player_id}, ${p.gsis_id ?? null}, ${p.espn_id != null ? String(p.espn_id) : null},
-            ${p.yahoo_id != null ? String(p.yahoo_id) : null},
-            ${p.rotowire_id != null ? String(p.rotowire_id) : null}, ${p.sportradar_id ?? null},
-            ${p.full_name ?? ([p.first_name, p.last_name].filter(Boolean).join(" ") || null)},
-            ${p.team ?? null}, ${p.position ?? null}, now()
+            ${p.sleeper_id}, ${p.gsis_id}, ${p.espn_id}, ${p.yahoo_id}, ${p.rotowire_id},
+            ${p.sportradar_id}, ${p.name}, ${p.team}, ${p.position}, now()
           )
           on conflict (sleeper_id) do update set
             gsis_id = excluded.gsis_id, espn_id = excluded.espn_id, yahoo_id = excluded.yahoo_id,
@@ -118,15 +217,38 @@ async function gsisMap(): Promise<Map<string, string>> {
       ),
     );
   }
-  return map;
+  await sql`
+    insert into ol_crosswalk_log (version, at, rows) values (${INGEST_VERSION}, now(), ${list.length})
+    on conflict (version) do update set at = now(), rows = excluded.rows
+  `;
+}
+
+/** gsis → sleeper, from the persisted crosswalk; rebuilt daily or on a version bump. */
+async function gsisMap(): Promise<Map<string, string>> {
+  await ensure();
+  if (!(await crosswalkFresh())) await buildCrosswalk();
+  const sql = await getSql();
+  const rows = await sql<{ gsis_id: string; sleeper_id: string }>`
+    select gsis_id, sleeper_id from ol_player_ids where gsis_id is not null
+  `;
+  return new Map(rows.map((r) => [r.gsis_id, r.sleeper_id]));
+}
+
+/** Make sure the Sleeper ↔ GSIS/ESPN/Yahoo crosswalk table is populated. */
+export async function ensureCrosswalk(): Promise<void> {
+  await gsisMap();
 }
 
 /* ── ingest ──────────────────────────────────────────────────────────── */
 
-async function lastRun(season: string): Promise<number | null> {
+async function lastRun(season: string): Promise<{ at: number; crosswalk: number } | null> {
   const sql = await getSql();
-  const row = (await sql<{ at: string }>`select at from ol_pbp_log where season = ${season}`)[0];
-  return row ? new Date(row.at).getTime() : null;
+  const row = (
+    await sql<{ at: string; crosswalk: number }>`
+      select at, crosswalk from ol_pbp_log where season = ${season}
+    `
+  )[0];
+  return row ? { at: new Date(row.at).getTime(), crosswalk: row.crosswalk } : null;
 }
 
 /**
@@ -141,7 +263,14 @@ export async function ensureTimelines(
   await ensure();
   if (!opts?.force) {
     const last = await lastRun(season);
-    if (last != null && Date.now() - last < REFRESH_AFTER_MS) return { skipped: true, games: 0 };
+    // A timeline built on an older crosswalk is missing players; rebuild it.
+    if (
+      last != null &&
+      last.crosswalk === INGEST_VERSION &&
+      Date.now() - last.at < REFRESH_AFTER_MS
+    ) {
+      return { skipped: true, games: 0 };
+    }
   }
   const gsis = await gsisMap();
 
@@ -185,7 +314,24 @@ export async function ensureTimelines(
     const t = r.time_of_day || lastT[r.game_id] || "";
     if (!t) continue;
     lastT[r.game_id] = t;
-    if (!g.kickoff) g.kickoff = t;
+    if (!g.kickoff) {
+      g.kickoff = t;
+      // Both defences open the game having allowed nothing, so a shutout scores
+      // its top bucket from kickoff and every later delta sums from zero.
+      const [, , awayAbbr, homeAbbr] = r.game_id.split("_");
+      for (const abbr of [awayAbbr, homeAbbr]) {
+        if (!abbr) continue;
+        g.events.push({
+          t,
+          g: r.game_id,
+          q: n(r.qtr),
+          clock: r.time,
+          s: n(r.game_seconds_remaining),
+          p: team(abbr),
+          d: { pts_allow: 0 },
+        });
+      }
+    }
 
     const scoring = r.sp === "1" || r.interception === "1" || r.fumble_lost === "1";
     for (const { p, d } of deltas) {
@@ -214,8 +360,10 @@ export async function ensureTimelines(
     `;
   }
   await sql`
-    insert into ol_pbp_log (season, at, games) values (${season}, now(), ${games.size})
-    on conflict (season) do update set at = now(), games = excluded.games
+    insert into ol_pbp_log (season, at, games, crosswalk)
+    values (${season}, now(), ${games.size}, ${INGEST_VERSION})
+    on conflict (season) do update set
+      at = now(), games = excluded.games, crosswalk = excluded.crosswalk
   `;
   return { skipped: false, games: games.size };
 }
