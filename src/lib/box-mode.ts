@@ -1,20 +1,23 @@
 /**
  * What kind of box this is.
  *
- *   box        (default) — the whole product: accounts, hosted leagues, the
- *              desk, tokens, plus receipts, open data, the lab, and MCP.
- *   substrate  — the public host's shape: receipts, open data, the lab, and
- *              /api/mcp with no accounts at all. No signup, no tokens, no
- *              leagues live here. Anyone can call the public verbs; anything
- *              that needs a person is refused with a pointer to self-hosting.
+ *   substrate  (default) — receipts, open data, the lab, and /api/mcp with no
+ *              accounts at all. No signup, no tokens, no leagues. Anyone can
+ *              call the public read verbs; anything that needs a person is
+ *              refused with a pointer to running a league box. This is what
+ *              an unconfigured deploy is, so a public host can never expose a
+ *              signup form by accident.
+ *   league     — the whole product: accounts, hosted leagues, the desk, tokens,
+ *              plus everything the substrate does. Opted into with
+ *              OPENLEAGUES_MODE=league; docker-compose and `bun run dev` set it.
  *
  * Server-side truth is the environment. Clients ask through `getBoxMode`.
  */
-export type BoxMode = "box" | "substrate";
+export type BoxMode = "league" | "substrate";
 
 export function boxMode(): BoxMode {
   const raw = (process.env.OPENLEAGUES_MODE ?? "").trim().toLowerCase();
-  return raw === "substrate" ? "substrate" : "box";
+  return raw === "league" || raw === "box" ? "league" : "substrate";
 }
 
 export const isSubstrate = (): boolean => boxMode() === "substrate";

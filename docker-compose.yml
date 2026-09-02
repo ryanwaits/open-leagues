@@ -7,6 +7,9 @@ services:
       - open-leagues-data:/data
     environment:
       PGLITE_DATA_DIR: /data/pglite
+      # A compose box is a league box: accounts, your league, tokens. Drop this
+      # line to run a public substrate instead.
+      OPENLEAGUES_MODE: "league"
       OPENLEAGUES_SELF_TICK: "1"
       # Public origin of this box (no trailing slash). Change when reverse-proxied.
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:8080}

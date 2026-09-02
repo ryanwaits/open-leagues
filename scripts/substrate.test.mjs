@@ -6,8 +6,16 @@ import { test } from "node:test";
 const root = join(import.meta.dirname, "..");
 const read = (p) => readFileSync(join(root, p), "utf8");
 
-test("substrate mode is one env var, read on the server, asked for by clients", () => {
-  assert.match(read("src/lib/box-mode.ts"), /OPENLEAGUES_MODE/);
+test("substrate is the default; league mode is the deliberate step", () => {
+  const mode = read("src/lib/box-mode.ts");
+  assert.match(mode, /OPENLEAGUES_MODE/);
+  assert.match(mode, /raw === "league" \|\| raw === "box" \? "league" : "substrate"/);
+  assert.match(read("docker-compose.yml"), /OPENLEAGUES_MODE: "league"/);
+  assert.match(read("package.json"), /OPENLEAGUES_MODE=\$\{OPENLEAGUES_MODE:-league\} vite dev/);
+  assert.doesNotMatch(
+    read("render.yaml"),
+    /key: (OPENLEAGUES_MODE|BETTER_AUTH_URL|GOOGLE_CLIENT|VAPID)/,
+  );
   assert.match(read("src/lib/box-mode.fns.ts"), /getBoxMode = createServerFn/);
   assert.match(read(".env.example"), /OPENLEAGUES_MODE=/);
 });
@@ -37,7 +45,15 @@ test("the public MCP door is rate-limited and confined to PUBLIC_CORE", () => {
   const core = read("src/lib/agent/core.ts");
   // nothing in PUBLIC_CORE needs a seat or a person
   const pub = core.slice(core.indexOf("PUBLIC_CORE"));
-  for (const v of ["getAgentContext", "startPlayer", "placeWager", "freezeStrategy", "recordLabRun", "getWeekProjections", "listMyLeagues"]) {
+  for (const v of [
+    "getAgentContext",
+    "startPlayer",
+    "placeWager",
+    "freezeStrategy",
+    "recordLabRun",
+    "getWeekProjections",
+    "listMyLeagues",
+  ]) {
     assert.ok(!pub.includes(`"${v}"`), `${v} must not be public`);
   }
 });

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { afterEach, test } from "node:test";
+import { afterEach, beforeEach, test } from "node:test";
 import { AGENT_CORE } from "@/lib/agent/core";
 import { handleMcp } from "./mcp.ts";
 
@@ -9,6 +9,12 @@ const KEYS = [
   "OPENLEAGUES_MCP_USER_HEADER",
   "OPENLEAGUES_MCP_PROXY_SECRET",
 ];
+// Unset is substrate; these tests exercise the league box's credential door
+// unless a test says otherwise.
+beforeEach(() => {
+  for (const k of KEYS) delete process.env[k];
+  process.env.OPENLEAGUES_MODE = "league";
+});
 afterEach(() => {
   for (const k of KEYS) delete process.env[k];
 });

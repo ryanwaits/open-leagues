@@ -1,6 +1,15 @@
-# Render Blueprint — one web service, PGLite on a persistent disk.
+# Render Blueprint — the public substrate box.
+#
+# Receipts, open data, the lab, and /api/mcp for anyone. No accounts, no
+# leagues, no tokens: OPENLEAGUES_MODE is left unset, which is substrate mode.
 # Launch once from the Render dashboard (New → Blueprint → this repo);
 # afterwards this file is the source of truth and syncs on push.
+#
+# To wipe the database before the first substrate deploy (old leagues, users,
+# tokens): copy the External Database URL from the open-leagues-pg page and run
+#   DATABASE_URL='postgres://…' bun scripts/db-wipe.mjs --yes
+# then deploy; `bun run build` re-applies migrations and every table the box
+# needs is created on first use.
 services:
   - type: web
     name: open-leagues
@@ -25,26 +34,10 @@ services:
         fromDatabase:
           name: open-leagues-pg
           property: connectionString
-      - key: PGLITE_DATA_DIR
-        value: /data/pglite
-      - key: OPENLEAGUES_SELF_TICK
-        value: "1"
-      - key: BETTER_AUTH_URL
-        value: https://leagues.waits.dev
       - key: VITE_PUBLIC_HOSTNAME
         value: leagues.waits.dev
-      # Secrets — set values in the dashboard at blueprint launch; never here.
-      - key: VAPID_PUBLIC_KEY
-        sync: false
-      - key: VAPID_PRIVATE_KEY
-        sync: false
-      - key: VAPID_SUBJECT
-        sync: false
-      # Optional Google sign-in; leave blank to run email-only.
-      - key: GOOGLE_CLIENT_ID
-        sync: false
-      - key: GOOGLE_CLIENT_SECRET
-        sync: false
+      # Substrate: no OPENLEAGUES_MODE, no BETTER_AUTH_*, no Google, no VAPID,
+      # no self-tick (there are no leagues to tick). Splits stay off publicly.
 
 databases:
   - name: open-leagues-pg
