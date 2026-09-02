@@ -373,3 +373,38 @@ export const getSources = createServerFn({ method: "GET" }).handler(async () => 
   const sleeper = await import("./sleeper.server");
   return sleeper.probeSources();
 });
+
+/* --------------------------------------------------------------- receipts -- */
+
+/**
+ * One roster's week as facts. Hosted leagues keep the seat rule; a raw Sleeper
+ * id is Sleeper's own public data and needs none.
+ */
+export const getReceipt = createServerFn({ method: "GET" })
+  .middleware([optionalAuthMiddleware])
+  .validator(z.object({ leagueId: z.string(), week: z.number(), rosterId: z.number() }))
+  .handler(async ({ data, context }) => {
+    if (isHostedLeague(data.leagueId)) {
+      const eng = await import("@/lib/league/engine.server");
+      await eng.assertLeagueViewer(data.leagueId, context.userId);
+    }
+    const { buildReceipt } = await import("@/lib/receipts/receipt.server");
+    const { count } = await import("@/lib/metrics.server");
+    const receipt = await buildReceipt(data.leagueId, data.week, data.rosterId, context.userId);
+    count("card", data.leagueId);
+    return receipt;
+  });
+
+export const getWeekBoard = createServerFn({ method: "GET" })
+  .middleware([optionalAuthMiddleware])
+  .validator(z.object({ leagueId: z.string(), week: z.number().nullable().optional() }))
+  .handler(async ({ data, context }) => {
+    if (isHostedLeague(data.leagueId)) {
+      const eng = await import("@/lib/league/engine.server");
+      await eng.assertLeagueViewer(data.leagueId, context.userId);
+    }
+    const { buildWeekBoard } = await import("@/lib/receipts/receipt.server");
+    const { count } = await import("@/lib/metrics.server");
+    count("paste", data.leagueId);
+    return buildWeekBoard(data.leagueId, data.week ?? null, context.userId);
+  });
