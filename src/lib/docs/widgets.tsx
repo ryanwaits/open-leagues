@@ -371,7 +371,7 @@ function MatchupBoard({ pair }: { pair: MatchupPair }) {
           );
         })}
         <div className="border-t border-line bg-band px-4 py-2 font-mono text-[10.5px] text-faint">
-          matchupId {pair.matchupId} · {pair.kind} · every filled slot scores 0 — no snaps played
+          matchupId {pair.matchupId} · {pair.kind} · every filled slot scores 0, no snaps played
         </div>
       </div>
     </div>
