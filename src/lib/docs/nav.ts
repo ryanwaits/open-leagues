@@ -32,14 +32,14 @@ export const DOCS_GROUPS: DocsNavGroup[] = [
     items: [
       { slug: "overview", href: "/docs", label: "Overview", kicker: "What this is" },
       { slug: "guide", href: "/docs/$slug", label: "Guide", kicker: "Pain, fix, proof" },
-      { slug: "receipts", href: "/docs/$slug", label: "Receipts", kicker: "Your week, as facts" },
       {
         slug: "open-data",
         href: "/docs/$slug",
         label: "Open data",
-        kicker: "Two files, no key",
+        kicker: "Three files, no key",
         tag: "json",
       },
+      { slug: "receipts", href: "/docs/$slug", label: "Receipts", kicker: "A worked example" },
       { slug: "quickstart", href: "/docs/$slug", label: "Quickstart", kicker: "Running a box" },
       {
         slug: "migrate",
@@ -52,8 +52,8 @@ export const DOCS_GROUPS: DocsNavGroup[] = [
   {
     label: "Headless",
     items: [
+      { slug: "agents", href: "/docs/$slug", label: "Agents & MCP", kicker: "One URL, no account" },
       { slug: "cli", href: "/docs/$slug", label: "CLI", kicker: "The ledger slice" },
-      { slug: "agents", href: "/docs/$slug", label: "Agents & MCP", kicker: "Connect a client" },
       {
         slug: "state",
         href: "/docs/$slug",

@@ -419,6 +419,98 @@ const sections: DocsSection[] = [
       </>
     ),
   },
+  {
+    id: "connect",
+    heading: "Connect Codex or Claude",
+    audience: ["agent", "manager", "bettor", "builder"],
+    body: () => (
+      <UseCase
+        pain="My agent can talk about fantasy football. It can’t touch my league."
+        fix={
+          <>
+            One URL. On the public box no token is needed: the read verbs — receipts, boards, the
+            ledger, lines, cohorts, grading, staking — answer anonymously, rate-limited per IP. On
+            your own box, one token unlocks all {MCP_WIRED} of {MCP_CATALOG} verbs. We publish no
+            plugin for anyone; the protocol your client already speaks is the surface.
+          </>
+        }
+        run={connectSnippets(hostOrigin())}
+        output={CODEX_LIST_OUT}
+        outputLabel="codex mcp list · real · captured when leagues.waits.dev was still a league box; the public box needs no token"
+        after={
+          <>
+            <p className="mt-4 max-w-[640px] text-[13.5px] leading-relaxed text-muted">
+              Then ask it something. Captured preseason 2026 against the live host, unedited — the
+              first two calls are tools Codex assumed existed:
+            </p>
+            <TranscriptReplay />
+          </>
+        }
+        trust={[
+          "Cookie sessions are rejected on /api/mcp in every mode. A bearer token or a proxied user id, nothing else.",
+          "stdio on your own box needs a real Postgres DATABASE_URL plus OPENLEAGUES_USER and exits without both.",
+        ]}
+      />
+    ),
+  },
+  {
+    id: "lab",
+    heading: "Test a betting hunch",
+    audience: ["bettor", "agent"],
+    body: () => (
+      <UseCase
+        pain="Home dogs getting over half the tickets — is that a signal or a story? I have no way to check that isn’t a spreadsheet and a weekend."
+        fix={
+          <>
+            Two skills over thirteen verbs, and no opinions anywhere in the code.{" "}
+            <Inline>open-leagues-lab-discover</Inline> turns the sentence into a cohort, grades it
+            on some seasons, then opens a holdout it never tuned on; it freezes the rule only if the
+            holdout clears, and reports <Inline>pBreakEven</Inline> — how easily luck alone produces
+            that record. <Inline>open-leagues-lab-run</Inline> takes a frozen rule every Tuesday:
+            grades last week, stakes the season on paper with <Inline>simulateBankroll</Inline>,
+            appends the run, writes the digest, lists next week’s games. It cannot place a bet; the
+            verb is not in its vocabulary.
+          </>
+        }
+        run={[
+          {
+            key: "agent",
+            tab: "Agent",
+            label: "over MCP · three calls",
+            body: `# discover: tune on 2023–24, verify on 2025, freeze only if it clears
+sampleGames      { "seasons": [2023, 2024], "filter": { "homeDog": true, "played": true, "splits": [{ "market": "spread", "side": "home", "tickets": [50, 100] }] } }
+evaluateBets · summarizeRun                       # read pBreakEven and n
+sampleGames      { "seasons": [2025], …same filter }   # the holdout, opened once
+evaluateBets · summarizeRun
+simulateBankroll { "graded": […], "bankroll": 1000, "policy": { "type": "percent", "pct": 1, "cap": 2 } }
+freezeStrategy   { "name": "…", "spec": { words, seasons, filter, bet, staking, bankroll } }   # only if it cleared
+
+# run, every Tuesday, on the frozen rule
+getStrategy → getLabRuns → sampleGames (last week) → evaluateBets → summarizeRun
+→ simulateBankroll (season) → recordLabRun → the digest`,
+          },
+          {
+            key: "curl",
+            tab: "curl",
+            label: "the feed underneath · every game, every season since 1999",
+            body: `curl -s ${hostOrigin()}/api/lines/2025.json | jq '.games[] | select(.spread < 0 and .spread > -3.5)'`,
+          },
+        ]}
+        output={LAB_OUT}
+        outputLabel="the discover skill on your hunch · real · every number from summarizeRun or simulateBankroll"
+        outputLines={12}
+        trust={[
+          "Lines and results are nflverse’s closing numbers — the same table every public NFL model is built on. Missing prices default to −110 and the payload says which odds were used.",
+          "Grading is tested against a real game (DAL–DET, week 14 2025: DET −3.5, 44–30) and reports closing-line value when you took a different number than the close.",
+          "Ticket and money percentages are opt-in (OPENLEAGUES_SPLITS_SOURCE): Action Network’s consensus is the one source with history (2023 on) and the one backtests use; DraftKings Network’s own handle and bet share and WiseGuyTeam’s multi-book read cover the current slate, each kept under its own book. All undocumented, all kept on your box once pulled.",
+          "The holdout is the whole point. Tuned on 2023–24 this looked like +14%; on 2025 it went −13%. pBreakEven says a 27-18 discovery happens by luck one time in five. The skill will not freeze it, and says why.",
+          "Staking is arithmetic, not opinion: the policy is the caller’s; simulateBankroll compounds it, reports drawdown in dollars, flags when Kelly was fed its own sample, and resamples the bets a thousand times so a +$19 result shows as a band from −$108 to +$170 with a 43% chance of a loss.",
+          "What it will not pretend to have: opening lines and line movement (free only for 2007–2021, not wired in). A frozen strategy is stored on your box, owned by you, and never touched by the run skill.",
+          "To follow this yourself, start to finish — box, agent, skills, the exact sentence to say — read docs/lab.md in the repo.",
+        ]}
+      />
+    ),
+  },
 
   /* ── managers ── */
   {
@@ -680,65 +772,6 @@ curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one c
     ),
   },
 
-  {
-    id: "lab",
-    heading: "Test a betting hunch",
-    audience: ["builder", "agent"],
-    body: () => (
-      <UseCase
-        pain="Home dogs getting over half the tickets — is that a signal or a story? I have no way to check that isn’t a spreadsheet and a weekend."
-        fix={
-          <>
-            Two skills over thirteen verbs, and no opinions anywhere in the code.{" "}
-            <Inline>open-leagues-lab-discover</Inline> turns the sentence into a cohort, grades it
-            on some seasons, then opens a holdout it never tuned on; it freezes the rule only if the
-            holdout clears, and reports <Inline>pBreakEven</Inline> — how easily luck alone produces
-            that record. <Inline>open-leagues-lab-run</Inline> takes a frozen rule every Tuesday:
-            grades last week, stakes the season on paper with <Inline>simulateBankroll</Inline>,
-            appends the run, writes the digest, lists next week’s games. It cannot place a bet; the
-            verb is not in its vocabulary.
-          </>
-        }
-        run={[
-          {
-            key: "agent",
-            tab: "Agent",
-            label: "over MCP · three calls",
-            body: `# discover: tune on 2023–24, verify on 2025, freeze only if it clears
-sampleGames      { "seasons": [2023, 2024], "filter": { "homeDog": true, "played": true, "splits": [{ "market": "spread", "side": "home", "tickets": [50, 100] }] } }
-evaluateBets · summarizeRun                       # read pBreakEven and n
-sampleGames      { "seasons": [2025], …same filter }   # the holdout, opened once
-evaluateBets · summarizeRun
-simulateBankroll { "graded": […], "bankroll": 1000, "policy": { "type": "percent", "pct": 1, "cap": 2 } }
-freezeStrategy   { "name": "…", "spec": { words, seasons, filter, bet, staking, bankroll } }   # only if it cleared
-
-# run, every Tuesday, on the frozen rule
-getStrategy → getLabRuns → sampleGames (last week) → evaluateBets → summarizeRun
-→ simulateBankroll (season) → recordLabRun → the digest`,
-          },
-          {
-            key: "curl",
-            tab: "curl",
-            label: "the feed underneath · every game, every season since 1999",
-            body: `curl -s ${hostOrigin()}/api/lines/2025.json | jq '.games[] | select(.spread < 0 and .spread > -3.5)'`,
-          },
-        ]}
-        output={LAB_OUT}
-        outputLabel="the discover skill on your hunch · real · every number from summarizeRun or simulateBankroll"
-        outputLines={12}
-        trust={[
-          "Lines and results are nflverse’s closing numbers — the same table every public NFL model is built on. Missing prices default to −110 and the payload says which odds were used.",
-          "Grading is tested against a real game (DAL–DET, week 14 2025: DET −3.5, 44–30) and reports closing-line value when you took a different number than the close.",
-          "Ticket and money percentages are opt-in (OPENLEAGUES_SPLITS_SOURCE): Action Network’s consensus is the one source with history (2023 on) and the one backtests use; DraftKings Network’s own handle and bet share and WiseGuyTeam’s multi-book read cover the current slate, each kept under its own book. All undocumented, all kept on your box once pulled.",
-          "The holdout is the whole point. Tuned on 2023–24 this looked like +14%; on 2025 it went −13%. pBreakEven says a 27-18 discovery happens by luck one time in five. The skill will not freeze it, and says why.",
-          "Staking is arithmetic, not opinion: the policy is the caller’s; simulateBankroll compounds it, reports drawdown in dollars, flags when Kelly was fed its own sample, and resamples the bets a thousand times so a +$19 result shows as a band from −$108 to +$170 with a 43% chance of a loss.",
-          "What it will not pretend to have: opening lines and line movement (free only for 2007–2021, not wired in). A frozen strategy is stored on your box, owned by you, and never touched by the run skill.",
-          "To follow this yourself, start to finish — box, agent, skills, the exact sentence to say — read docs/lab.md in the repo.",
-        ]}
-      />
-    ),
-  },
-
   /* ── commissioners ── */
   {
     id: "box",
@@ -867,40 +900,6 @@ importLeague   { "leagueId": "${L}", "confirm": true }`,
     ),
   },
   {
-    id: "connect",
-    heading: "Connect Codex or Claude",
-    audience: ["agent"],
-    body: () => (
-      <UseCase
-        pain="My agent can talk about fantasy football. It can’t touch my league."
-        fix={
-          <>
-            One URL. On the public box no token is needed: the read verbs — receipts, boards, the
-            ledger, lines, cohorts, grading, staking — answer anonymously, rate-limited per IP. On
-            your own box, one token unlocks all {MCP_WIRED} of {MCP_CATALOG} verbs. We publish no
-            plugin for anyone; the protocol your client already speaks is the surface.
-          </>
-        }
-        run={connectSnippets(hostOrigin())}
-        output={CODEX_LIST_OUT}
-        outputLabel="codex mcp list · real · captured when leagues.waits.dev was still a league box; the public box needs no token"
-        after={
-          <>
-            <p className="mt-4 max-w-[640px] text-[13.5px] leading-relaxed text-muted">
-              Then ask it something. Captured preseason 2026 against the live host, unedited — the
-              first two calls are tools Codex assumed existed:
-            </p>
-            <TranscriptReplay />
-          </>
-        }
-        trust={[
-          "Cookie sessions are rejected on /api/mcp in every mode. A bearer token or a proxied user id, nothing else.",
-          "stdio on your own box needs a real Postgres DATABASE_URL plus OPENLEAGUES_USER and exits without both.",
-        ]}
-      />
-    ),
-  },
-  {
     id: "honest",
     heading: "Prove what the agent did",
     audience: ["agent", "manager"],
@@ -952,6 +951,6 @@ npx skills add ryanwaits/open-leagues --agent codex -g   # Codex`}
 
 export const guide: DocsPage = {
   title: "Guide",
-  lede: "Every use case as pain, fix, what you run, and what comes back. Every output on this page is real, captured from a live Sleeper league.",
+  lede: "Every use case as pain, fix, what you run, and what comes back. Every output on this page is real: a live Sleeper league, or a real lab run.",
   sections,
 };

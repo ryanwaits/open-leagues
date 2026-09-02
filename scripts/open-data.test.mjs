@@ -65,7 +65,7 @@ test("docs and landing describe receipts and open data", () => {
   assert.match(pages, /\/api\/players\.json/);
   assert.match(pages, /\/api\/wire\/:season\/:week\.json/);
   const landing = read("src/components/landing.tsx");
-  assert.match(landing, /The minute your matchup flipped\./);
+  assert.match(landing, /Fantasy and NFL facts\. Your agent decides\./);
   assert.match(landing, /ReceiptFinder/);
   assert.doesNotMatch(landing, /A headless fantasy league\./);
   const readme = read("README.md");

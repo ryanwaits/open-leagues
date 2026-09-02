@@ -75,7 +75,7 @@ function DocLink({ slug, children }: { slug: DocsSlug; children: ReactNode }) {
 
 const overview: DocsPage = {
   title: "Overview",
-  lede: "Receipts for your fantasy week, on a headless league. Postgres holds the league and enforces the rules; an MCP server exposes every verb; the browser app is client zero — not the product.",
+  lede: "Headless NFL and fantasy data for agents, over MCP. Three families: your league, the game, the lab; plus three open JSON files. Facts, never advice.",
   sections: [
     {
       id: "what",
@@ -83,21 +83,21 @@ const overview: DocsPage = {
       body: () => (
         <>
           <P>
-            Two things, one box. <DocLink slug="receipts">Receipts</DocLink> read any Sleeper league
-            by id — no account — and say when a matchup flipped, what sat on the bench, and what the
-            wire cost. Underneath is a fantasy football league that keeps its state in a database
-            you control and its rules in one engine, exposed three ways. The surfaces differ in
-            reach, not in rules — they all land on the same server modules.
+            Three families of verbs, one box. Your league reads any Sleeper league by id, no
+            account, and on a box you own reads and moves the league you host. The game is the NFL
+            with no league attached. The lab is every closing line since 1999 as a backtest bench.
+            Postgres holds state, one engine holds the rules, and every surface lands on the same
+            server modules.
           </P>
           <DocTable
             head={["Surface", "Reach", "Entry point"]}
             rows={[
               [
                 <strong key="a" className="font-medium text-fg">
-                  Receipts
+                  MCP server
                 </strong>,
-                "Any Sleeper league, anonymous",
-                <Mono key="c">/r/:leagueId · /api/*.json</Mono>,
+                `${MCP_WIRED} of ${MCP_CATALOG} verbs; 23 with no account`,
+                <Mono key="c">/api/mcp · scripts/mcp.mjs</Mono>,
               ],
               [
                 <strong key="a" className="font-medium text-fg">
@@ -110,22 +110,29 @@ const overview: DocsPage = {
                 <strong key="a" className="font-medium text-fg">
                   The lab
                 </strong>,
-                "Real NFL lines, cohorts, grading, staking · 13 verbs",
+                "Real NFL lines since 1999, cohorts, grading, staking",
                 <Mono key="c">/api/lines/:season.json · two skills</Mono>,
+              ],
+              [
+                <strong key="a" className="font-medium text-fg">
+                  Open data
+                </strong>,
+                "Three JSON files, anonymous, CORS on",
+                <Mono key="c">/api/players.json · /api/wire · /api/lines</Mono>,
+              ],
+              [
+                <strong key="a" className="font-medium text-fg">
+                  Receipts
+                </strong>,
+                "A worked example: any Sleeper league, anonymous",
+                <Mono key="c">/r/:leagueId</Mono>,
               ],
               [
                 <strong key="a" className="font-medium text-fg">
                   Browser app
                 </strong>,
-                "Everything",
+                "Everything, client zero",
                 <Mono key="c">createServerFn</Mono>,
-              ],
-              [
-                <strong key="a" className="font-medium text-fg">
-                  MCP server
-                </strong>,
-                `${MCP_WIRED} of ${MCP_CATALOG} verbs`,
-                <Mono key="c">/api/mcp · scripts/mcp.mjs</Mono>,
               ],
               [
                 <strong key="a" className="font-medium text-fg">

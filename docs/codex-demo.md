@@ -1,9 +1,10 @@
 # Connecting Codex to a league
 
-A real MCP session, end to end: mint a token, point Codex at it, ask a
-question in plain language, and get back a real answer pulled live from
-the league — no custom integration code on either side, just the MCP
-protocol both sides already speak.
+A real MCP session, end to end: add one URL to Codex, ask a question in plain
+language, and get back facts pulled live from the box, with no custom
+integration code on either side. The public box at `https://leagues.waits.dev`
+needs no account and no token; a league box you run adds accounts, your
+league, and tokens, and that is the path the rest of this page walks.
 
 This works the same way for Claude Code, a Claude Connector, or a ChatGPT
 custom connector — Codex is just the one this walkthrough uses.
