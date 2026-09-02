@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { ReceiptFinder } from "@/components/receipt-finder";
 import { AGENT_TOOLS } from "@/lib/agent/catalog";
 import { AGENT_CORE } from "@/lib/agent/core";
 import {
@@ -212,6 +213,7 @@ const receipts: DocsPage = {
       heading: "Two URLs",
       body: () => (
         <>
+          <ReceiptFinder />
           <DocTable
             head={["URL", "Shows", "Needs"]}
             rows={[
@@ -229,9 +231,9 @@ const receipts: DocsPage = {
           />
           <P>
             <Inline>:leagueId</Inline> is a raw Sleeper id. Private leagues work — Sleeper’s API
-            serves them by id — and a username in the home input lists that person’s leagues to pick
-            from. Team names only: when a team name is just the manager’s username, it renders as{" "}
-            <Inline>Roster N</Inline>.
+            serves them by id — and a username in the finder above lists that person’s leagues to
+            pick from. Team names only: when a team name is just the manager’s username, it renders
+            as <Inline>Roster N</Inline>.
           </P>
           <Callout>
             A league on your own box (an <Inline>lg_</Inline> id) has receipts too, behind the same

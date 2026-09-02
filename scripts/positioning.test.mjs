@@ -6,21 +6,30 @@ import { test } from "node:test";
 const root = join(import.meta.dirname, "..");
 const read = (p) => readFileSync(join(root, p), "utf8");
 
-test("the product is headless tools for agents; receipts are a worked example", () => {
+test("the landing is a quickstart: what it is, how to add it, what to ask", () => {
   const landing = read("src/components/landing.tsx");
-  assert.match(landing, /Fantasy and NFL facts\. Your agent decides\./);
+  assert.match(landing, /Fantasy football and NFL data for agents, over MCP\./);
   assert.match(landing, /claude mcp add --transport http open-leagues/);
-  assert.match(landing, /a worked example: the receipt/);
-  assert.match(landing, /a worked example: the lab/);
-  // the door comes before the receipt example, and the finder sits under the example
-  assert.ok(landing.indexOf("add it to your agent") < landing.indexOf("a worked example: the receipt"));
-  assert.ok(landing.indexOf("a worked example: the receipt") < landing.indexOf("<ReceiptFinder />"));
-  // no hardcoded verb counts on the landing
+  assert.match(landing, /codex mcp add open-leagues/);
+  // the door comes before the examples; examples before the files; no widgets, no essays
+  assert.ok(landing.indexOf("add it to your agent") < landing.indexOf("then ask"));
+  assert.ok(landing.indexOf("then ask") < landing.indexOf("without an agent"));
+  assert.doesNotMatch(landing, /ReceiptFinder|FAMILIES|RECEIPT_LINES|LAB_SAMPLE/);
   assert.doesNotMatch(landing, /MCP_WIRED|MCP_CATALOG/);
+  const prose = landing.match(/<p[^>]*>([\s\S]*?)<\/p>/g) ?? [];
+  assert.ok(prose.length <= 3, `landing has ${prose.length} paragraphs; keep it under four`);
+  assert.ok(landing.split("\n").length < 240, "landing grew past a screen of code");
 });
 
 test("retired taglines are gone from every reader-facing surface", () => {
-  for (const p of ["src/components/landing.tsx", "README.md", "PRODUCT.md", "src/lib/docs/pages.tsx", "src/lib/docs/guide.tsx", "docs/codex-demo.md"]) {
+  for (const p of [
+    "src/components/landing.tsx",
+    "README.md",
+    "PRODUCT.md",
+    "src/lib/docs/pages.tsx",
+    "src/lib/docs/guide.tsx",
+    "docs/codex-demo.md",
+  ]) {
     const s = read(p);
     assert.doesNotMatch(s, /Receipts for your fantasy week/, p);
     assert.doesNotMatch(s, /The minute your matchup flipped\./, p);
@@ -37,9 +46,14 @@ test("README opens with the substrate and the install line, not a receipt", () =
   const readme = read("README.md");
   const firstCode = readme.indexOf("```sh");
   assert.ok(firstCode > 0);
-  assert.match(readme.slice(firstCode, firstCode + 200), /claude mcp add --transport http open-leagues https:\/\/leagues\.waits\.dev\/api\/mcp/);
+  assert.match(
+    readme.slice(firstCode, firstCode + 200),
+    /claude mcp add --transport http open-leagues https:\/\/leagues\.waits\.dev\/api\/mcp/,
+  );
   assert.match(readme, /## What an agent can ask/);
-  assert.ok(readme.indexOf("## What an agent can ask") < readme.indexOf("## A worked example: the receipt"));
+  assert.ok(
+    readme.indexOf("## What an agent can ask") < readme.indexOf("## A worked example: the receipt"),
+  );
 });
 
 test("the guide leads with agents and knows bettors", () => {
