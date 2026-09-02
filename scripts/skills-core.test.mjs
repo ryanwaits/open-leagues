@@ -89,3 +89,13 @@ test("migrate requires confirm: true; week does not mention sitPlayer", () => {
   assert.match(migrate, /confirm:\s*true/);
   assert.doesNotMatch(week, /sitPlayer/);
 });
+
+test("every skill says up front that it needs the MCP server, and which box", () => {
+  for (const file of skillFiles()) {
+    const md = readFileSync(file, "utf8");
+    assert.match(md, /## Before anything/, file);
+    assert.match(md, /open-leagues MCP server connected/, file);
+    if (file.includes("open-leagues-lab-")) assert.match(md, /leagues\.waits\.dev\/api\/mcp/, file);
+    else assert.match(md, /league box/, file);
+  }
+});

@@ -10,6 +10,17 @@ description: >
 
 # Discover
 
+## Before anything
+
+This skill only works with the open-leagues MCP server connected. If no
+`open-leagues` tools are listed (`getGameLines`, `sampleGames`, …), stop and
+say so — do not estimate, recall, or improvise a single number. To connect:
+
+    claude mcp add --transport http open-leagues https://leagues.waits.dev/api/mcp
+
+The public box needs no account or token. Splits (`getBettingSplits`) are only
+on if the box opted in; an empty result means "off", not "zero".
+
 Call tools. Do not answer from memory. Every number you report came back from
 `summarizeRun` or `simulateBankroll`.
 
