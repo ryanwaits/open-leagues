@@ -197,11 +197,12 @@ export function Landing({
       </div>
       <div className="mb-14 overflow-hidden rounded-lg border border-line-strong bg-surface">
         <div className="px-4 py-3.5 text-[14px] leading-relaxed">
-          Receipts sit on a headless league engine. Postgres holds the league and enforces the rules
-          — one FAAB purse, one scoring book, confirm-gated season ops. An MCP server exposes{" "}
-          {MCP_WIRED} of {MCP_CATALOG} verbs with read or act tokens, so the same agent that reads
-          your receipt can set your lineup and sign its work. Migrate a league in and this box is
-          the source of truth.
+          Receipts sit on a headless league engine. Add{" "}
+          <span className="font-mono text-[13px]">leagues.waits.dev/api/mcp</span> to your agent and
+          it reads receipts, lines, cohorts, and grades bets with no account and no token — your
+          agent brings its own model. Run the same code on your own box and it becomes a league:
+          Postgres holds the rules — one FAAB purse, one scoring book, confirm-gated season ops —
+          and {MCP_WIRED} of {MCP_CATALOG} verbs open to read or act tokens.
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line px-4 py-3 text-[13px]">
           <Link

@@ -5,6 +5,9 @@ register: product
 ## Product purpose
 Receipts for your fantasy week, on a headless league. Paste a Sleeper league id and get, for any team, the minute the matchup flipped, what was left on the bench, what the wire cost, and which open source called it before kickoff. Every line is a fact with a timestamp; nothing on a receipt comes from a model. Beneath the receipts, a league engine anyone can self-host and any agent can operate.
 
+## Two boxes
+The public host is a substrate: receipts for any Sleeper league, the open-data files, the lab, and read verbs over MCP, with no accounts, tokens, or leagues. Agents bring their own model; the box pays for Postgres and nothing else. Everything that needs a person runs on a box you own, from one command. Same code, one environment variable apart.
+
 ## Users
 - The manager who lost by 2.4: wants to know exactly when and why, and wants to send it to the chat. Never makes an account.
 - The commissioner: migrates a league in, then lets it run — the tick advances weeks and clears waivers; they confirm season ops and otherwise stay idle.

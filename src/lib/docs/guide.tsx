@@ -832,10 +832,11 @@ importLeague   { "leagueId": "${L}", "confirm": true }`,
         pain="I want my agent to set lineups, not blow up the league."
         fix={
           <>
-            Every token is minted <Inline>read</Inline> or <Inline>act</Inline>. A read token can
-            look and never move a player. An act token can do what your seat can do — one purse, no
-            fading your own team, confirm on anything season-wide — and nothing more. Mint it from
-            the account page or from a shell.
+            Tokens exist on your own box; the public box has no accounts and needs none. Every token
+            is minted <Inline>read</Inline> or <Inline>act</Inline>. A read token can look and never
+            move a player. An act token can do what your seat can do — one purse, no fading your own
+            team, confirm on anything season-wide — and nothing more. Mint it from the account page
+            or from a shell.
           </>
         }
         run={[
@@ -873,8 +874,10 @@ importLeague   { "leagueId": "${L}", "confirm": true }`,
         pain="My agent can talk about fantasy football. It can’t touch my league."
         fix={
           <>
-            One URL and the token. We publish no plugin for anyone; the protocol your client already
-            speaks is the surface. {MCP_WIRED} of {MCP_CATALOG} verbs are on it.
+            One URL. On the public box no token is needed: the read verbs — receipts, boards, the
+            ledger, lines, cohorts, grading, staking — answer anonymously, rate-limited per IP. On
+            your own box, one token unlocks all {MCP_WIRED} of {MCP_CATALOG} verbs. We publish no
+            plugin for anyone; the protocol your client already speaks is the surface.
           </>
         }
         run={connectSnippets(hostOrigin())}

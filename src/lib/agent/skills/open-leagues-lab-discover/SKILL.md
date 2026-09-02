@@ -46,10 +46,14 @@ You will look at many cohorts. One of them will look good by luck. So:
    on the holdout's graded bets. Report the bootstrap band (`p5`/`p50`/`p95`)
    and `probLoss`, not just the point result. If they named none, use
    `{ type: "flat", unit: 1% of bankroll }` and say you did.
-6. If it survives and the user wants to track it, call `freezeStrategy` with
-   the exact filter, bet rule, staking policy, bankroll, and both season
-   lists. Then `recordLabRun` with kind `discover`, the holdout summary, the
-   simulation, and the bets.
+6. If it survives and the user wants to track it, freeze it. On a box with
+   accounts, call `freezeStrategy` with the exact filter, bet rule, staking
+   policy, bankroll, and both season lists, then `recordLabRun` with kind
+   `discover`, the holdout summary, the simulation, and the bets. On the
+   public substrate (no accounts; `freezeStrategy` is not offered), write the
+   same spec to `labs/<name>/strategy.json` in the user's workspace and the
+   run to `labs/<name>/runs/discover.json` — same shape, same rule: frozen
+   means frozen.
 
 ## Output
 

@@ -93,6 +93,16 @@ export type Snippet = { key: string; tab: string; label: string; body: string };
 export function connectSnippets(origin: string): Snippet[] {
   return [
     {
+      key: "public",
+      tab: "Public box",
+      label: "leagues.waits.dev — no account, no token, the public read verbs",
+      body: `claude mcp add --transport http open-leagues https://leagues.waits.dev/api/mcp
+codex  mcp add open-leagues --url https://leagues.waits.dev/api/mcp
+
+# receipts, week boards, the season ledger, lines, cohorts, grading, staking
+# rate-limited per IP · nothing here needs a person`,
+    },
+    {
       key: "codex",
       tab: "Codex",
       label: "codex — hosted MCP over HTTP",

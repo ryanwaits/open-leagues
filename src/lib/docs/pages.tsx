@@ -101,6 +101,13 @@ const overview: DocsPage = {
               ],
               [
                 <strong key="a" className="font-medium text-fg">
+                  The public box
+                </strong>,
+                "Substrate mode: receipts, open data, the lab, public MCP · no accounts, no leagues",
+                <Mono key="c">OPENLEAGUES_MODE=substrate</Mono>,
+              ],
+              [
+                <strong key="a" className="font-medium text-fg">
                   The lab
                 </strong>,
                 "Real NFL lines, cohorts, grading, staking · 13 verbs",
@@ -783,7 +790,7 @@ bun scripts/ledger.mjs --list`}</Pre>
 
 const agents: DocsPage = {
   title: "Agents & MCP",
-  lede: "One URL, one bearer token, and whatever agent you already use. We publish no client-specific surface and ship no first-party plugin.",
+  lede: "One URL and whatever agent you already use. The public box needs no token at all for its read verbs; your own box takes a bearer token or a proxied user id. We publish no client-specific surface and ship no first-party plugin.",
   sections: [
     {
       id: "connect",
@@ -791,15 +798,12 @@ const agents: DocsPage = {
       body: () => (
         <>
           <P>
-            Mint the token at{" "}
-            <Link
-              to="/account"
-              className="text-fg underline decoration-line-strong underline-offset-4"
-            >
-              /account
-            </Link>{" "}
-            first. HTTP is the hosted path; stdio is for a commissioner running their own box who
-            would rather not expose an endpoint at all.
+            Two doors. The public box at <Inline>leagues.waits.dev</Inline> runs in substrate mode:
+            add the URL and every read verb that needs no person — receipts, boards, the season
+            ledger, lines, cohorts, grading, staking — answers with no account and no token,
+            rate-limited per IP. Your own box is the full product: mint a token at{" "}
+            <Inline>/account</Inline> (or from a shell), or let your edge pass a user id. stdio is
+            for a commissioner who would rather not expose an endpoint at all.
           </P>
           <TabbedCode snippets={connectSnippets(hostOrigin())} />
           <Callout>

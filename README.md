@@ -58,6 +58,21 @@ curl https://YOUR_HOST/api/lines/2025.json        # closing spread, total, money
 # OPENLEAGUES_SPLITS_SOURCE=actionnetwork          # opt-in ticket/money splits, 2023 onward
 ```
 
+## The public box
+
+`leagues.waits.dev` runs in substrate mode: receipts for any Sleeper league,
+the open-data files, and `/api/mcp` with no account and no token. Add it to
+your agent and go:
+
+```sh
+claude mcp add --transport http open-leagues https://leagues.waits.dev/api/mcp
+codex  mcp add open-leagues --url https://leagues.waits.dev/api/mcp
+```
+
+It keeps no accounts and hosts no leagues. Your agent pays for its own model;
+the box pays for nothing but Postgres. Everything that needs a person — a
+league, tokens, frozen strategies — runs on a box you own.
+
 ## Run your own
 
 ```sh
@@ -68,7 +83,8 @@ docker compose up -d
 
 Open `http://YOUR_HOST:8080`. Receipts work immediately for any Sleeper id.
 To migrate a league in and run it here — standings, waivers, trades, a
-book — see [docs/migrate.md](docs/migrate.md). Env vars, Vercel, and
+book — see [docs/migrate.md](docs/migrate.md). Set `OPENLEAGUES_MODE=substrate`
+to run a public box like ours instead. Env vars, Vercel, and
 running without Docker: [docs/self-host.md](docs/self-host.md).
 
 ## Connect an agent

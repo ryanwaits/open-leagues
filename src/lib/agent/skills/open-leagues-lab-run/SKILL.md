@@ -18,11 +18,13 @@ Ceiling and invariants: [CATALOG.md](../../CATALOG.md),
 
 ## Steps
 
-1. Call `getStrategy` (or `listStrategies` and ask which). Read the filter,
-   bet rule, staking policy, bankroll, and holdout seasons. Do not alter any
-   of them.
-2. Call `getLabRuns` for the ledger so far. The most recent `weekly` run
-   tells you the last week graded.
+1. Load the frozen strategy: `getStrategy` (or `listStrategies` and ask
+   which) on a box with accounts; `labs/<name>/strategy.json` in the user's
+   workspace on the public substrate, where those verbs are not offered.
+   Read the filter, bet rule, staking policy, bankroll, and holdout seasons.
+   Do not alter any of them.
+2. Load the ledger so far: `getLabRuns`, or `labs/<name>/runs/*.json`. The
+   most recent `weekly` run tells you the last week graded.
 3. For the week just played: call `sampleGames` with the frozen filter,
    `seasons: [thisSeason]`, `weeks: [lastWeek]`, `played: true`. Build the
    bets from the frozen rule. `evaluateBets`, `summarizeRun`.
@@ -32,9 +34,10 @@ Ceiling and invariants: [CATALOG.md](../../CATALOG.md),
 5. For next week's ticket list: `sampleGames` with `weeks: [nextWeek]`,
    `played: false`. List the games and sides the rule would take, at the
    current closing line from `getGameLines`. This is a list, not advice.
-6. Write the digest (format below). Call `recordLabRun` with kind `weekly`,
-   the week's summary, the season simulation, the week's bets, and the digest
-   text.
+6. Write the digest (format below). Append the run: `recordLabRun` with kind
+   `weekly`, the week's summary, the season simulation, the week's bets, and
+   the digest text — or `labs/<name>/runs/<season>-w<week>.json` on the
+   substrate.
 
 ## Digest
 
