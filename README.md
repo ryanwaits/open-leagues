@@ -1,6 +1,6 @@
 # open-leagues
 
-NFL and fantasy football data for your agent. An open-source MCP server. It reads any Sleeper league by id, NFL stats, open projections, and the closing line for every game since 1999. Each answer carries a timestamp and a source. No account is needed. It does not rank players, pick sides, or place bets.
+NFL and fantasy football data for your agent. An open-source MCP server. It reads any Sleeper league by id, NFL stats, open projections, and the closing line for every game since 1999. Each answer carries a timestamp and a source. No account is needed.
 
 ```sh
 claude mcp add --transport http open-leagues https://leagues.waits.dev/api/mcp

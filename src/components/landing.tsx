@@ -138,7 +138,7 @@ export function Landing({
       <p className="mt-3 text-[15px] leading-relaxed text-muted">
         An open-source MCP server. It reads any Sleeper league by id, NFL stats, open projections,
         and the closing line for every game since 1999. Each answer carries a timestamp and a
-        source. No account is needed. It does not rank players, pick sides, or place bets.
+        source. No account is needed.
       </p>
 
       <div className="mt-8 overflow-hidden rounded-lg border border-line-strong bg-surface">

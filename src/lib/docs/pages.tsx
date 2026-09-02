@@ -76,7 +76,7 @@ function DocLink({ slug, children }: { slug: DocsSlug; children: ReactNode }) {
 
 const overview: DocsPage = {
   title: "Overview",
-  lede: "An open-source MCP server. It reads any Sleeper league by id, NFL stats, open projections, and the closing line for every game since 1999. It does not rank players, pick sides, or place bets.",
+  lede: "An open-source MCP server. It reads any Sleeper league by id, NFL stats, open projections, and the closing line for every game since 1999.",
   sections: [
     {
       id: "what",

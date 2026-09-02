@@ -29,7 +29,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       {
         name: "description",
         content:
-          "An open-source MCP server for Sleeper leagues, NFL stats, open projections, and closing lines since 1999. No account. It does not rank, pick, or bet.",
+          "An open-source MCP server for Sleeper leagues, NFL stats, open projections, and closing lines since 1999. No account.",
       },
       { name: "apple-mobile-web-app-title", content: APP_NAME },
       { name: "theme-color", media: "(prefers-color-scheme: light)", content: "#fafaf8" },
