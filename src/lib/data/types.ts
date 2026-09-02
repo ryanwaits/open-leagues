@@ -64,6 +64,8 @@ export type SleeperLeague = {
     last_scored_leg?: number;
     leg?: number;
     waiver_type?: number;
+    /** FAAB purse per roster; Sleeper's default is 100. */
+    waiver_budget?: number;
     taxi_slots?: number;
     reserve_slots?: number;
     best_ball?: number;

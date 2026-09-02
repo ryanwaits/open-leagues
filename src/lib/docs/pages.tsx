@@ -253,8 +253,8 @@ const receipts: DocsPage = {
                 <strong key="a" className="font-medium text-fg">
                   The wire
                 </strong>,
-                "Bids, results, and what the player cleared for elsewhere",
-                "The league’s transactions plus the wire clearing prices, once a second league has one",
+                "Bids as a share of your budget, results, and what the player cleared for elsewhere",
+                "The league’s transactions plus the wire clearing prices in percent of budget, once a second league has one",
               ],
               [
                 <strong key="a" className="font-medium text-fg">
@@ -275,7 +275,7 @@ const receipts: DocsPage = {
           <Pre label="a real one · SDIFFL 2025 · week 14 · NateBot 129.0 — Roster 14 85.3">{`Took the lead for good at 3:41pm ET on a Trevor Lawrence completion, 78.8–78.6 · 78% to win at 3:11pm.
 6.5 left on the bench — Omarion Hampton (13.7) started over Saquon Barkley (20.2).
   Sleeper projection, Last 3 weeks, and Season average all said start Barkley.
-Wire: bid $26 on Stefon Diggs, lost.`}</Pre>
+Wire: bid $26 on Stefon Diggs — 13% of a $200 budget — lost.`}</Pre>
           <Note>
             Hindsight, on purpose. A projection is an opinion and a box score is a fact; the receipt
             is about facts, and it names which opinions were right. Paid sources never appear, even
@@ -375,14 +375,27 @@ const openData: DocsPage = {
         <>
           <P>
             What each player actually cleared for on waivers that week, across every Sleeper league
-            that has asked for a receipt. Median, quartiles, max, and the count of leagues behind
-            each number. The figure paid tools predict with a model, published as a fact.
+            that has asked for a receipt — as a{" "}
+            <strong className="font-medium text-fg">share of budget</strong>, because a dollar is
+            not a unit: $50 is half of a $100 league and a twentieth of a $1,000 one. Median,
+            quartiles, max, the share of what the winner had left, and the count behind each number.
+            Raw dollars appear only when every bid came from the same budget. The figure paid tools
+            predict with a model, published as a fact.
           </P>
-          <Pre label="shape">{`{
-  "season": "2025", "week": 14, "leagues": 1, "computedAt": "…",
+          <P>
+            Filter to a cohort so formats are not averaged together:{" "}
+            <Inline>?rosters=12&amp;format=half&amp;superflex=false</Inline>. The payload’s{" "}
+            <Inline>budgets</Inline> map shows how many contributing leagues run each purse.
+          </P>
+          <Pre label="shape · real">{`{
+  "season": "2025", "week": 14, "leagues": 1,
+  "budgets": { "200": 1 },            // contributing leagues per FAAB purse
+  "cohort": {},                       // or { rosters: 14, format: "half", superflex: false }
   "prices": [
-    { "player_id": "2449", "name": "Stefon Diggs", "position": "WR",
-      "n": 1, "median": 79, "p25": 79, "p75": 79, "max": 79 }
+    { "player_id": "2449", "name": "Stefon Diggs", "position": "WR", "n": 1,
+      "median_pct": 39.5, "p25_pct": 39.5, "p75_pct": 39.5, "max_pct": 39.5,
+      "median_pct_remaining": 76.7,   // share of what the winner still had
+      "dollars": { "budget": 200, "median": 79 } }   // only within one budget
   ]
 }`}</Pre>
           <Bullets>
@@ -392,15 +405,17 @@ const openData: DocsPage = {
             </li>
             <li>
               No league id, manager, or roster appears in the payload. <Inline>n</Inline> is the
-              number of winning bids behind a price.
+              number of winning bids behind a price; <Inline>median_pct_remaining</Inline> is the
+              bid as a share of what the winner still had, reconstructed from their earlier wins.
             </li>
             <li>
               Cached an hour once at least one league has a cleared claim; empty results are not
               cached, so the file fills in as leagues arrive.
             </li>
             <li>
-              A team’s own receipt shows the median beside a won claim once a second league has one,
-              with the count, so a single league’s bid never reads as “the market”.
+              A team’s own receipt shows every bid as a percent of its budget, and the median share
+              beside a won claim once a second league has one, with the count — so a single league’s
+              bid never reads as “the market”.
             </li>
           </Bullets>
         </>

@@ -23,8 +23,12 @@ export type WireMove = {
   drop: string | null;
   bid: number | null;
   won: boolean;
-  /** Median winning bid across pasted leagues, once another league has cleared one. */
-  median: number | null;
+  /** The league's FAAB budget, so a bid can be read as a share. */
+  budget: number | null;
+  /** This bid as a share of budget, 0–100. */
+  bidPct: number | null;
+  /** Median winning share of budget across pasted leagues, once another league has cleared one. */
+  medianPct: number | null;
   leagues: number | null;
 };
 
@@ -341,21 +345,32 @@ export async function buildReceipt(
       drop: a.drops[0]?.name ?? null,
       bid: a.bid,
       won: a.status === "complete",
-      median: null,
+      budget: null,
+      bidPct: null,
+      medianPct: null,
       leagues: null,
     }));
   // What the same player cleared for elsewhere. Only for raw Sleeper leagues,
   // only when enough leagues have pasted to say something.
-  if (!isHostedLeague(leagueId) && moves.some((m) => m.kind === "waiver" && m.won)) {
+  if (!isHostedLeague(leagueId) && moves.some((m) => m.kind === "waiver")) {
     try {
-      const { wirePrices } = await import("./open-data.server");
-      const prices = await wirePrices(String(bundle.league.season), week);
-      const byId = new Map(prices.prices.map((p) => [p.player_id, p]));
+      const sleeper = await import("@/lib/data/sleeper.server");
+      const budget = (await sleeper.fetchLeague(leagueId)).settings?.waiver_budget ?? 100;
       for (const m of moves) {
-        const p = m.addId ? byId.get(m.addId) : undefined;
-        if (p && p.n >= 2) {
-          m.median = p.median;
-          m.leagues = p.n;
+        if (m.bid == null) continue;
+        m.budget = budget;
+        m.bidPct = budget > 0 ? Math.round((1000 * m.bid) / budget) / 10 : null;
+      }
+      if (moves.some((m) => m.kind === "waiver" && m.won)) {
+        const { wirePrices } = await import("./open-data.server");
+        const prices = await wirePrices(String(bundle.league.season), week);
+        const byId = new Map(prices.prices.map((p) => [p.player_id, p]));
+        for (const m of moves) {
+          const p = m.addId ? byId.get(m.addId) : undefined;
+          if (p && p.n >= 2) {
+            m.medianPct = p.median_pct;
+            m.leagues = p.n;
+          }
         }
       }
     } catch {

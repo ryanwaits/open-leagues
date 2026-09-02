@@ -240,10 +240,13 @@ export function ReceiptCard({ receipt: r, permalink }: { receipt: Receipt; perma
                   </span>
                   <span className="font-mono text-[12.5px] tabular-nums text-muted">
                     ${m.bid ?? 0}
-                    {m.median != null && m.leagues != null ? (
+                    {m.bidPct != null ? (
+                      <span className="text-faint"> · {m.bidPct}% of budget</span>
+                    ) : null}
+                    {m.medianPct != null && m.leagues != null ? (
                       <span className="text-faint">
                         {" "}
-                        · ${m.median} median · {m.leagues} leagues
+                        · median {m.medianPct}% across {m.leagues} leagues
                       </span>
                     ) : null}
                   </span>

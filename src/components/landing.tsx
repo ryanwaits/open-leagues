@@ -47,7 +47,7 @@ const RECEIPT_LINES: { k: string; what: string; how: string }[] = [
   {
     k: "the wire",
     what: "What you bid, whether you won, and what the same player cleared for elsewhere.",
-    how: "Median winning bid across every league that has pasted, from the second league on.",
+    how: "As a share of each league’s budget — a $50 bid is half of a $100 league and a twentieth of a $1,000 one — across every league that has pasted.",
   },
 ];
 
@@ -182,7 +182,7 @@ export function Landing({
           {"\n"}
           <span className="text-muted">
             {
-              "  what each player cleared for on waivers — median, quartiles, n — across pasted leagues"
+              "  what each player cleared for on waivers, as a share of budget — median, quartiles, n — by cohort"
             }
           </span>
         </pre>

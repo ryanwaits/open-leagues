@@ -25,7 +25,13 @@ export const Route = createFileRoute("/api/wire/$season/$week.json")({
         }
         try {
           const { wirePrices } = await import("@/lib/receipts/open-data.server");
-          const data = await wirePrices(p.season, p.week);
+          const q = new URL(request.url).searchParams;
+          const fmt = q.get("format");
+          const data = await wirePrices(p.season, p.week, {
+            rosters: q.get("rosters") ? Number(q.get("rosters")) : undefined,
+            format: fmt === "ppr" || fmt === "half" || fmt === "std" ? fmt : undefined,
+            superflex: q.has("superflex") ? q.get("superflex") !== "false" : undefined,
+          });
           return Response.json(data, {
             headers: { ...CORS, "cache-control": "public, max-age=600, s-maxage=3600" },
           });

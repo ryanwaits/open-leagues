@@ -22,14 +22,6 @@ async function ensure(): Promise<void> {
   first_seen timestamptz not null default now(),
   last_seen timestamptz not null default now()
 )`);
-  await sql.query(`create table if not exists ol_wire_prices (
-  season text not null,
-  week int not null,
-  computed_at timestamptz not null default now(),
-  leagues int not null,
-  prices_json text not null,
-  primary key (season, week)
-)`);
   ready = true;
 }
 
@@ -79,16 +71,36 @@ export async function playersCrosswalk(): Promise<CrosswalkRow[]> {
 
 /* ── clearing prices ─────────────────────────────────────────────────── */
 
+/**
+ * A dollar is not a unit. A $50 bid is half of a $100 league and a twentieth
+ * of a $1,000 one, and $50 with $52 left is a different act than $50 with
+ * $400 left. Every claim is stored with the budget it came from and the
+ * bidder's remaining purse at the time, and every published price is a share
+ * of budget. Raw dollars only appear inside a single-budget cohort.
+ */
+export type WireCohort = {
+  /** Roster count in the league, e.g. 12. */
+  rosters?: number;
+  /** Scoring shape from the receptions value: ppr | half | std. */
+  format?: "ppr" | "half" | "std";
+  superflex?: boolean;
+};
+
 export type WirePrice = {
   player_id: string;
   name: string | null;
   position: string | null;
-  /** Winning bids across leagues, in dollars. */
+  /** Winning bids behind this price. */
   n: number;
-  median: number;
-  p25: number;
-  p75: number;
-  max: number;
+  /** Share of the league's FAAB budget, 0–100. */
+  median_pct: number;
+  p25_pct: number;
+  p75_pct: number;
+  max_pct: number;
+  /** Share of what the winning bidder had left when they bid, 0–100. */
+  median_pct_remaining: number;
+  /** Dollars, only when every bid behind this price came from the same budget. */
+  dollars: { budget: number; median: number } | null;
 };
 
 export type WirePrices = {
@@ -96,19 +108,127 @@ export type WirePrices = {
   week: number;
   /** Leagues that contributed at least one cleared claim. */
   leagues: number;
+  /** How many contributing leagues run each budget, e.g. { "100": 9, "200": 3 }. */
+  budgets: Record<string, number>;
+  cohort: WireCohort;
   computedAt: string;
   prices: WirePrice[];
 };
 
-const PRICES_TTL_MS = 60 * 60 * 1000;
+type Claim = {
+  league_id: string;
+  week: number;
+  roster_id: number;
+  player_id: string;
+  bid: number;
+  budget: number;
+  remaining_before: number;
+  rosters: number;
+  format: "ppr" | "half" | "std";
+  superflex: boolean;
+};
+
+const CLAIMS_TTL_MS = 6 * 60 * 60 * 1000;
 const MAX_LEAGUES = 400; // stay well under Sleeper's 1000/min per IP
 
 type SleeperTx = {
   type: string;
   status: string;
+  status_updated?: number;
   adds: Record<string, number> | null;
-  settings: { waiver_bid?: number } | null;
+  settings: { waiver_bid?: number; seq?: number } | null;
 };
+
+async function ensureClaims(): Promise<void> {
+  const sql = await getSql();
+  await sql.query(`create table if not exists ol_wire_claims (
+  league_id text not null,
+  season text not null,
+  week int not null,
+  roster_id int not null,
+  player_id text not null,
+  bid int not null,
+  budget int not null,
+  remaining_before int not null,
+  rosters int not null,
+  format text not null,
+  superflex boolean not null,
+  primary key (league_id, season, week, roster_id, player_id)
+)`);
+  await sql.query(`create table if not exists ol_wire_claims_log (
+  league_id text not null,
+  season text not null,
+  at timestamptz not null default now(),
+  primary key (league_id, season)
+)`);
+}
+
+function formatOf(scoring: Record<string, number> | undefined): Claim["format"] {
+  const rec = scoring?.rec ?? 0;
+  if (rec >= 1) return "ppr";
+  if (rec > 0) return "half";
+  return "std";
+}
+
+/**
+ * Pull one league-season's cleared claims once (≤18 calls), with each bidder's
+ * remaining purse reconstructed from their own earlier wins. Refreshed every
+ * six hours for the current season; past seasons are read once.
+ */
+async function ensureLeagueClaims(leagueId: string, season: string, throughWeek: number) {
+  const sql = await getSql();
+  const log = (
+    await sql<{ at: string }>`
+      select at from ol_wire_claims_log where league_id = ${leagueId} and season = ${season}
+    `
+  )[0];
+  if (log && Date.now() - new Date(log.at).getTime() < CLAIMS_TTL_MS) return;
+
+  const sleeper = await import("@/lib/data/sleeper.server");
+  const league = await sleeper.fetchLeague(leagueId);
+  const budget = league.settings?.waiver_budget ?? 100;
+  const rosters = league.total_rosters ?? league.settings?.num_teams ?? 0;
+  const format = formatOf(league.scoring_settings);
+  const superflex = (league.roster_positions ?? []).includes("SUPER_FLEX");
+
+  const spent = new Map<number, number>();
+  for (let w = 1; w <= Math.min(throughWeek, 18); w++) {
+    let txs: SleeperTx[] = [];
+    try {
+      const res = await fetch(`https://api.sleeper.app/v1/league/${leagueId}/transactions/${w}`, {
+        headers: { accept: "application/json" },
+      });
+      if (!res.ok) continue;
+      txs = (await res.json()) as SleeperTx[];
+    } catch {
+      continue;
+    }
+    const won = txs
+      .filter((t) => t.type === "waiver" && t.status === "complete" && t.adds)
+      .sort((a, b) => (a.settings?.seq ?? 0) - (b.settings?.seq ?? 0));
+    for (const t of won) {
+      const bid = t.settings?.waiver_bid;
+      if (typeof bid !== "number" || !t.adds) continue;
+      for (const [pid, rosterId] of Object.entries(t.adds)) {
+        const before = budget - (spent.get(rosterId) ?? 0);
+        await sql`
+          insert into ol_wire_claims
+            (league_id, season, week, roster_id, player_id, bid, budget, remaining_before, rosters, format, superflex)
+          values (${leagueId}, ${season}, ${w}, ${rosterId}, ${pid}, ${bid}, ${budget}, ${Math.max(0, before)},
+                  ${rosters}, ${format}, ${superflex})
+          on conflict (league_id, season, week, roster_id, player_id) do update set
+            bid = excluded.bid, budget = excluded.budget, remaining_before = excluded.remaining_before,
+            rosters = excluded.rosters, format = excluded.format, superflex = excluded.superflex
+        `;
+        spent.set(rosterId, (spent.get(rosterId) ?? 0) + bid);
+      }
+    }
+  }
+  await sql`
+    insert into ol_wire_claims_log (league_id, season, at) values (${leagueId}, ${season}, now())
+    on conflict (league_id, season) do update set at = now()
+  `;
+}
 
 function quantile(sorted: number[], q: number): number {
   if (sorted.length === 0) return 0;
@@ -120,8 +240,19 @@ function quantile(sorted: number[], q: number): number {
   return Math.round((v + (w - v) * (pos - lo)) * 10) / 10;
 }
 
-async function computeWirePrices(season: string, week: number): Promise<WirePrices> {
+const pct = (part: number, whole: number) => (whole > 0 ? (100 * part) / whole : 0);
+
+/**
+ * Clearing prices for a week across every league that has pasted, as shares
+ * of budget. Not cached beyond the claims themselves; the aggregate is cheap.
+ */
+export async function wirePrices(
+  season: string,
+  week: number,
+  cohort: WireCohort = {},
+): Promise<WirePrices> {
   await ensure();
+  await ensureClaims();
   const sql = await getSql();
   const leagues = await sql<{ league_id: string }>`
     select league_id from ol_pasted_leagues
@@ -129,87 +260,80 @@ async function computeWirePrices(season: string, week: number): Promise<WirePric
     order by last_seen desc
     limit ${MAX_LEAGUES}
   `;
+  // Refresh each league's claims (a no-op inside the TTL), a few at a time.
+  for (let i = 0; i < leagues.length; i += 4) {
+    await Promise.all(
+      leagues
+        .slice(i, i + 4)
+        .map(({ league_id }) => ensureLeagueClaims(league_id, season, week).catch(() => undefined)),
+    );
+  }
 
-  const bids = new Map<string, number[]>();
-  let contributing = 0;
-  await Promise.all(
-    leagues.map(async ({ league_id }) => {
-      try {
-        const res = await fetch(
-          `https://api.sleeper.app/v1/league/${league_id}/transactions/${week}`,
-          {
-            headers: { accept: "application/json" },
-          },
-        );
-        if (!res.ok) return;
-        const txs = (await res.json()) as SleeperTx[];
-        let any = false;
-        for (const t of txs) {
-          if (t.type !== "waiver" || t.status !== "complete" || !t.adds) continue;
-          const bid = t.settings?.waiver_bid;
-          if (typeof bid !== "number") continue;
-          for (const pid of Object.keys(t.adds)) {
-            const list = bids.get(pid) ?? [];
-            list.push(bid);
-            bids.set(pid, list);
-            any = true;
-          }
-        }
-        if (any) contributing += 1;
-      } catch {
-        /* one league down is not a reason to have no prices */
-      }
-    }),
+  const rows = await sql<Claim>`
+    select league_id, week, roster_id, player_id, bid, budget, remaining_before, rosters, format, superflex
+    from ol_wire_claims
+    where season = ${season} and week = ${week}
+  `;
+  const claims = rows.filter(
+    (c) =>
+      (cohort.rosters == null || c.rosters === cohort.rosters) &&
+      (cohort.format == null || c.format === cohort.format) &&
+      (cohort.superflex == null || c.superflex === cohort.superflex),
   );
 
+  const byPlayer = new Map<string, Claim[]>();
+  const leagueSet = new Set<string>();
+  const budgets: Record<string, number> = {};
+  const seenBudget = new Set<string>();
+  for (const c of claims) {
+    leagueSet.add(c.league_id);
+    if (!seenBudget.has(c.league_id)) {
+      seenBudget.add(c.league_id);
+      budgets[String(c.budget)] = (budgets[String(c.budget)] ?? 0) + 1;
+    }
+    const list = byPlayer.get(c.player_id) ?? [];
+    list.push(c);
+    byPlayer.set(c.player_id, list);
+  }
+
   const sleeper = await import("@/lib/data/sleeper.server");
-  const prices: WirePrice[] = [...bids.entries()]
+  const prices: WirePrice[] = [...byPlayer.entries()]
     .map(([player_id, list]) => {
-      const sorted = [...list].sort((a, b) => a - b);
+      const shares = list.map((c) => pct(c.bid, c.budget)).sort((a, b) => a - b);
+      const remaining = list.map((c) => pct(c.bid, c.remaining_before)).sort((a, b) => a - b);
+      const budgetsHere = new Set(list.map((c) => c.budget));
       const p = sleeper.getPlayer(player_id);
       return {
         player_id,
         name: p?.full_name ?? null,
         position: p?.position ?? null,
-        n: sorted.length,
-        median: quantile(sorted, 0.5),
-        p25: quantile(sorted, 0.25),
-        p75: quantile(sorted, 0.75),
-        max: sorted[sorted.length - 1] ?? 0,
+        n: list.length,
+        median_pct: quantile(shares, 0.5),
+        p25_pct: quantile(shares, 0.25),
+        p75_pct: quantile(shares, 0.75),
+        max_pct: shares[shares.length - 1] ?? 0,
+        median_pct_remaining: quantile(remaining, 0.5),
+        dollars:
+          budgetsHere.size === 1
+            ? {
+                budget: list[0]?.budget ?? 0,
+                median: quantile(
+                  list.map((c) => c.bid).sort((a, b) => a - b),
+                  0.5,
+                ),
+              }
+            : null,
       };
     })
-    .sort((a, b) => b.median - a.median || b.n - a.n);
+    .sort((a, b) => b.median_pct - a.median_pct || b.n - a.n);
 
-  return { season, week, leagues: contributing, computedAt: new Date().toISOString(), prices };
-}
-
-/** Cached for an hour; the wire clears once a week, so this is generous. */
-export async function wirePrices(season: string, week: number): Promise<WirePrices> {
-  await ensure();
-  const sql = await getSql();
-  const hit = (
-    await sql<{ computed_at: string; leagues: number; prices_json: string }>`
-      select computed_at, leagues, prices_json from ol_wire_prices
-      where season = ${season} and week = ${week}
-    `
-  )[0];
-  if (hit && hit.leagues > 0 && Date.now() - new Date(hit.computed_at).getTime() < PRICES_TTL_MS) {
-    return {
-      season,
-      week,
-      leagues: hit.leagues,
-      computedAt: new Date(hit.computed_at).toISOString(),
-      prices: JSON.parse(hit.prices_json) as WirePrice[],
-    };
-  }
-  const fresh = await computeWirePrices(season, week);
-  // Nothing to say yet is not worth remembering for an hour.
-  if (fresh.leagues === 0) return fresh;
-  await sql`
-    insert into ol_wire_prices (season, week, computed_at, leagues, prices_json)
-    values (${season}, ${week}, now(), ${fresh.leagues}, ${JSON.stringify(fresh.prices)})
-    on conflict (season, week) do update set
-      computed_at = now(), leagues = excluded.leagues, prices_json = excluded.prices_json
-  `;
-  return fresh;
+  return {
+    season,
+    week,
+    leagues: leagueSet.size,
+    budgets,
+    cohort,
+    computedAt: new Date().toISOString(),
+    prices,
+  };
 }

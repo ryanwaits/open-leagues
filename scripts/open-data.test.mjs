@@ -29,8 +29,10 @@ test("open data is anonymous and CORS-open", () => {
     assert.match(src, /cache-control/);
   }
   const mod = read("src/lib/receipts/open-data.server.ts");
-  // The price row carries counts and quantiles — never the league that bid.
+  // The price row carries counts and shares of budget — never the league that bid.
   assert.match(mod, /player_id,\s*name:/);
+  assert.match(mod, /median_pct/);
+  assert.match(mod, /remaining_before/);
   assert.doesNotMatch(mod, /league_id[^\n]*prices\.push|prices[^\n]*league_id/);
   // Hosted leagues never register as pasted.
   assert.match(mod, /if \(leagueId\.startsWith\("lg_"\)\) return;/);
@@ -39,13 +41,20 @@ test("open data is anonymous and CORS-open", () => {
 test("receipt shows a market median only once two leagues have cleared a claim, raw Sleeper only", () => {
   const src = read("src/lib/receipts/receipt.server.ts");
   assert.match(src, /p\.n >= 2/);
+  // shares of budget, never dollars across leagues
+  assert.match(src, /m\.medianPct = p\.median_pct/);
+  assert.doesNotMatch(src, /m\.median = p\.median;/);
   assert.match(src, /!isHostedLeague\(leagueId\) && moves\.some/);
 });
 
-test("empty wire results are not cached", () => {
+test("claims are cached per league-season; the aggregate is recomputed and never stale", () => {
   const mod = read("src/lib/receipts/open-data.server.ts");
-  assert.match(mod, /if \(fresh\.leagues === 0\) return fresh;/);
-  assert.match(mod, /hit\.leagues > 0/);
+  assert.match(mod, /ol_wire_claims_log/);
+  assert.match(mod, /CLAIMS_TTL_MS/);
+  assert.doesNotMatch(mod, /ol_wire_prices/);
+  // every price is a share of budget; dollars only inside a single-budget cohort
+  assert.match(mod, /budgetsHere\.size === 1/);
+  assert.match(mod, /pct\(c\.bid, c\.budget\)/);
 });
 
 test("docs and landing describe receipts and open data", () => {

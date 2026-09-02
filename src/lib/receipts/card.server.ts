@@ -55,11 +55,14 @@ function wireLine(r: Receipt): string | null {
   const won = r.wire.moves.filter((m) => m.kind === "waiver" && m.won);
   if (won.length === 0) return null;
   const top = won.slice().sort((a, b) => (b.bid ?? 0) - (a.bid ?? 0))[0];
+  const share = top?.bidPct != null ? ` (${top.bidPct}% of budget` : "";
   const market =
-    top?.median != null && top.leagues != null
-      ? ` ($${top.median} median across ${top.leagues} leagues)`
-      : "";
-  return `Wire: ${won.length} claim${won.length === 1 ? "" : "s"} won, $${r.wire.spent} spent${top?.add ? ` — ${top.add} for $${top.bid ?? 0}${market}` : ""}.`;
+    top?.medianPct != null && top.leagues != null
+      ? `${share ? "; " : " ("}median ${top.medianPct}% across ${top.leagues} leagues)`
+      : share
+        ? ")"
+        : "";
+  return `Wire: ${won.length} claim${won.length === 1 ? "" : "s"} won, $${r.wire.spent} spent${top?.add ? ` — ${top.add} for $${top.bid ?? 0}${share}${market}` : ""}.`;
 }
 
 export async function renderReceiptPng(r: Receipt, origin: string): Promise<ArrayBuffer> {

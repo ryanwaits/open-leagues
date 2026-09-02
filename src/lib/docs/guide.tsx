@@ -254,7 +254,8 @@ const BENCH_OUT = `Left 6.5 on the bench. Saquon Barkley 20.2 sat behind Omarion
 
 const WIRE_OUT = `"wire": {
   "moves": [
-    { "kind": "waiver", "add": "Stefon Diggs", "bid": 26, "won": false, "median": null, "leagues": null }
+    { "kind": "waiver", "add": "Stefon Diggs", "bid": 26, "won": false,
+      "budget": 200, "bidPct": 13, "medianPct": null, "leagues": null }
   ],
   "spent": 0
 }
@@ -262,10 +263,12 @@ const WIRE_OUT = `"wire": {
 GET /api/wire/2025/14.json
 {
   "season": "2025", "week": 14, "leagues": 1,
+  "budgets": { "200": 1 },
+  "cohort": {},
   "prices": [
-    { "player_id": "2449", "name": "Stefon Diggs",       "position": "WR",  "n": 1, "median": 79, "p25": 79, "p75": 79, "max": 79 },
-    { "player_id": "CIN",  "name": "Cincinnati Bengals", "position": "DEF", "n": 1, "median": 2,  "p25": 2,  "p75": 2,  "max": 2 },
-    { "player_id": "3678", "name": "Wil Lutz",           "position": "K",   "n": 1, "median": 0,  "p25": 0,  "p75": 0,  "max": 0 }
+    { "player_id": "2449", "name": "Stefon Diggs",       "position": "WR",  "n": 1, "median_pct": 39.5, "p25_pct": 39.5, "p75_pct": 39.5, "max_pct": 39.5, "median_pct_remaining": 76.7, "dollars": { "budget": 200, "median": 79 } },
+    { "player_id": "CIN",  "name": "Cincinnati Bengals", "position": "DEF", "n": 1, "median_pct": 1,    "p25_pct": 1,    "p75_pct": 1,    "max_pct": 1,    "median_pct_remaining": 8.3,  "dollars": { "budget": 200, "median": 2 } },
+    { "player_id": "3678", "name": "Wil Lutz",           "position": "K",   "n": 1, "median_pct": 0,    "p25_pct": 0,    "p75_pct": 0,    "max_pct": 0,    "median_pct_remaining": 0,    "dollars": { "budget": 200, "median": 0 } }
   ]
 }`;
 
@@ -476,9 +479,10 @@ const sections: DocsSection[] = [
         pain="Did I overpay on waivers?"
         fix={
           <>
-            Your bids for the week, whether each won, and — from the second pasted league on — the
-            median a player actually cleared for elsewhere. The same numbers are published as a file
-            anyone can fetch.
+            Your bids for the week as a share of your league’s budget, whether each won, and — from
+            the second pasted league on — the median share a player actually cleared for elsewhere.
+            A dollar is not a unit: $79 is 39.5% of this league’s $200 purse and would be 79% of a
+            $100 one. The same numbers are published as a file anyone can fetch.
           </>
         }
         run={[
@@ -492,7 +496,8 @@ const sections: DocsSection[] = [
             key: "curl",
             tab: "curl",
             label: "clearing prices for a week · anonymous · CORS on",
-            body: `curl -s ${hostOrigin()}/api/wire/2025/14.json`,
+            body: `curl -s ${hostOrigin()}/api/wire/2025/14.json
+curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one cohort`,
           },
         ]}
         output={WIRE_OUT}
@@ -500,6 +505,7 @@ const sections: DocsSection[] = [
         outputLines={7}
         trust={[
           "Only leagues that have asked for a receipt contribute; nothing is crawled. No league id, manager, or roster appears in the file.",
+          "Every price is a share of the bidder’s league budget, with the share of what they had left beside it; raw dollars appear only inside a single-budget cohort. Filter by roster count, scoring format, and superflex so formats are never averaged together.",
           "n is the number of winning bids behind a price. With one league it is one bid; the receipt shows a median only once a second league has cleared a claim.",
         ]}
       />
@@ -615,8 +621,10 @@ const sections: DocsSection[] = [
         fix={
           <>
             <Inline>/api/wire/:season/:week.json</Inline> is the winning bids across every league
-            that has pasted, as median, quartiles, max, and count per player. New data, published as
-            a fact, and it gets more honest with every league that asks for a receipt.
+            that has pasted, per player, as a share of each league’s budget: median, quartiles, max,
+            the share of what the winner had left, and count. Cohort filters keep a 14-team half-PPR
+            league from being averaged with a 10-team PPR one. New data, published as a fact, and it
+            gets more honest with every league that asks for a receipt.
           </>
         }
         run={`curl -s ${hostOrigin()}/api/wire/2025/14.json | jq '.prices[:3]'`}
