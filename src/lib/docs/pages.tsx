@@ -431,8 +431,10 @@ const openData: DocsPage = {
             side, the result, and the context a strategy keys on: rest days, roof, surface, division
             game, weekday, starting quarterbacks, referee. nflverse’s games table, 1999 to now,
             refreshed every six hours. Closing lines only — free opening lines exist for 2007–2021
-            in the Sportsbook Review archive and are not wired in; public betting splits (ticket and
-            money percentages) are not free anywhere, so nothing here pretends to be.
+            in the Sportsbook Review archive and are not wired in. Public betting splits are a
+            separate, opt-in feed (<Inline>OPENLEAGUES_SPLITS_SOURCE=actionnetwork</Inline>, 2023
+            onward) read over MCP as <Inline>getBettingSplits</Inline>; they are not republished
+            here because they are not ours to publish.
           </P>
           <Pre label="shape · real">{`{
   "source": "nflverse nfldata games.csv · closing lines", "season": 2025, "count": 272,
@@ -449,10 +451,11 @@ const openData: DocsPage = {
   ]
 }`}</Pre>
           <P>
-            The same rows drive four verbs over MCP — <Inline>getGameLines</Inline>,{" "}
-            <Inline>getGameContext</Inline>, <Inline>sampleGames</Inline>,{" "}
-            <Inline>evaluateBets</Inline> — and a fifth, <Inline>summarizeRun</Inline>, that turns a
-            graded list into a record. The <DocLink slug="guide">guide</DocLink> runs a real one.
+            The same rows drive the lab’s verbs over MCP — <Inline>getGameLines</Inline>,{" "}
+            <Inline>getGameContext</Inline>, <Inline>getBettingSplits</Inline>,{" "}
+            <Inline>sampleGames</Inline>, <Inline>evaluateBets</Inline> — and{" "}
+            <Inline>summarizeRun</Inline>, which turns a graded list into a record. The{" "}
+            <DocLink slug="guide">guide</DocLink> runs a real one.
           </P>
         </>
       ),

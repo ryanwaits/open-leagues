@@ -41,6 +41,20 @@ curl https://YOUR_HOST/api/players.json          # sleeper ↔ gsis ↔ espn ↔
 curl https://YOUR_HOST/api/wire/2025/14.json     # FAAB clearing prices: median, quartiles, n
 ```
 
+## The lab
+
+Six primitives for testing a betting idea, no opinions attached: every NFL
+game's closing line since 1999 (`/api/lines/:season.json`), a cohort
+filter, a grader, a summarizer, and — if you opt in — the public's ticket
+and money share per side. Agents compose them; a weekly digest is a prompt,
+not a feature.
+
+```sh
+curl https://YOUR_HOST/api/lines/2025.json        # closing spread, total, moneylines, result, context
+# over MCP: sampleGames → evaluateBets → summarizeRun
+# OPENLEAGUES_SPLITS_SOURCE=actionnetwork          # opt-in ticket/money splits, 2023 onward
+```
+
 ## Run your own
 
 ```sh

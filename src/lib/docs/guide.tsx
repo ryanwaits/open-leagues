@@ -290,23 +290,29 @@ Following Sleeper projection every week would have added +2.1.
   …
 ]`;
 
-const LAB_OUT = `mcp: sampleGames   { "seasons": [2022, 2023, 2024, 2025], "filter": { "homeDog": true, "spreadAbs": [0.5, 3], "played": true } }
-     → { "count": 206, "games": [ … ] }
-mcp: evaluateBets  { "bets": [ { "gameId": "2025_14_DAL_DET", "market": "spread", "side": "home" }, … 206 ] }
-     → [ { "grade": "win", "units": 0.91, "oddsUsed": -110, "lineUsed": 3.5, "clv": 0, … }, … ]
-mcp: summarizeRun  { "bets": [ …graded ] }
-{
-  "bets": 206, "wins": 89, "losses": 108, "pushes": 9, "voids": 0,
-  "staked": 206, "units": -25.26, "roi": -0.12,
-  "winRate": 0.45, "breakEven": 0.52,
-  "maxDrawdown": 29.45, "longestWin": 4, "longestLoss": 7, "avgClv": 0,
-  "bySeason": {
-    "2022": { "bets": 49, "units": -2.65,  "roi": -0.05 },
-    "2023": { "bets": 60, "units": -10.82, "roi": -0.18 },
-    "2024": { "bets": 49, "units": -7.89,  "roi": -0.16 },
-    "2025": { "bets": 48, "units": -3.9,   "roi": -0.08 }
-  }
-}`;
+const LAB_OUT = `mcp: sampleGames  { "seasons": [2023, 2024, 2025],
+                    "filter": { "homeDog": true, "played": true,
+                                "splits": [{ "market": "spread", "side": "home", "tickets": [50, 100] }] } }
+     → { "count": 82, "games": [ { "gameId": "2023_05_BAL_PIT", "spread": -4.5, "result": 7,
+                                   "splits": { "spread": { "home": { "tickets": 67, "money": 83 }, "away": { "tickets": 33, "money": 17 } } } }, … ] }
+mcp: evaluateBets { "bets": games.map(g => ({ gameId: g.gameId, market: "spread", side: "home" })) }
+mcp: summarizeRun { "bets": graded }
+
+home dogs the public is ON (>50% of spread tickets), 2023–2025
+{ "bets": 82, "wins": 42, "losses": 36, "pushes": 4, "units": 2.27, "roi": 0.03, "winRate": 0.54,
+  "breakEven": 0.52, "maxDrawdown": 6.25,
+  "bySeason": { "2023": { "bets": 30, "units": 2.65, "roi": 0.09 },
+                "2024": { "bets": 19, "units": 4.0,  "roi": 0.21 },
+                "2025": { "bets": 33, "units": -4.38, "roi": -0.13 } } }
+
+the mirror — home dogs the public is FADING (<40% of tickets)
+{ "bets": 189, "wins": 87, "losses": 99, "pushes": 3, "units": -19.03, "roi": -0.1, "maxDrawdown": 29.86 }
+
+all home dogs, no split condition
+{ "bets": 331, "wins": 156, "losses": 167, "pushes": 8, "units": -24.13, "roi": -0.07 }
+
+home dogs of 3 or fewer, 2022–2025 (closing lines only, no splits needed)
+{ "bets": 206, "wins": 89, "losses": 108, "pushes": 9, "units": -25.26, "roi": -0.12, "maxDrawdown": 29.45 }`;
 
 const BOARD_OUT = `GET /r/${L}?week=14
 
@@ -675,14 +681,16 @@ curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one c
     audience: ["builder", "agent"],
     body: () => (
       <UseCase
-        pain="I think small home dogs are undervalued. I have no way to check that isn’t a spreadsheet and a weekend."
+        pain="Home dogs getting over half the tickets — is that a signal or a story? I have no way to check that isn’t a spreadsheet and a weekend."
         fix={
           <>
-            Five primitives and no opinions. <Inline>sampleGames</Inline> finds the cohort you
+            Six primitives and no opinions. <Inline>sampleGames</Inline> finds the cohort you
             describe; <Inline>evaluateBets</Inline> grades a bet list against the closing line and
             the result, at the odds taken; <Inline>summarizeRun</Inline> turns it into a record with
-            drawdown, streaks, and per-season splits. An agent composes them into any strategy — and
-            a Tuesday routine that re-runs it and writes you a digest is a prompt, not a feature.
+            drawdown, streaks, and per-season splits; <Inline>getBettingSplits</Inline> adds the
+            public’s ticket and money share when you opt in. An agent composes them into any
+            strategy — and a Tuesday routine that re-runs it and writes you a digest is a prompt,
+            not a feature.
           </>
         }
         run={[
@@ -690,7 +698,7 @@ curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one c
             key: "agent",
             tab: "Agent",
             label: "over MCP · three calls",
-            body: `sampleGames  { "seasons": [2022, 2023, 2024, 2025], "filter": { "homeDog": true, "spreadAbs": [0.5, 3], "played": true } }
+            body: `sampleGames  { "seasons": [2023, 2024, 2025], "filter": { "homeDog": true, "played": true, "splits": [{ "market": "spread", "side": "home", "tickets": [50, 100] }] } }
 evaluateBets { "bets": games.map(g => ({ "gameId": g.gameId, "market": "spread", "side": "home" })) }
 summarizeRun { "bets": graded }`,
           },
@@ -702,12 +710,13 @@ summarizeRun { "bets": graded }`,
           },
         ]}
         output={LAB_OUT}
-        outputLabel="home dogs of 3 or fewer, ATS, 2022–2025 · real"
-        outputLines={9}
+        outputLabel="four runs · real · half a second each once the feeds are cached"
+        outputLines={13}
         trust={[
           "Lines and results are nflverse’s closing numbers — the same table every public NFL model is built on. Missing prices default to −110 and the payload says which odds were used.",
           "Grading is tested against a real game (DAL–DET, week 14 2025: DET −3.5, 44–30) and reports closing-line value when you took a different number than the close.",
-          "What it will not pretend to have: opening lines and line movement (free only for 2007–2021, not wired in), and public betting splits, which are not free anywhere. A strategy that needs them cannot be backtested honestly here yet, and the docs say so.",
+          "Ticket and money percentages come from Action Network’s consensus feed, the one free source that exists — undocumented, so it is opt-in (OPENLEAGUES_SPLITS_SOURCE=actionnetwork), reaches back to 2023, and every pulled week is kept on your box in case it goes away. Their “consensus” is an aggregate across tracked books, not one sportsbook’s ledger.",
+          "What it will not pretend to have: opening lines and line movement (free only for 2007–2021, not wired in). Eighty-two bets over three seasons with the sign flipping in the third is a story, not a signal — and the summary shows you exactly that rather than rounding it into advice.",
         ]}
       />
     ),
