@@ -388,23 +388,32 @@ export function SourceLedgerCard({ ledger }: { ledger: SourceLedger }) {
           ) : null}
         </p>
         <table className="mt-3 w-full text-[13px]">
+          <colgroup>
+            <col />
+            <col className="w-[52px]" />
+            <col className="w-[52px]" />
+            <col className="w-[52px]" />
+            <col className="w-[84px]" />
+          </colgroup>
           <thead>
             <tr className="font-mono text-[10.5px] tracking-[0.06em] text-faint uppercase">
-              <th className="py-1 text-left font-semibold">source</th>
-              <th className="py-1 text-right font-semibold">beat · tied · lost</th>
+              <th className="py-1 pr-2 text-left font-semibold">source</th>
+              <th className="py-1 text-right font-semibold">beat</th>
+              <th className="py-1 text-right font-semibold">tied</th>
+              <th className="py-1 text-right font-semibold">lost</th>
               <th className="py-1 text-right font-semibold">vs you</th>
             </tr>
           </thead>
           <tbody>
             {ledger.sources.map((src) => (
               <tr key={src.source} className="border-t border-line">
-                <td className="py-1.5">
+                <td className="py-1.5 pr-2">
                   {src.label}
                   <span className="ml-1.5 font-mono text-[11px] text-faint">{src.weeks} wks</span>
                 </td>
-                <td className="py-1.5 text-right font-mono tabular-nums text-muted">
-                  {src.beat} · {src.tied} · {src.lost}
-                </td>
+                <td className="py-1.5 text-right font-mono tabular-nums text-muted">{src.beat}</td>
+                <td className="py-1.5 text-right font-mono tabular-nums text-muted">{src.tied}</td>
+                <td className="py-1.5 text-right font-mono tabular-nums text-muted">{src.lost}</td>
                 <td
                   className={`py-1.5 text-right font-mono tabular-nums ${src.delta > 0 ? "text-fg" : "text-muted"}`}
                 >

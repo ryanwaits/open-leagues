@@ -81,3 +81,44 @@ test("null points read as zero, never as missing data", () => {
   assert.equal(r.left, 12);
   assert.equal(r.misses[0].started.points, 0);
 });
+
+test("with a FLEX, a bench RB can displace a weak WR through the shuffle a manager would make", () => {
+  const r = benchReceipt(
+    [
+      p("qb1", "QB", "starter", 20, "QB"),
+      p("rb1", "RB", "starter", 15, "RB"),
+      p("rb2", "RB", "starter", 11, "RB"),
+      p("wr1", "WR", "starter", 14, "WR"),
+      p("wr2", "WR", "starter", 3.5, "WR"),
+      p("te1", "TE", "starter", 9, "TE"),
+      p("wr3", "WR", "starter", 8, "FLEX"),
+      p("rbX", "RB", "bench", 16), // RB in → rb2 to FLEX → wr3 to WR → wr2 out
+    ],
+    POS,
+  );
+  assert.equal(r.misses.length, 1);
+  assert.equal(r.misses[0].best.name, "rbX");
+  assert.equal(r.misses[0].started.name, "wr2", "the chain ends at the WR who should have sat");
+  assert.equal(r.misses[0].slot, "RB", "labelled by the slot the bench player takes");
+  assert.equal(r.misses[0].cost, 12.5);
+});
+
+test("without a FLEX, a bench RB cannot reach a WR slot: no miss is invented", () => {
+  const NOFLEX = ["QB", "RB", "RB", "WR", "WR", "TE", "BN", "BN"];
+  const r = benchReceipt(
+    [
+      p("qb1", "QB", "starter", 20, "QB"),
+      p("rb1", "RB", "starter", 15, "RB"),
+      p("rb2", "RB", "starter", 11, "RB"),
+      p("wr1", "WR", "starter", 14, "WR"),
+      p("wr2", "WR", "starter", 3.5, "WR"),
+      p("te1", "TE", "starter", 9, "TE"),
+      p("rbX", "RB", "bench", 12), // outscored wr2, but only an RB slot could hold him
+      p("wrX", "WR", "bench", 6),
+    ],
+    NOFLEX,
+  );
+  const names = r.misses.map((m) => `${m.slot}:${m.best.name}>${m.started.name}`);
+  assert.deepEqual(names.sort(), ["RB:rbX>rb2", "WR:wrX>wr2"]);
+  assert.equal(r.left, 3.5, "1 at RB (12 − 11) + 2.5 at WR (6 − 3.5)");
+});
