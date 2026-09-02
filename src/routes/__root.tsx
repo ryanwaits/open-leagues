@@ -29,7 +29,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       {
         name: "description",
         content:
-          "A custom fantasy football desk for your leagues — standings, matchups, scores, and weekly recaps.",
+          "A custom fantasy football desk for your leagues — standings, matchups, scores, and the book.",
       },
       { name: "apple-mobile-web-app-title", content: APP_NAME },
       { name: "theme-color", media: "(prefers-color-scheme: light)", content: "#fafaf8" },

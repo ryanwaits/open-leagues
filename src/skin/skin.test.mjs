@@ -177,9 +177,6 @@ test("flourishes are mounted in representative components", () => {
   const playerProfile = readFileSync(join(root, "src/components/player-profile.tsx"), "utf8");
   assert.match(playerProfile, /GhostNum/);
 
-  const recap = readFileSync(join(root, "src/routes/league/$leagueId/recap.tsx"), "utf8");
-  assert.match(recap, /Stamp/);
-
   const lineupBoard = readFileSync(join(root, "src/components/lineup-board.tsx"), "utf8");
   assert.match(lineupBoard, /slot-rail/);
 });
@@ -353,13 +350,14 @@ test("my team's sections answer to the deck", () => {
   assert.match(lineupBoard, /data-deck-sec="Bench"/);
 });
 
-test("the league pages share the table-recap deck", () => {
+test("standings keeps a week deck; recap redirects off the desk", () => {
   const standings = readFileSync(join(root, "src/routes/league/$leagueId/standings.tsx"), "utf8");
   assert.match(standings, /<Deck>/);
+  assert.doesNotMatch(standings, /\/league\/\$leagueId\/recap/);
 
   const recap = readFileSync(join(root, "src/routes/league/$leagueId/recap.tsx"), "utf8");
-  assert.match(recap, /<Deck>/);
-  assert.match(recap, /aria-current="page"/);
+  assert.match(recap, /redirect/);
+  assert.match(recap, /\/league\/\$leagueId\/standings/);
 });
 
 test("console voice recipes exist and are hooked in representative components", () => {

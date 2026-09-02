@@ -1,6 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44">
-  <rect width="44" height="44" rx="10" fill="#17191d"/>
-  <rect x="8" y="10" width="28" height="6.5" rx="2" fill="#6fdc93"/>
-  <rect x="8" y="20" width="28" height="6.5" rx="2" fill="none" stroke="#faf8f1" stroke-width="2.2"/>
-  <rect x="8" y="30" width="19" height="6.5" rx="2" fill="none" stroke="#faf8f1" stroke-width="2.2"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- The works-with chip, alone: a small filled box in the neutral ink.
+       Fill tracks the viewer's theme so it reads on a light or dark tab. -->
+  <style>
+    .box { fill: #5c6066; }
+    @media (prefers-color-scheme: dark) { .box { fill: #a3a6aa; } }
+  </style>
+  <rect class="box" x="7" y="7" width="18" height="18" rx="5.5"/>
 </svg>

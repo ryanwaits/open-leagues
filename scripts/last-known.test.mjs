@@ -123,13 +123,16 @@ test("player profiles prefetch on intent and paint identity from cache", () => {
   assert.match(board, /profileIntent/);
 });
 
-test("activity, recap, and team do not wait on the full bundle", () => {
+test("activity and team do not wait on the full bundle", () => {
   const activity = src("src/routes/league/$leagueId/activity.tsx");
   assert.doesNotMatch(activity, /enabled:\s*Boolean\(league\.data\)/);
 
-  const recap = src("src/routes/league/$leagueId/recap.tsx");
-  assert.doesNotMatch(recap, /enabled:\s*Boolean\(league\.data\)/);
-
   const team = src("src/routes/league/$leagueId/team/$rosterId.tsx");
   assert.doesNotMatch(team, /enabled:\s*Boolean\(league\.data\)/);
+});
+
+test("parked recap route redirects onto standings", () => {
+  const recap = src("src/routes/league/$leagueId/recap.tsx");
+  assert.match(recap, /redirect/);
+  assert.match(recap, /\/league\/\$leagueId\/standings/);
 });
