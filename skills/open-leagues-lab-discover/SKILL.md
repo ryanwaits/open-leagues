@@ -33,7 +33,10 @@ You will look at many cohorts. One of them will look good by luck. So:
 
 - Tune on some seasons, verify on others, and never touch the holdout until
   the rule is fixed. Default: discover on all but the most recent full season,
-  hold out the most recent.
+  hold out the most recent. A splits rule has history from 2023 only, so its
+  default is 2023–24 / 2025; a closing-line rule can reach back to 1999 and
+  hold out several seasons. Whatever you choose, say which seasons and why
+  before the first `sampleGames` call.
 - Report `pBreakEven` and `n` every time. Below 0.05 on the holdout with
   n ≥ 100 is worth freezing. Anything else is a story, and you say so.
 - Do not widen or narrow a filter *after* seeing the holdout. That is the

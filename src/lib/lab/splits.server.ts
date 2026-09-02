@@ -85,6 +85,7 @@ async function ensure(): Promise<void> {
   at timestamptz not null default now(),
   rows int not null default 0
 )`);
+  await sql.query(`alter table ol_live_splits_log add column if not exists note text`);
   ready = true;
 }
 
@@ -226,9 +227,11 @@ async function resolveGame(
  * own book, so a week can carry DraftKings' numbers beside the consensus.
  * Refreshed hourly; a source that is down is skipped, not fatal.
  */
-export async function ensureLiveSplits(): Promise<Record<string, number>> {
+export type LiveStatus = { rows: number; note: string | null; at: string | null };
+
+export async function ensureLiveSplits(): Promise<Record<string, LiveStatus>> {
   const wanted = splitsSources().filter((s) => s !== "actionnetwork");
-  const out: Record<string, number> = {};
+  const out: Record<string, LiveStatus> = {};
   if (wanted.length === 0) return out;
   await ensure();
   const sql = await getSql();
@@ -236,16 +239,16 @@ export async function ensureLiveSplits(): Promise<Record<string, number>> {
   await ensureGameLines().catch(() => undefined);
   for (const source of wanted) {
     const log = (
-      await sql<{
-        at: string;
-        rows: number;
-      }>`select at, rows from ol_live_splits_log where source = ${source}`
+      await sql<{ at: string; rows: number; note: string | null }>`
+        select at, rows, note from ol_live_splits_log where source = ${source}
+      `
     )[0];
     if (log && Date.now() - new Date(log.at).getTime() < LIVE_TTL_MS) {
-      out[source] = log.rows;
+      out[source] = { rows: log.rows, note: log.note, at: new Date(log.at).toISOString() };
       continue;
     }
     let rows: SplitRow[] = [];
+    let note: string | null = null;
     try {
       if (source === "wiseguyteam") {
         const res = await fetch(WGT_URL, {
@@ -253,16 +256,18 @@ export async function ensureLiveSplits(): Promise<Record<string, number>> {
         });
         if (res.ok)
           rows = parseWiseGuyTeam((await res.json()) as Parameters<typeof parseWiseGuyTeam>[0]);
+        else note = `http ${res.status}`;
       } else if (source === "dknetwork") {
         const res = await fetch(DKN_URL, { headers: { "user-agent": UA, accept: "text/html" } });
-        if (res.ok) {
+        if (!res.ok) note = `http ${res.status}`;
+        else {
           const html = await res.text();
           // Resolve each game against the lines table; async, so collect first.
           const pairs = new Map<string, { season: number; week: number } | null>();
+          const { nflverseAbbr } = await import("./splits");
           for (const m of html.matchAll(
             /logos\/teams\/nfl\/([A-Z]+)\.png[\s\S]{0,600}?logos\/teams\/nfl\/([A-Z]+)\.png/g,
           )) {
-            const { nflverseAbbr } = await import("./splits");
             const key = `${nflverseAbbr(m[1] as string)}_${nflverseAbbr(m[2] as string)}`;
             if (!pairs.has(key))
               pairs.set(
@@ -271,17 +276,23 @@ export async function ensureLiveSplits(): Promise<Record<string, number>> {
               );
           }
           rows = parseDkNetwork(html, (away, home) => pairs.get(`${away}_${home}`) ?? null);
+          if (rows.length === 0)
+            note = html.includes("tb-market-wrap")
+              ? "page parsed, no games matched the lines table"
+              : `no splits markup in ${html.length} bytes (blocked or changed page)`;
         }
       }
-    } catch {
+    } catch (err) {
       rows = [];
+      note = err instanceof Error ? err.message : String(err);
     }
     if (rows.length) await upsertRows(rows);
     await sql`
-      insert into ol_live_splits_log (source, at, rows) values (${source}, now(), ${rows.length})
-      on conflict (source) do update set at = now(), rows = excluded.rows
+      insert into ol_live_splits_log (source, at, rows, note)
+      values (${source}, now(), ${rows.length}, ${note})
+      on conflict (source) do update set at = now(), rows = excluded.rows, note = excluded.note
     `;
-    out[source] = rows.length;
+    out[source] = { rows: rows.length, note, at: new Date().toISOString() };
   }
   return out;
 }

@@ -334,7 +334,9 @@ async function run(
         source: sp.splitsSource(),
         error: e.message,
       }));
-      const live = await sp.ensureLiveSplits().catch(() => ({}) as Record<string, number>);
+      const live = await sp
+        .ensureLiveSplits()
+        .catch(() => ({}) as Record<string, import("@/lib/lab/splits.server").LiveStatus>);
       const [by, books] = await Promise.all([
         sp.splitsFor([season], week),
         sp.splitsByBookFor([season], week),

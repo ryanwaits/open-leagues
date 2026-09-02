@@ -453,7 +453,9 @@ export const getBettingSplits = createServerFn({ method: "GET" })
       source: sp.splitsSource(),
       error: e.message,
     }));
-    const live = await sp.ensureLiveSplits().catch(() => ({}) as Record<string, number>);
+    const live = await sp
+      .ensureLiveSplits()
+      .catch(() => ({}) as Record<string, import("@/lib/lab/splits.server").LiveStatus>);
     const [by, books] = await Promise.all([
       sp.splitsFor([data.season], data.week),
       sp.splitsByBookFor([data.season], data.week),
