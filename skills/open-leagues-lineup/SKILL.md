@@ -11,16 +11,15 @@ description: >
 ## Before anything
 
 This skill only works with the open-leagues MCP server connected, pointed at a
-league box — one running `OPENLEAGUES_MODE=league` with your seat and a
-token. If no `open-leagues` tools are listed, or `getAgentContext` is refused
+league box (one running `OPENLEAGUES_MODE=league` with your seat and a
+token). If no `open-leagues` tools are listed, or `getAgentContext` is refused
 as "public substrate", stop and say so: the public box at leagues.waits.dev
 hosts no leagues. Do not answer from memory.
 
 Ceiling and invariants: [CATALOG.md](../../src/lib/agent/CATALOG.md),
 [context-prompt.md](../../src/lib/agent/context-prompt.md).
 
-Use `getTeam` plus `getWeekProjections` for the sit/start call. Do not
-invent projections from memory.
+Do not invent projections from memory.
 
 ## Steps
 

@@ -14,15 +14,15 @@ description: >
 
 This skill only works with the open-leagues MCP server connected. If no
 `open-leagues` tools are listed (`getGameLines`, `sampleGames`, …), stop and
-say so — do not estimate, recall, or improvise a single number. To connect:
+say so. Do not estimate, recall, or improvise a single number. To connect:
 
     claude mcp add --transport http open-leagues https://leagues.waits.dev/api/mcp
 
 The public box needs no account or token. Splits (`getBettingSplits`) are only
 on if the box opted in; an empty result means "off", not "zero".
 
-Call tools. Do not answer from memory. The strategy is frozen; you do not
-edit it here. If it should change, that is a new discovery.
+The strategy is frozen; you do not edit it here. If it should change, that is
+a new discovery.
 
 Ceiling and invariants: [CATALOG.md](../../src/lib/agent/CATALOG.md),
 [context-prompt.md](../../src/lib/agent/context-prompt.md).
@@ -44,13 +44,13 @@ Ceiling and invariants: [CATALOG.md](../../src/lib/agent/CATALOG.md),
    bets from the frozen rule. `evaluateBets`, `summarizeRun`.
 4. For the season to date: the same with all played weeks of this season.
    `evaluateBets`, `summarizeRun`, then `simulateBankroll` with the frozen
-   policy and bankroll, so the digest has dollars and the bootstrap band.
+   policy and bankroll.
 5. For next week's ticket list: `sampleGames` with `weeks: [nextWeek]`,
    `played: false`. List the games and sides the rule would take, at the
    current closing line from `getGameLines`. This is a list, not advice.
 6. Write the digest (format below). Append the run: `recordLabRun` with kind
    `weekly`, the week's summary, the season simulation, the week's bets, and
-   the digest text — or `~/.open-leagues/labs/<name>/runs/<season>-w<week>.json`
+   the digest text, or `~/.open-leagues/labs/<name>/runs/<season>-w<week>.json`
    on the substrate.
 
 ## Digest

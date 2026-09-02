@@ -4,7 +4,7 @@ description: >
   Read-only weekly digest for one league: record, matchup, bye/injury
   flags, one waiver idea. Use when the user says "week preview",
   "newsletter", "who do I play", "waiver wire idea", or "what's
-  going on this week". Decision support only — not autopilot.
+  going on this week". Decision support only, not autopilot.
 ---
 
 # Weekly digest
@@ -12,12 +12,10 @@ description: >
 ## Before anything
 
 This skill only works with the open-leagues MCP server connected, pointed at a
-league box — one running `OPENLEAGUES_MODE=league` with your seat and a
-token. If no `open-leagues` tools are listed, or `getAgentContext` is refused
+league box (one running `OPENLEAGUES_MODE=league` with your seat and a
+token). If no `open-leagues` tools are listed, or `getAgentContext` is refused
 as "public substrate", stop and say so: the public box at leagues.waits.dev
 hosts no leagues. Do not answer from memory.
-
-Call tools. Do not answer from memory.
 
 Ceiling and invariants: [CATALOG.md](../../src/lib/agent/CATALOG.md),
 [context-prompt.md](../../src/lib/agent/context-prompt.md).
