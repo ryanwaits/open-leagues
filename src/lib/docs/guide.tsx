@@ -137,7 +137,7 @@ export function UseCase({
   outputLabel?: string;
   outputLines?: number;
   after?: ReactNode;
-  /** Why the output can be trusted — sources, checks, limits. */
+  /** Why the output can be trusted: sources, checks, limits. */
   trust?: string[];
 }) {
   return (
@@ -410,10 +410,8 @@ const sections: DocsSection[] = [
     body: () => (
       <>
         <P>
-          Every use case below is one pain, one fix, the exact thing to type, and what came back.
-          Every output was captured from this app against a real Sleeper league, SDIFFL, 2025, week
-          14, or a real lab run, and is shown verbatim. Filter to the seat you sit in, or read
-          straight down: agents first, then the season in the order the pain shows up.
+          Outputs come from a real Sleeper league (SDIFFL, 2025, week 14) or a real lab run,
+          verbatim. Filter to your seat, or read straight down.
         </P>
         <AudienceChips />
       </>
@@ -425,30 +423,28 @@ const sections: DocsSection[] = [
     audience: ["agent", "manager", "bettor", "builder"],
     body: () => (
       <UseCase
-        pain="My agent can talk about fantasy football. It can’t touch my league."
+        pain="My agent can talk about fantasy football but cannot touch my league."
         fix={
           <>
-            One URL. On the public box no token is needed: the read verbs — receipts, boards, the
-            ledger, lines, cohorts, grading, staking — answer anonymously, rate-limited per IP. On
-            your own box, one token unlocks all {MCP_WIRED} of {MCP_CATALOG} verbs. We publish no
-            plugin for anyone; the protocol your client already speaks is the surface.
+            The public box serves the read verbs with no token, rate-limited per IP. Your own box
+            takes one bearer token for {MCP_WIRED} of {MCP_CATALOG} verbs.
           </>
         }
         run={connectSnippets(hostOrigin())}
         output={CODEX_LIST_OUT}
-        outputLabel="codex mcp list · real · captured when leagues.waits.dev was still a league box; the public box needs no token"
+        outputLabel="codex mcp list · captured while leagues.waits.dev was a league box"
         after={
           <>
             <p className="mt-4 max-w-[640px] text-[13.5px] leading-relaxed text-muted">
-              Then ask it something. Captured preseason 2026 against the live host, unedited — the
-              first two calls are tools Codex assumed existed:
+              Then ask it a question. Captured preseason 2026 against the live host, unedited. The
+              first two calls are tools Codex assumed existed.
             </p>
             <TranscriptReplay />
           </>
         }
         trust={[
-          "Cookie sessions are rejected on /api/mcp in every mode. A bearer token or a proxied user id, nothing else.",
-          "stdio on your own box needs a real Postgres DATABASE_URL plus OPENLEAGUES_USER and exits without both.",
+          "/api/mcp rejects cookie sessions in every mode. It accepts a bearer token or a proxied user id.",
+          "stdio needs a Postgres DATABASE_URL and OPENLEAGUES_USER, and exits without both.",
         ]}
       />
     ),
@@ -459,17 +455,13 @@ const sections: DocsSection[] = [
     audience: ["bettor", "agent"],
     body: () => (
       <UseCase
-        pain="Home dogs getting over half the tickets — is that a signal or a story? I have no way to check that isn’t a spreadsheet and a weekend."
+        pain="Checking whether home dogs with over half the tickets are a signal takes a spreadsheet and a weekend."
         fix={
           <>
-            Two skills over thirteen verbs, and no opinions anywhere in the code.{" "}
-            <Inline>open-leagues-lab-discover</Inline> turns the sentence into a cohort, grades it
-            on some seasons, then opens a holdout it never tuned on; it freezes the rule only if the
-            holdout clears, and reports <Inline>pBreakEven</Inline> — how easily luck alone produces
-            that record. <Inline>open-leagues-lab-run</Inline> takes a frozen rule every Tuesday:
-            grades last week, stakes the season on paper with <Inline>simulateBankroll</Inline>,
-            appends the run, writes the digest, lists next week’s games. It cannot place a bet; the
-            verb is not in its vocabulary.
+            <Inline>open-leagues-lab-discover</Inline> grades the cohort on 2023–24, then once on a
+            2025 holdout, and freezes the rule only if the holdout clears.{" "}
+            <Inline>open-leagues-lab-run</Inline> grades a frozen rule each Tuesday on paper and
+            places no bets.
           </>
         }
         run={[
@@ -492,21 +484,21 @@ getStrategy → getLabRuns → sampleGames (last week) → evaluateBets → summ
           {
             key: "curl",
             tab: "curl",
-            label: "the feed underneath · every game, every season since 1999",
+            label: "the lines feed · every game since 1999",
             body: `curl -s ${hostOrigin()}/api/lines/2025.json | jq '.games[] | select(.spread < 0 and .spread > -3.5)'`,
           },
         ]}
         output={LAB_OUT}
-        outputLabel="the discover skill on your hunch · real · every number from summarizeRun or simulateBankroll"
+        outputLabel="discover skill · every number from summarizeRun or simulateBankroll"
         outputLines={12}
         trust={[
-          "Lines and results are nflverse’s closing numbers — the same table every public NFL model is built on. Missing prices default to −110 and the payload says which odds were used.",
-          "Grading is tested against a real game (DAL–DET, week 14 2025: DET −3.5, 44–30) and reports closing-line value when you took a different number than the close.",
-          "Ticket and money percentages are opt-in (OPENLEAGUES_SPLITS_SOURCE): Action Network’s consensus is the one source with history (2023 on) and the one backtests use; DraftKings Network’s own handle and bet share and WiseGuyTeam’s multi-book read cover the current slate, each kept under its own book. All undocumented, all kept on your box once pulled.",
-          "The holdout is the whole point. Tuned on 2023–24 this looked like +14%; on 2025 it went −13%. pBreakEven says a 27-18 discovery happens by luck one time in five. The skill will not freeze it, and says why.",
-          "Staking is arithmetic, not opinion: the policy is the caller’s; simulateBankroll compounds it, reports drawdown in dollars, flags when Kelly was fed its own sample, and resamples the bets a thousand times so a +$19 result shows as a band from −$108 to +$170 with a 43% chance of a loss.",
-          "What it will not pretend to have: opening lines and line movement (free only for 2007–2021, not wired in). A frozen strategy is stored on your box, owned by you, and never touched by the run skill.",
-          "To follow this yourself, start to finish — box, agent, skills, the exact sentence to say — read docs/lab.md in the repo.",
+          "Lines and results are nflverse closing numbers. Missing prices default to −110 and the payload says which odds were used.",
+          "Grading is tested against DAL–DET, week 14 2025 (DET −3.5, 44–30), and reports closing-line value when your number differed from the close.",
+          "Ticket and money percentages are opt-in (OPENLEAGUES_SPLITS_SOURCE). Action Network consensus has history from 2023 and is the source backtests use. DraftKings Network handle and bet share and the WiseGuyTeam multi-book read cover the current slate, each kept under its own book. All are undocumented and stored on your box once pulled.",
+          "Tuned on 2023–24 this cohort went 27-18, roi +0.14. On the 2025 holdout it went 15-18, roi −0.13. pBreakEven 0.19 means a 27-18 record comes up by luck one time in five. The skill does not freeze it and says why.",
+          "The staking policy is the caller’s. simulateBankroll compounds it, reports drawdown in dollars, flags when Kelly was fed its own sample, and resamples the bets 1000 times. Here a +$19 result shows as a band from −$108 to +$170 with a 43% chance of a loss.",
+          "Opening lines and line movement are not wired in (free only for 2007–2021). A frozen strategy is stored on your box and never touched by the run skill.",
+          "docs/lab.md in the repo has the full walkthrough, from box to the sentence to say.",
         ]}
       />
     ),
@@ -522,20 +514,20 @@ getStrategy → getLabRuns → sampleGames (last week) → evaluateBets → summ
         pain="I was winning until the 4pm games."
         fix={
           <>
-            Paste the league id on the home page and open your team’s receipt. The first line is the
-            minute the lead changed hands for the last time, who did it, and how likely you were to
-            win a half-hour earlier. It works for last week and for last season.
+            Open your team’s receipt for any settled week this season or last. The first line gives
+            the minute of the last lead change, the player behind it, and your win probability a
+            half-hour earlier.
           </>
         }
         run={`${hostOrigin()}${RECEIPT_URL}`}
         runLabel="browser · no account"
         output={FLIP_OUT}
-        outputLabel="the receipt, and the JSON behind it"
+        outputLabel="the receipt and its JSON"
         outputLines={6}
         trust={[
-          "Reconstructed from nflverse play-by-play, replayed under your league’s own scoring settings, to the second.",
-          "Settled to the box score: where the play log and Sleeper’s official stats disagree, the difference is booked at the final whistle, so finals match Sleeper to the cent — 84 of 84 team-weeks checked on this league. A correction that decides a week is named as one.",
-          "The current week appears once the play log publishes. Until then the receipt says so, rather than guessing.",
+          "Rebuilt from nflverse play-by-play under your league’s scoring settings, to the second.",
+          "Where the play log and Sleeper’s official stats disagree, the difference is booked at the final whistle. Finals match Sleeper to the cent, 84 of 84 team-weeks checked on this league. A correction that decides a week is named as one.",
+          "The current week appears once the play log publishes; until then the receipt says so.",
         ]}
       />
     ),
@@ -546,20 +538,19 @@ getStrategy → getLabRuns → sampleGames (last week) → evaluateBets → summ
     audience: ["manager"],
     body: () => (
       <UseCase
-        pain="I don’t know my league id. I just have the app."
+        pain="I have the Sleeper app and no league id."
         fix={
           <>
-            Type your Sleeper username instead. The home input lists every league that account is in
-            this season; pick one and you are on its week board. Private leagues work — Sleeper
-            serves them by id.
+            Type your Sleeper username in the home input; it lists every league that account is in
+            this season, private ones included.
           </>
         }
         run="ryanwaits"
-        runLabel="home page · the one input"
+        runLabel="home page input"
         output={FIND_OUT}
-        outputLabel="findSleeperUser · real"
+        outputLabel="findSleeperUser"
         trust={[
-          "Sleeper’s public user and league endpoints, read-only. Nothing about you is stored.",
+          "Read from Sleeper’s public user and league endpoints. Nothing about you is stored.",
           "Team names only: a team named after its manager’s username renders as Roster N.",
         ]}
       />
@@ -574,19 +565,18 @@ getStrategy → getLabRuns → sampleGames (last week) → evaluateBets → summ
         pain="I should have started him."
         fix={
           <>
-            The receipt scores the best lineup you could have set against the one you set, on the
-            actual box score, and names who over whom. Under each miss, three open sources say what
-            they would have called before kickoff — so you learn which one to trust in your league.
+            The receipt scores your best possible lineup against the one you set, on the box score.
+            Under each miss, three open sources show their pre-kickoff call.
           </>
         }
         run={`${hostOrigin()}${RECEIPT_URL}#bench`}
         runLabel="same receipt, second section"
         output={BENCH_OUT}
-        outputLabel="the bench line · real"
+        outputLabel="the bench line"
         outputLines={5}
         trust={[
-          "Sleeper projection, last three weeks, and season average — all valued under your league’s book. A paid source never appears, even as a comparison.",
-          "Hindsight, on purpose: the receipt is about facts, and it names which opinions were right.",
+          "Sleeper projection, last three weeks, and season average, each valued under your league’s book. No paid source appears, even as a comparison.",
+          "The receipt grades in hindsight and names which source was right.",
         ]}
       />
     ),
@@ -597,13 +587,12 @@ getStrategy → getLabRuns → sampleGames (last week) → evaluateBets → summ
     audience: ["manager", "builder"],
     body: () => (
       <UseCase
-        pain="Did I overpay on waivers?"
+        pain="I think I overpaid on waivers."
         fix={
           <>
-            Your bids for the week as a share of your league’s budget, whether each won, and — from
-            the second pasted league on — the median share a player actually cleared for elsewhere.
-            A dollar is not a unit: $79 is 39.5% of this league’s $200 purse and would be 79% of a
-            $100 one. The same numbers are published as a file anyone can fetch.
+            The wire line lists your week’s bids as a share of your league’s budget and whether each
+            won. From the second pasted league on, it adds the median share each player cleared for
+            elsewhere.
           </>
         }
         run={[
@@ -622,11 +611,11 @@ curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one c
           },
         ]}
         output={WIRE_OUT}
-        outputLabel="wire · real · one league has pasted so far"
+        outputLabel="wire · one league pasted so far"
         outputLines={7}
         trust={[
-          "Only leagues that have asked for a receipt contribute; nothing is crawled. No league id, manager, or roster appears in the file.",
-          "Every price is a share of the bidder’s league budget, with the share of what they had left beside it; raw dollars appear only inside a single-budget cohort. Filter by roster count, scoring format, and superflex so formats are never averaged together.",
+          "Only leagues that asked for a receipt contribute; nothing is crawled. No league id, manager, or roster appears in the file.",
+          "Each price is a share of the bidder’s league budget, with the share of their remaining budget beside it. Raw dollars appear only inside a single-budget cohort. Filters by roster count, scoring format, and superflex keep formats apart.",
           "n is the number of winning bids behind a price. With one league it is one bid; the receipt shows a median only once a second league has cleared a claim.",
         ]}
       />
@@ -638,23 +627,22 @@ curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one c
     audience: ["manager", "agent"],
     body: () => (
       <UseCase
-        pain="Every site tells me who to start. None of them tell me if they were right."
+        pain="Every site tells me who to start and none tells me if it was right."
         fix={
           <>
-            Below every receipt is the season ledger: the lineup each open source would have set,
-            week by week, scored on the box score, beside the one you set. Over a season it says
-            which source to trust in your league, about your calls — as a count, never a verdict.
+            Below each receipt, the season ledger scores each open source’s lineup, week by week,
+            beside yours, as weeks beat, tied, or lost.
           </>
         }
         run={`${hostOrigin()}${RECEIPT_URL}#ledger`}
-        runLabel="any receipt, below the card · also getSourceLedger over MCP"
+        runLabel="below any receipt · getSourceLedger over MCP"
         output={LEDGER_OUT}
-        outputLabel="the season ledger · real · NateBot, 2025"
+        outputLabel="the season ledger · NateBot, 2025"
         outputLines={10}
         trust={[
-          "Each source’s lineup is filled the same way yours is, from that source’s pre-kickoff numbers under your league’s book, then scored on what actually happened.",
-          "Settled weeks are computed once and kept. The first ask for a team takes about half a minute; every later one is instant.",
-          "Two of the three sources lose to this manager by a wide margin. The ledger says so. It would say the opposite just as plainly.",
+          "Each source’s lineup is filled the same way yours is, from its pre-kickoff numbers under your league’s book, then scored on the box score.",
+          "Settled weeks are computed once and kept. The first ask for a team takes about half a minute; later asks are cached.",
+          "Two of the three sources lose to this manager by over 230 points, and the ledger reports it.",
         ]}
       />
     ),
@@ -665,17 +653,17 @@ curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one c
     audience: ["manager"],
     body: () => (
       <UseCase
-        pain="Who else got wrecked this week?"
+        pain="I want to see every matchup in the league this week."
         fix={
           <>
-            The league page is one line per matchup with a week picker. Every line opens a receipt.
-            Team names only, no login.
+            The league page shows one line per matchup with a week picker; each line opens a receipt
+            and needs no login.
           </>
         }
         run={`${hostOrigin()}/r/${L}?week=14`}
         runLabel="browser"
         output={BOARD_OUT}
-        outputLabel="getWeekBoard · real"
+        outputLabel="getWeekBoard"
         outputLines={6}
       />
     ),
@@ -689,17 +677,16 @@ curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one c
         pain="Screenshots get argued with."
         fix={
           <>
-            Copy the receipt URL. iMessage, Discord, Sleeper chat, and X unfurl it as a card drawn
-            from the same lines as the page. The card is a fact with a clock on it; the league
-            supplies the trash talk.
+            Paste the receipt URL into iMessage, Discord, Sleeper chat, or X; it unfurls as a card
+            drawn from the same lines as the page.
           </>
         }
         run={`${hostOrigin()}${RECEIPT_URL}`}
-        runLabel="paste this anywhere links unfurl"
+        runLabel="paste where links unfurl"
         output={SHARE_OUT}
-        outputLabel="the og:image behind the link · real headers"
+        outputLabel="the og:image behind the link · headers"
         trust={[
-          "Rendered server-side from the receipt itself; nothing is drawn that is not on the page.",
+          "Rendered server-side from the receipt; nothing appears that is not on the page.",
           "To have a league’s receipts taken down, open an issue on the repo with the league id.",
         ]}
       />
@@ -709,7 +696,7 @@ curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one c
   /* ── builders ── */
   {
     id: "crosswalk",
-    heading: "One player-ID map",
+    heading: "One player-id map",
     audience: ["builder"],
     body: () => (
       <UseCase
@@ -717,16 +704,17 @@ curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one c
         fix={
           <>
             One file, one row per player: Sleeper, GSIS (nflverse), ESPN, Yahoo, RotoWire, and
-            Sportradar ids with name, team, and position. Free, no key, CORS open, cached a day.
+            Sportradar ids with name, team, and position. It needs no key, is CORS open, and is
+            cached one day.
           </>
         }
         run={`curl -s ${hostOrigin()}/api/players.json`}
         runLabel="curl · 11,826 rows"
         output={CROSSWALK_OUT}
-        outputLabel="one row · real"
+        outputLabel="one row"
         outputLines={13}
         trust={[
-          "Sleeper’s player file plus the dynastyprocess id table, so every active player carries a GSIS id — Sleeper alone has one for a fifth of them.",
+          "Sleeper’s player file plus the dynastyprocess id table. Sleeper alone has a GSIS id for a fifth of active players; the join gives every active player one.",
           "Sleeper stays the authority on its own ids; the id table only fills what Sleeper leaves blank.",
         ]}
       />
@@ -738,26 +726,22 @@ curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one c
     audience: ["builder"],
     body: () => (
       <UseCase
-        pain="Paid tools predict FAAB with a model. Nobody publishes what actually cleared."
+        pain="Paid tools predict FAAB prices, and nobody publishes what cleared."
         fix={
           <>
-            <Inline>/api/wire/:season/:week.json</Inline> is the winning bids across every league
-            that has pasted, per player, as a share of each league’s budget: median, quartiles, max,
-            the share of what the winner had left, and count. Cohort filters keep a 14-team half-PPR
-            league from being averaged with a 10-team PPR one. New data, published as a fact, and it
-            gets more honest with every league that asks for a receipt.
+            <Inline>/api/wire/:season/:week.json</Inline> lists winning bids per player across
+            pasted leagues, as a share of each league’s budget: median, quartiles, max,
+            remaining-budget share, and count. Cohort filters keep formats apart.
           </>
         }
         run={`curl -s ${hostOrigin()}/api/wire/2025/14.json | jq '.prices[:3]'`}
-        runLabel="curl · cached an hour once a league has a cleared claim"
+        runLabel="curl · cached one hour once a claim has cleared"
         output={WIRE_OUT.split("\n\nGET")[1] ? `GET${WIRE_OUT.split("\n\nGET")[1]}` : WIRE_OUT}
-        outputLabel="week 14 · real · one league so far"
+        outputLabel="week 14 · one league so far"
         outputLines={12}
         after={
           <p className="mt-3 max-w-[640px] text-[13.5px] leading-relaxed text-muted">
-            A weekend build: a Discord bot that posts the flip card Monday morning, a spreadsheet of
-            what every waiver cost this season, a model that joins your rosters to nflverse
-            play-by-play. The full shapes are on{" "}
+            Full field shapes for both files are on{" "}
             <Link
               to="/docs/$slug"
               params={{ slug: "open-data" }}
@@ -782,15 +766,14 @@ curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one c
         pain="Our league’s history belongs to an app that sells ads against it."
         fix={
           <>
-            One container with a volume, or a Vercel deploy with Postgres. Receipts work the moment
-            it boots for any Sleeper id; sign up to create or migrate a league that lives here.
-            First boot is empty on purpose: no users, no leagues, nothing seeded.
+            Run one container with a volume, or a Vercel deploy with Postgres. Receipts work for any
+            Sleeper id on first boot, and nothing is seeded.
           </>
         }
         run={INSTALL_SNIPPETS}
         trust={[
-          "No connection string means the embedded database; a box with no managed Postgres still keeps a real league.",
-          "Players, stats, and projections flow in from Sleeper and nflverse, outbound only. No member needs an account anywhere else.",
+          "With no DATABASE_URL the box uses the embedded PGLite database and still keeps a league.",
+          "Players, stats, and projections come from Sleeper and nflverse over outbound requests. No member needs an account anywhere else.",
         ]}
       />
     ),
@@ -804,9 +787,8 @@ curl -s "${hostOrigin()}/api/wire/2025/14.json?rosters=14&format=half"   # one c
         pain="We would switch, but not if it means re-typing ten rosters and a scoring table."
         fix={
           <>
-            Sleeper by league id, ESPN by id or URL, or a pasted recap. Always preview, then commit;
-            whoever commits is the commissioner. After commit this box is the source of truth and
-            nothing syncs back.
+            Import from Sleeper by league id, ESPN by id or URL, or a pasted recap. Preview, then
+            commit; whoever commits is the commissioner, and nothing syncs back.
           </>
         }
         run={[
@@ -826,10 +808,10 @@ importLeague   { "leagueId": "${L}", "confirm": true }`,
           },
         ]}
         output={REFUSALS_OUT.split("\n\n")[1] ?? ""}
-        outputLabel="what happens without confirm · exact engine text"
+        outputLabel="without confirm · engine text"
         trust={[
-          "Manager emails are never pulled from any source; the invite allowlist is typed by the commissioner, and it is not on MCP.",
-          "exportLeague hands back a JSON snapshot any time. Extract is one-way.",
+          "No manager emails are pulled from any source. The commissioner types the invite allowlist, which is not on MCP.",
+          "exportLeague returns a JSON snapshot at any time.",
         ]}
       />
     ),
@@ -843,15 +825,14 @@ importLeague   { "leagueId": "${L}", "confirm": true }`,
         pain="I don’t want to be the one who forgets to process waivers."
         fix={
           <>
-            Scoring advances on a tick. Weeks advance with the NFL schedule; waivers clear on
-            Wednesday. The commissioner appears only for what the rules cannot decide, and every
-            season-wide move needs an explicit yes.
+            An hourly tick refreshes scoring, advances weeks with the NFL schedule, and clears
+            waivers on Wednesday. Season-wide moves still need the commissioner’s confirm.
           </>
         }
         run="OPENLEAGUES_SELF_TICK=1      # a long-lived box ticks itself; on Vercel, vercel.json's cron is the clock"
-        runLabel=".env · exactly one thing drives the clock"
+        runLabel=".env · one clock source"
         output={CLOCK_OUT}
-        outputLabel="what the engine says · exact text"
+        outputLabel="engine text"
       />
     ),
   },
@@ -863,21 +844,19 @@ importLeague   { "leagueId": "${L}", "confirm": true }`,
     audience: ["agent", "commissioner"],
     body: () => (
       <UseCase
-        pain="I want my agent to set lineups, not blow up the league."
+        pain="I want my agent to set lineups without the power to wreck the league."
         fix={
           <>
-            Tokens exist on your own box; the public box has no accounts and needs none. Every token
-            is minted <Inline>read</Inline> or <Inline>act</Inline>. A read token can look and never
-            move a player. An act token can do what your seat can do — one purse, no fading your own
-            team, confirm on anything season-wide — and nothing more. Mint it from the account page
-            or from a shell.
+            Tokens are minted <Inline>read</Inline> or <Inline>act</Inline> on your own box, from
+            the account page or a shell. A read token cannot move a player; an act token has your
+            seat’s powers, one purse, and confirm on season-wide moves.
           </>
         }
         run={[
           {
             key: "shell",
             tab: "Shell",
-            label: "mint against this box's own database · no browser",
+            label: "mint from a shell · this box's database",
             body: `bun scripts/ledger.mjs mintToken --write --user usr_… --name codex --scope read`,
           },
           {
@@ -889,12 +868,10 @@ importLeague   { "leagueId": "${L}", "confirm": true }`,
         ]}
         output={MINT_OUT}
         outputLabel="mintToken · shape"
-        after={
-          <Output label="the whole CLI · bun scripts/ledger.mjs --help">{CLI_HELP_OUT}</Output>
-        }
+        after={<Output label="bun scripts/ledger.mjs --help">{CLI_HELP_OUT}</Output>}
         trust={[
-          "Tokens are issued and checked by your box against its own table; nothing is central. Hashed at rest, shown once.",
-          "Already authenticate people at the edge? OPENLEAGUES_MCP_AUTH=proxy trusts a user-id header instead, and x-openleagues-scope: read can narrow a caller.",
+          "Your box issues and checks tokens against its own table; nothing is central. They are hashed at rest and shown once. An act token cannot fade its own team.",
+          "OPENLEAGUES_MCP_AUTH=proxy trusts a user-id header from your edge instead, and x-openleagues-scope: read narrows a caller.",
         ]}
       />
     ),
@@ -905,23 +882,23 @@ importLeague   { "leagueId": "${L}", "confirm": true }`,
     audience: ["agent", "manager"],
     body: () => (
       <UseCase
-        pain="The agent says it set a good lineup. Says."
+        pain="The agent says it set a good lineup, and I have only its word."
         fix={
           <>
-            Every write an act token makes is logged as an event carrying the token’s name, and a
-            receipt on a league box shows the agent’s line next to yours. Anything it should not do
-            fails whole, with the reason in plain text.
+            Every act-token write is logged as an event carrying the token’s name, and the receipt
+            shows the agent’s line beside yours. Disallowed calls fail whole, with the reason in
+            plain text.
           </>
         }
         run={`getAgentContext { "leagueId": "lg_…" }     # start every session here: seat, purse, week, the tools you may call
 startPlayer     { "leagueId": "lg_…", "playerId": "4866", "slot": "RB" }`}
-        runLabel="two verbs, over MCP"
+        runLabel="two verbs over MCP"
         output={REFUSALS_OUT}
-        outputLabel="the refusals · exact engine text"
+        outputLabel="refusals · engine text"
         outputLines={12}
         trust={[
-          "Two checks gate every call: a user id on every write, and the seat check on every hosted read — same rule for browser, CLI, and agent.",
-          "Raw Sleeper ids are the one open door, by design: that data is already public, and reading it is how a league looks at itself before moving.",
+          "Two checks gate every call: a user id on every write and a seat check on every hosted read. Browser, CLI, and agent get the same rule.",
+          "Raw Sleeper ids need no seat. That data is already public.",
         ]}
       />
     ),
@@ -935,8 +912,8 @@ startPlayer     { "leagueId": "lg_…", "playerId": "4866", "slot": "RB" }`}
         pain={`I don’t want to learn ${MCP_CATALOG} verbs to set a lineup.`}
         fix={
           <>
-            Six skills ship in the repo. Copy them into your host’s skills directory and one
-            sentence runs the whole chain, stopping where a human should say yes.
+            Six skills ship in the repo. One sentence runs the chain and stops where a human must
+            confirm.
           </>
         }
         run={`npx skills add ryanwaits/open-leagues -g                 # all six, Claude Code
@@ -951,6 +928,6 @@ npx skills add ryanwaits/open-leagues --agent codex -g   # Codex`}
 
 export const guide: DocsPage = {
   title: "Guide",
-  lede: "Every use case as pain, fix, what you run, and what comes back. Every output on this page is real: a live Sleeper league, or a real lab run.",
+  lede: "One pain, one fix, the command, and what came back.",
   sections,
 };

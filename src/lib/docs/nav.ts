@@ -31,7 +31,7 @@ export const DOCS_GROUPS: DocsNavGroup[] = [
     label: "Get started",
     items: [
       { slug: "overview", href: "/docs", label: "Overview", kicker: "What this is" },
-      { slug: "guide", href: "/docs/$slug", label: "Guide", kicker: "Pain, fix, proof" },
+      { slug: "guide", href: "/docs/$slug", label: "Guide", kicker: "Use cases" },
       {
         slug: "open-data",
         href: "/docs/$slug",
@@ -53,7 +53,7 @@ export const DOCS_GROUPS: DocsNavGroup[] = [
     label: "Headless",
     items: [
       { slug: "agents", href: "/docs/$slug", label: "Agents & MCP", kicker: "One URL, no account" },
-      { slug: "cli", href: "/docs/$slug", label: "CLI", kicker: "The ledger slice" },
+      { slug: "cli", href: "/docs/$slug", label: "CLI", kicker: "Three reads, one write" },
       {
         slug: "state",
         href: "/docs/$slug",
@@ -78,7 +78,7 @@ export const DOCS_GROUPS: DocsNavGroup[] = [
   },
 ];
 
-/** Flat reading order — drives prev/next and page titles. */
+/** Flat reading order: drives prev/next and page titles. */
 export const DOCS_NAV: DocsNavItem[] = DOCS_GROUPS.flatMap((g) => g.items);
 
 /** Retired slugs, kept so old links land somewhere sensible instead of 404ing. */

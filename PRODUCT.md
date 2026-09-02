@@ -3,10 +3,12 @@
 register: product
 
 ## Product purpose
-A set of headless tools and open sources, exposed over MCP, that tell an agent facts: about a fantasy league (rosters, matchups, FAAB, the wire), about the NFL itself (scores, stats, projections, byes), and about betting (every closing line since 1999, cohorts graded with n and pBreakEven). Every answer is a record with a clock and a named source. No rankings, no picks, no paid feeds. The agent brings its own model and makes the decision. Receipts are the worked example. A league box you own is where your own league lives.
+An open-source MCP server. It reads any Sleeper league by id, NFL stats, open projections, and the closing line for every game since 1999. League reads cover rosters, matchups, FAAB, and the wire; NFL reads cover scores, stats, projections, and byes. The lab grades betting cohorts with n and pBreakEven. Each answer carries a timestamp and a source. No account is needed.
+
+It does not rank players, pick sides, place bets, or read paid feeds. The agent brings its own model and decides. Receipts are the worked example. A league box you own holds your own league.
 
 ## Two boxes
-The public host is a substrate: public MCP verbs for any Sleeper league, the game, and the lab, plus the open-data files, with no accounts, tokens, or leagues. Agents bring their own model; the box pays for Postgres and nothing else. Everything that needs a person runs on a box you own, from one command. Same code; substrate is the default, and `OPENLEAGUES_MODE=league` is the deliberate step into accounts and leagues.
+The public box is a substrate: MCP verbs for any Sleeper league, the game, and the lab, plus the open-data files. It has no accounts, tokens, or leagues. Agents bring the model; the box pays for Postgres only. Anything that needs a person runs on a league box you own, from one command. Same code: substrate is the default, and `OPENLEAGUES_MODE=league` opts into accounts and leagues.
 
 ## Users
 - The agent operator: adds one URL to Codex or Claude, asks in words, gets facts with clocks, decides on their own model. Never makes an account on the public box.
@@ -28,11 +30,11 @@ Monday morning, phone in one hand, the group chat already going. A card unfurls:
 - Generic SaaS dashboards: no hero-metric cards, no icon-card grids.
 
 ## Strategic principles
-1. Every verb returns a fact, not an opinion. Every line traces to a box score, a play-by-play row, a transaction log, or a closing line, with a timestamp. Projections appear only as what a named source said before kickoff.
-2. Open sources only. Sleeper's projection, last three weeks, season average. A paid source never renders, even as a comparison.
-3. Team names, never people. Public Sleeper data passes through by id; a manager's name is replaced with the roster number when it would identify them. Leagues on a league box (`lg_` ids) are seat-gated on every surface; the public box hosts none.
-4. Every league read makes the commons richer. Leagues read through the box, by an agent or a browser, contribute anonymously to the wire clearing prices. No league id, manager, or roster appears in an aggregate.
-5. The verbs are the product; the browser is client zero. One FAAB purse, one scoring book, confirm-gated season ops, read/act agent scopes.
-6. Leagues run themselves. The tick advances weeks and clears waivers; the commissioner is idle by design.
-7. Tools are atomic; strategies are prompts. The lab exposes lines, cohorts, grading, and summaries as separate verbs and leaves the judgment which games, which side to the agent or the person. A feature that would bundle that judgment into code is a feature we do not build.
-8. Agents bring the model. The box never calls a model to answer a verb and never recommends; it pays for Postgres only. Receipts and the lab digest are what an agent made from the verbs, not what the box decided.
+1. Every verb returns a fact. Every line traces to a box score, a play-by-play row, a transaction log, or a closing line, with a timestamp. Projections appear only as what a named source said before kickoff.
+2. Open sources only: Sleeper's projection, the last three weeks, the season average. A paid source never renders, even as a comparison.
+3. Team names, never a person's name. Public Sleeper data passes through by id; a manager's name becomes the roster number when it would identify them. Leagues on a league box (`lg_` ids) are seat-gated on every surface; the public box hosts none.
+4. Every league read adds to the shared data. Leagues read through the box, by agent or browser, feed the wire clearing prices anonymously. No league id, manager, or roster appears in an aggregate.
+5. The verbs are the product; the browser is the first client. One FAAB purse, one scoring book, confirm-gated season ops, read/act agent scopes.
+6. Leagues run on their own. The tick advances weeks and clears waivers; the commissioner is idle by design.
+7. Tools are atomic; strategies are prompts. The lab exposes lines, cohorts, grading, and summaries as separate verbs and leaves the judgment (which games, which side) to the agent or the person. We do not build a feature that bundles that judgment into code.
+8. Agents bring the model. The box never calls a model to answer a verb, never recommends, and pays for Postgres only. Receipts and the lab digest are what an agent made from the verbs; the box decided nothing.

@@ -12,10 +12,9 @@ bun run lint
 
 ## Testing the book (wagers)
 
-Managers can stake FAAB on matchups when the commissioner turns betting **On**
-under **The book** in league settings (then Save). Open Matchups to see the
-line — live prices open the wager ticket; preseason shows an honest "no price"
-empty state.
+Betting is on when the commissioner sets **The book** to **On** in league
+settings and saves. Matchups shows the line; a live price opens the wager
+ticket, preseason shows a "no price" empty state.
 
 With `bun run dev` up:
 
@@ -23,8 +22,7 @@ With `bun run dev` up:
 bun scripts/wager-qa.mjs
 ```
 
-Signs in with the local seed, creates a throwaway league, enables the book, and
-screenshots either a placed ticket or the no-price panel under `screenshots/`.
-Stdout JSON `"path":"price"` means a $1 ticket actually submitted; `"path":"no-price"`
-is preseason (nothing to quote — do not fake a line). Re-run once a regular-season
-week has projections.
+Signs in with the local seed, makes a throwaway league, turns the book on, and
+screenshots the ticket or no-price panel to `screenshots/`. Stdout
+`"path":"price"`: a $1 ticket was submitted. `"path":"no-price"`: preseason,
+no line to quote. Re-run once a regular-season week has projections.

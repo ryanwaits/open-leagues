@@ -3,7 +3,7 @@ import type { MatchupPair, StarterLine } from "@/lib/data/types";
 /**
  * Docs fixtures. Real-shaped payloads cut to the fields the engine actually
  * returns, so the raw/rendered toggle shows one object two ways. Nothing here
- * calls the engine — a docs paint must not cost a query.
+ * calls the engine; a docs paint must not cost a query.
  */
 
 function line(
@@ -25,7 +25,7 @@ function line(
   };
 }
 
-/** `getMatchups` — one pair, week 1, nothing played. No projections: the raw
+/** `getMatchups`: one pair, week 1, nothing played. No projections: the raw
  *  response carries none; `expected` / `forecast` are a UI enrichment pass. */
 export const MATCHUPS_FIXTURE: MatchupPair[] = [
   {
@@ -95,7 +95,7 @@ export function connectSnippets(_origin: string): Snippet[] {
     {
       key: "public",
       tab: "Public box",
-      label: "leagues.waits.dev — no account, no token, the public read verbs",
+      label: "leagues.waits.dev · no account, no token · public read verbs",
       body: `claude mcp add --transport http open-leagues https://leagues.waits.dev/api/mcp
 codex  mcp add open-leagues --url https://leagues.waits.dev/api/mcp
 
@@ -105,7 +105,7 @@ codex  mcp add open-leagues --url https://leagues.waits.dev/api/mcp
     {
       key: "codex",
       tab: "Codex",
-      label: "codex — your league box over HTTP",
+      label: "codex · your league box over HTTP",
       body: `export OPENLEAGUES_TOKEN=ol_…    # minted at https://YOUR_BOX/account
 codex mcp add open-leagues \\
   --url https://YOUR_BOX/api/mcp \\
@@ -115,7 +115,7 @@ codex mcp list`,
     {
       key: "claude-code",
       tab: "Claude Code",
-      label: "claude — your league box over HTTP",
+      label: "claude · your league box over HTTP",
       body: `export OPENLEAGUES_TOKEN=ol_…    # minted at https://YOUR_BOX/account
 claude mcp add --transport http open-leagues \\
   https://YOUR_BOX/api/mcp \\
@@ -124,7 +124,7 @@ claude mcp add --transport http open-leagues \\
     {
       key: "stdio",
       tab: "stdio",
-      label: "stdio — your own box, no public endpoint",
+      label: "stdio · your own box, no public endpoint",
       body: `export DATABASE_URL=postgres://…
 export OPENLEAGUES_USER=<your Better Auth user id>
 codex mcp add open-leagues -- bun scripts/mcp.mjs`,
@@ -132,7 +132,7 @@ codex mcp add open-leagues -- bun scripts/mcp.mjs`,
     {
       key: "connector",
       tab: "Connector",
-      label: "connector — Claude Cowork, ChatGPT, Grok",
+      label: "connector · Claude Cowork, ChatGPT, Grok",
       body: `# Settings → Connectors → Add custom connector
 # the public box: no auth
 url:   https://leagues.waits.dev/api/mcp
@@ -150,7 +150,7 @@ export const INSTALL_SNIPPETS: Snippet[] = [
   {
     key: "docker",
     tab: "Docker",
-    label: "docker — durable box, in-process clock",
+    label: "docker · durable box, in-process clock",
     body: `git clone https://github.com/ryanwaits/open-leagues.git
 cd open-leagues
 docker compose up -d
@@ -160,24 +160,24 @@ docker compose up -d
   {
     key: "local",
     tab: "Local",
-    label: "local — bun dev server, PGLite fallback",
+    label: "local · bun dev server, PGLite fallback",
     body: `bun install
 cp .env.example .env      # optional
 bun run dev
 
-# 0.0.0.0:8080 — no Postgres, no migrate step`,
+# 0.0.0.0:8080 · no Postgres, no migrate step`,
   },
   {
     key: "vercel",
     tab: "Vercel",
-    label: "vercel — managed Postgres, cron clock",
+    label: "vercel · managed Postgres, cron clock",
     body: `# project env
 DATABASE_URL=postgres://…
 BETTER_AUTH_URL=https://your-host
 BETTER_AUTH_SECRET=…
 CRON_SECRET=…
 
-# leave OPENLEAGUES_SELF_TICK unset — vercel.json cron is the clock`,
+# leave OPENLEAGUES_SELF_TICK unset; vercel.json cron is the clock`,
   },
 ];
 
@@ -186,7 +186,7 @@ export const CLI_SNIPPETS: Snippet[] = [
   {
     key: "read",
     tab: "Reads",
-    label: "reads — JSON to stdout",
+    label: "reads · JSON to stdout",
     body: `bun scripts/ledger.mjs getEvents       --league lg_wiffl --limit 20
 bun scripts/ledger.mjs getLeagueFacts  --league lg_wiffl --week 1
 bun scripts/ledger.mjs getAgentContext --league lg_wiffl --user usr_…
@@ -197,20 +197,20 @@ bun scripts/ledger.mjs getEvents --json '{"leagueId":"lg_wiffl","limit":20}'`,
   {
     key: "write",
     tab: "The one write",
-    label: "placeWager — needs --write",
+    label: "placeWager · needs --write",
     body: `bun scripts/ledger.mjs placeWager --write \\
   --user usr_… --league lg_wiffl \\
   --matchup 3 --kind spread \\
   --side 4 --line -3.5 --stake 12
 
 # --side is a rosterId, not a team name
-# --kind is spread | moneyline — there is no total
+# --kind is spread | moneyline; no total
 # --stake is floored to whole dollars, minimum 1`,
   },
   {
     key: "mint",
     tab: "Mint a token",
-    label: "mintToken — issues this box's own bearer",
+    label: "mintToken · issues this box's bearer",
     body: `bun scripts/ledger.mjs mintToken --write --user usr_… --name codex
 
 {
@@ -220,12 +220,12 @@ bun scripts/ledger.mjs getEvents --json '{"leagueId":"lg_wiffl","limit":20}'`,
   "note": "Copy the token now — only its hash is stored."
 }
 
-# no browser needed — it writes to the same DATABASE_URL the app uses`,
+# no browser; writes to the same DATABASE_URL the app uses`,
   },
   {
     key: "refused",
     tab: "Refusals",
-    label: "refusals — by design",
+    label: "refusals",
     body: `$ bun scripts/ledger.mjs placeWager --league lg_wiffl
 placeWager is mutating and is not dispatched without --write.
 See src/lib/agent/CATALOG.md.
@@ -257,8 +257,7 @@ export const PLAYBOOKS: Playbook[] = [
       { verb: "sitPlayer", write: true },
       { verb: "startPlayer", write: true },
     ],
-    skill:
-      "open-leagues-lineup · never invents a projection · waits for the human before it applies",
+    skill: "open-leagues-lineup · never invents a projection · pauses for confirm before writes",
   },
   {
     say: "bring over my Sleeper league",
@@ -267,8 +266,7 @@ export const PLAYBOOKS: Playbook[] = [
       { verb: "confirm", pause: true },
       { verb: "importLeague · confirm:true", write: true },
     ],
-    skill:
-      "open-leagues-migrate · ESPN and rebuild are the same pair · file/paste is always option 2",
+    skill: "open-leagues-migrate · same pair for ESPN and rebuild · file/paste is option 2",
   },
   {
     say: "what's going on this week",
@@ -278,7 +276,7 @@ export const PLAYBOOKS: Playbook[] = [
       { verb: "getTeam" },
       { verb: "getWire" },
     ],
-    skill: "open-leagues-week · read-only digest · decision support, not autopilot",
+    skill: "open-leagues-week · read-only digest · no writes",
   },
   {
     say: "put $12 on us and pull my other ticket",
@@ -304,7 +302,7 @@ export const PLAYBOOKS: Playbook[] = [
       { verb: "freezeStrategy", write: true },
     ],
     skill:
-      "open-leagues-lab-discover · tune on some seasons, verify on others · freezes only what clears the holdout · never a bet",
+      "open-leagues-lab-discover · tunes on some seasons, verifies on others · freezes only what clears the holdout · places no bet",
   },
   {
     say: "run my lab for last week",
@@ -317,8 +315,7 @@ export const PLAYBOOKS: Playbook[] = [
       { verb: "simulateBankroll · season" },
       { verb: "recordLabRun", write: true },
     ],
-    skill:
-      "open-leagues-lab-run · frozen rule, paper stakes, a digest · placeWager is not in its vocabulary",
+    skill: "open-leagues-lab-run · frozen rule, paper stakes, digest · no placeWager",
   },
 ];
 
@@ -326,7 +323,7 @@ export const IDENTITY_SNIPPETS: Snippet[] = [
   {
     key: "token",
     tab: "token (default)",
-    label: "OPENLEAGUES_MCP_AUTH=token — this box issues the credential",
+    label: "OPENLEAGUES_MCP_AUTH=token · this box issues the credential",
     body: `# nothing to set; token is the default
 # on your league box: mint from /account, or headless:
 bun scripts/ledger.mjs mintToken --write --user usr_…
@@ -337,7 +334,7 @@ Authorization: Bearer ol_…`,
   {
     key: "proxy",
     tab: "proxy",
-    label: "OPENLEAGUES_MCP_AUTH=proxy — your edge already authenticated them",
+    label: "OPENLEAGUES_MCP_AUTH=proxy · your edge authenticates the caller",
     body: `OPENLEAGUES_MCP_AUTH=proxy
 OPENLEAGUES_MCP_USER_HEADER=x-openleagues-user   # optional, this is the default
 OPENLEAGUES_MCP_PROXY_SECRET=…                   # your proxy proves it is the proxy

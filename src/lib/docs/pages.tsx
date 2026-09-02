@@ -84,11 +84,9 @@ const overview: DocsPage = {
       body: () => (
         <>
           <P>
-            Three families of verbs, one box. Your league reads any Sleeper league by id, no
-            account, and on a box you own reads and moves the league you host. The game is the NFL
-            with no league attached. The lab is every closing line since 1999 as a backtest bench.
-            Postgres holds state, one engine holds the rules, and every surface lands on the same
-            server modules.
+            Three families of verbs. Your league reads any Sleeper league by id with no account; on
+            a box you own it also moves the league you host. The game is the NFL with no league
+            attached. The lab is every closing line since 1999.
           </P>
           <DocTable
             head={["Surface", "Reach", "Entry point"]}
@@ -104,7 +102,7 @@ const overview: DocsPage = {
                 <strong key="a" className="font-medium text-fg">
                   The public box
                 </strong>,
-                "The default shape: public MCP for any Sleeper league, the game, and the lab, plus the open-data files · no accounts, no leagues",
+                "Default mode: public MCP plus the open-data files; no accounts, no leagues",
                 <Mono key="c">OPENLEAGUES_MODE unset · league for the whole product</Mono>,
               ],
               [
@@ -132,22 +130,20 @@ const overview: DocsPage = {
                 <strong key="a" className="font-medium text-fg">
                   Browser app
                 </strong>,
-                "Everything, client zero",
+                "Every verb, in the browser",
                 <Mono key="c">createServerFn</Mono>,
               ],
               [
                 <strong key="a" className="font-medium text-fg">
                   Ledger CLI
                 </strong>,
-                "3 reads + one gated write",
+                "Three reads, one gated write",
                 <Mono key="c">scripts/ledger.mjs</Mono>,
               ],
             ]}
           />
           <Callout>
-            The CLI is a deliberate slice, not a second full client. If you want the whole surface
-            from a terminal, point an agent at MCP — that is the headless path. See{" "}
-            <DocLink slug="cli">CLI</DocLink> for exactly what it dispatches.
+            The CLI dispatches a slice of the catalog; see <DocLink slug="cli">CLI</DocLink>.
           </Callout>
         </>
       ),
@@ -158,8 +154,8 @@ const overview: DocsPage = {
       body: () => (
         <>
           <P>
-            Docker is the shortest path to a durable box: PGLite lives on a volume, the league clock
-            ticks in-process, and nothing needs a managed Postgres.
+            Docker gives a durable box: PGLite on a volume, the league clock in-process, no managed
+            Postgres.
           </P>
           <TabbedCode snippets={INSTALL_SNIPPETS} />
         </>
@@ -171,15 +167,15 @@ const overview: DocsPage = {
       body: () => (
         <>
           <P>
-            One league row, ten rosters, a schedule, a wire, and a book. Three invariants the engine
-            holds regardless of which surface asked:
+            One league row, ten rosters by default, a schedule, a wire, and a book. Three invariants
+            hold on every surface:
           </P>
           <Bullets>
             <li>
               <strong className="font-medium text-fg">FAAB is one purse.</strong> Waiver bids and
-              wager stakes draw from the same <Inline>faab_remaining</Inline>, so a spend is checked
-              against <Inline>spendable</Inline> — remaining minus what is staked and unsettled —
-              never against <Inline>remaining</Inline>.
+              wager stakes draw from the same <Inline>faab_remaining</Inline>. A spend is checked
+              against <Inline>spendable</Inline> (remaining minus unsettled stakes), never against{" "}
+              <Inline>remaining</Inline>.
             </li>
             <li>
               <strong className="font-medium text-fg">You cannot fade your own roster.</strong> You
@@ -192,9 +188,8 @@ const overview: DocsPage = {
             </li>
           </Bullets>
           <Callout>
-            After a migrate commits, this box is the source of truth. Extract is one-way —{" "}
-            <Inline>exportLeague</Inline> hands back a JSON snapshot; there is no import-from-backup
-            and nothing syncs to Sleeper or ESPN.
+            <Inline>exportLeague</Inline> returns a JSON snapshot. Nothing reads one back in, and
+            nothing syncs to Sleeper or ESPN.
           </Callout>
         </>
       ),
@@ -206,7 +201,7 @@ const overview: DocsPage = {
 
 const receipts: DocsPage = {
   title: "Receipts",
-  lede: "Paste a Sleeper league id. For any team, any settled week: the minute the matchup flipped, what was left on the bench, what the wire cost — and which open source called it before kickoff.",
+  lede: "Paste a Sleeper league id. For any settled week: the minute the matchup flipped, bench points left, wire cost, and which open source called it.",
   sections: [
     {
       id: "urls",
@@ -219,7 +214,7 @@ const receipts: DocsPage = {
             rows={[
               [
                 <Mono key="a">/r/:leagueId</Mono>,
-                "Every matchup of the current week, one line each; a week picker",
+                "Each matchup of the current week on one line, with a week picker",
                 "Nothing",
               ],
               [
@@ -230,15 +225,13 @@ const receipts: DocsPage = {
             ]}
           />
           <P>
-            <Inline>:leagueId</Inline> is a raw Sleeper id. Private leagues work — Sleeper’s API
-            serves them by id — and a username in the finder above lists that person’s leagues to
-            pick from. Team names only: when a team name is just the manager’s username, it renders
-            as <Inline>Roster N</Inline>.
+            <Inline>:leagueId</Inline> is a raw Sleeper id. Private leagues work, since Sleeper’s
+            API serves them by id. A username in the finder lists that person’s leagues. When a team
+            name is the manager’s username, it renders as <Inline>Roster N</Inline>.
           </P>
           <Callout>
-            A league on your own box (an <Inline>lg_</Inline> id) has receipts too, behind the same
-            seat check as everything else there — and no public card. The anonymous path is for
-            public Sleeper data only; the public box hosts no leagues at all.
+            A league on your own league box (an <Inline>lg_</Inline> id) has receipts too, behind
+            the same seat check and with no public card. The public box hosts no leagues.
           </Callout>
         </>
       ),
@@ -255,15 +248,15 @@ const receipts: DocsPage = {
                 <strong key="a" className="font-medium text-fg">
                   The flip
                 </strong>,
-                "The minute the matchup last changed hands, the play, and how likely you were to win a half-hour earlier",
-                "nflverse play-by-play, scored under the league’s own book, to the second",
+                "The minute the lead last changed, the play, and the win probability a half-hour earlier",
+                "nflverse play-by-play under the league’s book",
               ],
               [
                 <strong key="a" className="font-medium text-fg">
                   The bench
                 </strong>,
-                "Points left sitting, and exactly who over whom",
-                "Best lineup on the box score versus the lineup actually set",
+                "Points left on the bench, and who sat behind whom",
+                "Best lineup on the box score against the lineup set",
               ],
               [
                 <strong key="a" className="font-medium text-fg">
@@ -276,15 +269,15 @@ const receipts: DocsPage = {
                 <strong key="a" className="font-medium text-fg">
                   The wire
                 </strong>,
-                "Bids as a share of your budget, results, and what the player cleared for elsewhere",
-                "The league’s transactions plus the wire clearing prices in percent of budget, once a second league has one",
+                "Bids as a share of budget, results, and what the player cleared for elsewhere",
+                "League transactions plus wire clearing prices in percent of budget, once a second league has one",
               ],
               [
                 <strong key="a" className="font-medium text-fg">
                   The season ledger
                 </strong>,
-                "Which open source would have set a better lineup than you did, week by week, over the season",
-                "Each source’s pre-kickoff lineup scored on the box score; counts labeled with weeks",
+                "Which open source would have set a better lineup than you, week by week",
+                "Each source’s pre-kickoff lineup scored on the box score",
               ],
               [
                 <strong key="a" className="font-medium text-fg">
@@ -295,15 +288,11 @@ const receipts: DocsPage = {
               ],
             ]}
           />
-          <Pre label="a real one · SDIFFL 2025 · week 14 · NateBot 129.0 — Roster 14 85.3">{`Took the lead for good at 3:41pm ET on a Trevor Lawrence completion, 78.8–78.6 · 78% to win at 3:11pm.
+          <Pre label="a real one · SDIFFL 2025 · week 14 · NateBot 129.0 · Roster 14 85.3">{`Took the lead for good at 3:41pm ET on a Trevor Lawrence completion, 78.8–78.6 · 78% to win at 3:11pm.
 6.5 left on the bench — Omarion Hampton (13.7) started over Saquon Barkley (20.2).
   Sleeper projection, Last 3 weeks, and Season average all said start Barkley.
 Wire: bid $26 on Stefon Diggs — 13% of a $200 budget — lost.`}</Pre>
-          <Note>
-            Hindsight, on purpose. A projection is an opinion and a box score is a fact; the receipt
-            is about facts, and it names which opinions were right. Paid sources never appear, even
-            as a comparison.
-          </Note>
+          <Note>Paid sources do not appear on a receipt.</Note>
         </>
       ),
     },
@@ -313,14 +302,13 @@ Wire: bid $26 on Stefon Diggs — 13% of a $200 budget — lost.`}</Pre>
       body: () => (
         <>
           <P>
-            Every receipt page sets <Inline>og:image</Inline> to a rendered PNG at{" "}
-            <Inline>/api/og/r/:leagueId/:week/:rosterId</Inline>, so pasting the link into iMessage,
-            Discord, or a group chat unfurls the receipt itself. The card is rendered server-side
-            with the same lines as the page; nothing is drawn that is not on the receipt.
+            Each receipt page sets <Inline>og:image</Inline> to a PNG at{" "}
+            <Inline>/api/og/r/:leagueId/:week/:rosterId</Inline>, so a pasted link unfurls the
+            receipt in iMessage or Discord. The card draws only what is on the receipt.
           </P>
           <Callout tone="warn">
-            Receipts read a league’s public Sleeper data and show team names, not people. To have a
-            league’s receipts taken down, open an issue on the repo with the league id.
+            Receipts show team names, not people. To have a league’s receipts taken down, open an
+            issue on the repo with the league id.
           </Callout>
         </>
       ),
@@ -333,28 +321,25 @@ Wire: bid $26 on Stefon Diggs — 13% of a $200 budget — lost.`}</Pre>
           <Bullets>
             <li>
               Each season’s nflverse play-by-play is streamed once into a per-game timeline of
-              scoring deltas — who gained what, on which play, at which wall-clock second.
+              scoring deltas: who gained what, on which play, at which second.
             </li>
             <li>
-              Both lineups are replayed under the league’s scoring book, so a half-PPR league’s flip
-              and a full-PPR league’s flip can land on different plays for the same game slate.
+              Both lineups are replayed under the league’s scoring book, so a half-PPR flip and a
+              full-PPR flip can land on different plays.
             </li>
             <li>
               The flip is the last moment the lead changed. “How likely you were” is a
-              win-probability snapshot from thirty minutes earlier, from the two scores and the game
-              states then.
+              win-probability snapshot from thirty minutes earlier.
             </li>
             <li>
-              Kick times are printed in Eastern. If the season’s play-by-play is not published yet
-              (the current week, most Sundays), the receipt says so rather than guessing.
+              Kick times are Eastern. If the season’s play-by-play is not published yet (the current
+              week, most Sundays), the receipt says so.
             </li>
             <li>
-              The play log is settled to the box score. Where nflverse and Sleeper’s official weekly
-              stats disagree — a re-spotted catch, a Thursday stat correction — the difference is
-              booked as one event at the final whistle, so every final matches Sleeper to the cent
-              (84 of 84 team-weeks checked on a real league) and the play log still supplies the
-              minute. If a correction is what decided the week, the receipt says “on the final box
-              score” instead of naming a play.
+              Where nflverse and Sleeper’s weekly stats disagree, the difference is booked as one
+              event at the final whistle. Each final matches Sleeper to the cent (84 of 84
+              team-weeks checked). If a correction decided the week, the receipt says “on the final
+              box score”.
             </li>
           </Bullets>
         </>
@@ -367,7 +352,7 @@ Wire: bid $26 on Stefon Diggs — 13% of a $200 budget — lost.`}</Pre>
 
 const openData: DocsPage = {
   title: "Open data",
-  lede: "The files every hobby tool rebuilds by hand, published once: the player-ID crosswalk, FAAB clearing prices, and every NFL game’s closing line since 1999. Anonymous, CORS on, no key.",
+  lede: "Three JSON files: the player-ID crosswalk, FAAB clearing prices, and the closing line for every NFL game since 1999. Anonymous, CORS on, no key.",
   sections: [
     {
       id: "players",
@@ -375,9 +360,8 @@ const openData: DocsPage = {
       body: () => (
         <>
           <P>
-            The player-ID crosswalk: Sleeper, GSIS (nflverse), ESPN, Yahoo, RotoWire, and Sportradar
-            ids side by side, with name, team, and position. Built from Sleeper’s player file and
-            refreshed as it is; cached a day.
+            Sleeper, GSIS (nflverse), ESPN, Yahoo, RotoWire, and Sportradar ids side by side, with
+            name, team, and position. Built from Sleeper’s player file; cached a day.
           </P>
           <Pre label="shape">{`{
   "source": "sleeper players + nflverse gsis",
@@ -397,18 +381,15 @@ const openData: DocsPage = {
       body: () => (
         <>
           <P>
-            What each player actually cleared for on waivers that week, across every Sleeper league
-            that has asked for a receipt — as a{" "}
-            <strong className="font-medium text-fg">share of budget</strong>, because a dollar is
-            not a unit: $50 is half of a $100 league and a twentieth of a $1,000 one. Median,
-            quartiles, max, the share of what the winner had left, and the count behind each number.
-            Raw dollars appear only when every bid came from the same budget. The figure paid tools
-            predict with a model, published as a fact.
+            What each player cleared for on waivers that week, across every Sleeper league that has
+            asked for a receipt, as a{" "}
+            <strong className="font-medium text-fg">share of budget</strong>. Median, quartiles,
+            max, share of what the winner had left, and the count. Raw dollars appear only when
+            every bid came from the same budget.
           </P>
           <P>
-            Filter to a cohort so formats are not averaged together:{" "}
-            <Inline>?rosters=12&amp;format=half&amp;superflex=false</Inline>. The payload’s{" "}
-            <Inline>budgets</Inline> map shows how many contributing leagues run each purse.
+            Filter to a cohort: <Inline>?rosters=12&amp;format=half&amp;superflex=false</Inline>.
+            The <Inline>budgets</Inline> map shows how many contributing leagues run each purse.
           </P>
           <Pre label="shape · real">{`{
   "season": "2025", "week": 14, "leagues": 1,
@@ -423,22 +404,18 @@ const openData: DocsPage = {
 }`}</Pre>
           <Bullets>
             <li>
-              Only leagues that have pasted contribute. Each receipt read registers its league;
+              Only leagues that have been pasted contribute. Each receipt read registers its league;
               nothing is crawled.
             </li>
             <li>
               No league id, manager, or roster appears in the payload. <Inline>n</Inline> is the
-              number of winning bids behind a price; <Inline>median_pct_remaining</Inline> is the
-              bid as a share of what the winner still had, reconstructed from their earlier wins.
+              number of winning bids behind a price. <Inline>median_pct_remaining</Inline> is the
+              bid as a share of what the winner still had.
             </li>
+            <li>Cached an hour once a league has a cleared claim. Empty results are not cached.</li>
             <li>
-              Cached an hour once at least one league has a cleared claim; empty results are not
-              cached, so the file fills in as leagues arrive.
-            </li>
-            <li>
-              A team’s own receipt shows every bid as a percent of its budget, and the median share
-              beside a won claim once a second league has one, with the count — so a single league’s
-              bid never reads as “the market”.
+              A team’s receipt shows the median share and count beside a won claim once a second
+              league has one.
             </li>
           </Bullets>
         </>
@@ -450,16 +427,18 @@ const openData: DocsPage = {
       body: () => (
         <>
           <P>
-            Every game of a season with its closing spread, total, moneylines, the prices on each
-            side, the result, and the context a strategy keys on: rest days, roof, surface, division
-            game, weekday, starting quarterbacks, referee. nflverse’s games table, 1999 to now,
-            refreshed every six hours. Closing lines only — free opening lines exist for 2007–2021
-            in the Sportsbook Review archive and are not wired in. Public betting splits are a
-            separate, opt-in feed read over MCP as <Inline>getBettingSplits</Inline>:{" "}
-            <Inline>OPENLEAGUES_SPLITS_SOURCE=actionnetwork,dknetwork,wiseguyteam</Inline> gives the
-            consensus with history from 2023 plus DraftKings’ own numbers and a multi-book read for
-            the current slate, each under its own book so a filter can ask for one. They are not
-            republished here because they are not ours to publish.
+            Every game of a season with its closing spread, total, moneylines, prices, result, and
+            context: rest days, roof, surface, division game, weekday, starting quarterbacks,
+            referee. Source: nflverse’s games table, 1999 to now, refreshed every six hours. Closing
+            lines only; opening lines for 2007–2021 exist in the Sportsbook Review archive and are
+            not wired in.
+          </P>
+          <P>
+            Public betting splits are a separate opt-in feed, read over MCP as{" "}
+            <Inline>getBettingSplits</Inline>.{" "}
+            <Inline>OPENLEAGUES_SPLITS_SOURCE=actionnetwork,dknetwork,wiseguyteam</Inline> adds the
+            consensus with history from 2023, DraftKings’ own numbers, and a multi-book read for the
+            current slate, each under its own book. They are not republished here.
           </P>
           <Pre label="shape · real">{`{
   "source": "nflverse nfldata games.csv · closing lines", "season": 2025, "count": 272,
@@ -476,16 +455,15 @@ const openData: DocsPage = {
   ]
 }`}</Pre>
           <P>
-            The same rows drive the lab’s verbs over MCP — <Inline>getGameLines</Inline>,{" "}
+            The same rows drive the lab verbs over MCP: <Inline>getGameLines</Inline>,{" "}
             <Inline>getGameContext</Inline>, <Inline>getBettingSplits</Inline>,{" "}
             <Inline>sampleGames</Inline>, <Inline>evaluateBets</Inline>,{" "}
-            <Inline>summarizeRun</Inline> (with <Inline>pBreakEven</Inline>), and{" "}
-            <Inline>simulateBankroll</Inline> — plus a person’s frozen strategies and their run
-            ledger (<Inline>freezeStrategy</Inline>, <Inline>recordLabRun</Inline>,{" "}
-            <Inline>getLabRuns</Inline>). Two skills compose them: <Inline>lab-discover</Inline>{" "}
-            holds out a season before it freezes anything; <Inline>lab-run</Inline> grades a frozen
-            rule each week and writes the digest. Neither can place a bet. The{" "}
-            <DocLink slug="guide">guide</DocLink> runs a real one.
+            <Inline>summarizeRun</Inline> (with <Inline>pBreakEven</Inline>),{" "}
+            <Inline>simulateBankroll</Inline>. <Inline>freezeStrategy</Inline>,{" "}
+            <Inline>recordLabRun</Inline>, and <Inline>getLabRuns</Inline> hold frozen strategies
+            and the run ledger. <Inline>lab-discover</Inline> holds out a season before it freezes
+            anything; <Inline>lab-run</Inline> grades a frozen rule weekly. Neither places a bet.
+            The <DocLink slug="guide">guide</DocLink> runs one.
           </P>
         </>
       ),
@@ -497,7 +475,7 @@ const openData: DocsPage = {
 
 const quickstart: DocsPage = {
   title: "Quickstart",
-  lede: "From an empty box to an agent answering a question about your league. Six steps, no integration code on either side.",
+  lede: "Six steps from an empty box to an agent answering a question about your league. Neither side needs integration code.",
   sections: [
     {
       id: "steps",
@@ -506,9 +484,9 @@ const quickstart: DocsPage = {
         <Steps>
           <Step n={1} title="Run a box">
             <P>
-              Docker gives you a durable box with the clock already running. Locally,{" "}
+              Docker gives a durable box with the clock running. Locally,{" "}
               <Inline>bun run dev</Inline> binds <Inline>0.0.0.0:8080</Inline> and migrates its own
-              PGLite on first access — no Postgres, no migrate step.
+              PGLite on first access.
             </P>
             <Pre label="shell">{`git clone https://github.com/ryanwaits/open-leagues.git
 cd open-leagues
@@ -520,48 +498,44 @@ bun run dev`}</Pre>
           </Step>
           <Step n={2} title="Make your account">
             <P>
-              A fresh box has no users and no leagues in it. Open{" "}
-              <Inline>http://localhost:8080/login</Inline>, choose{" "}
-              <strong className="font-medium text-fg">Need an account?</strong>, and sign up. There
-              is no admin tier — the first account is an account like any other.
+              A fresh box has no users or leagues. Open <Inline>http://localhost:8080/login</Inline>
+              , choose <strong className="font-medium text-fg">Need an account?</strong>, and sign
+              up. There is no admin tier.
             </P>
             <Note>
-              Nothing is seeded. If you want the maintainer&apos;s own fixture league for
-              development, start the box with <Inline>OPENLEAGUES_DEV_SEED=1</Inline> instead.
+              Nothing is seeded. For the maintainer&apos;s fixture league, start the box with{" "}
+              <Inline>OPENLEAGUES_DEV_SEED=1</Inline>.
             </Note>
           </Step>
           <Step n={3} title="Start or migrate a league">
             <P>
-              Go to <Inline>/new</Inline>. Start one from scratch, or import from Sleeper, ESPN, or
-              a pasted recap. Migration is always preview-then-commit, and whoever commits becomes
-              the commissioner of the resulting league.
+              Go to <Inline>/new</Inline>. Start from scratch, or import from Sleeper, ESPN, or a
+              pasted recap. Whoever commits an import becomes its commissioner.
             </P>
             <Note>
-              An agent can do this too — <Inline>previewImport</Inline> then{" "}
+              An agent can do this too: <Inline>previewImport</Inline>, then{" "}
               <Inline>importLeague</Inline> with <Inline>confirm: true</Inline>. See{" "}
               <DocLink slug="migrate">Migrate a league</DocLink>.
             </Note>
           </Step>
           <Step n={4} title="Mint an agent token">
             <P>
-              On your league box, open <Inline>/account</Inline> — any member, no commissioner gate.
-              Under <strong className="font-medium text-fg">Agent tokens</strong>, name one and
-              create it. The raw <Inline>ol_…</Inline> value is shown once.
+              On your league box, open <Inline>/account</Inline> (any member). Under{" "}
+              <strong className="font-medium text-fg">Agent tokens</strong>, name one and create it.
+              The raw <Inline>ol_…</Inline> value is shown once.
             </P>
             <Note>
-              Never opening the browser? The CLI issues the same credential against the same box:{" "}
+              The CLI mints the same credential with no browser:{" "}
               <Inline>bun scripts/ledger.mjs mintToken --write --user …</Inline>
             </Note>
-            <Callout tone="warn">
-              If you lose it, revoke and mint a new one. There is no second look at the value.
-            </Callout>
+            <Callout tone="warn">If you lose it, revoke and mint a new one.</Callout>
           </Step>
           <Step n={5} title="Point a client at it">
-            <P>Every client below speaks the same endpoint. None of them is a plugin we wrote.</P>
+            <P>Every client below speaks the same endpoint. None is a plugin we wrote.</P>
             <TabbedCode snippets={connectSnippets(hostOrigin())} />
           </Step>
           <Step n={6} title="Ask it something">
-            <P>Plain language. The agent introspects the catalog and picks its own verbs.</P>
+            <P>The agent introspects the catalog and picks its own verbs.</P>
             <Pre label="shell">{`codex exec "Use the open-leagues MCP tools to get my league context —
   team name, record, and this week's matchup opponent if one exists."`}</Pre>
           </Step>
@@ -574,17 +548,16 @@ bun run dev`}</Pre>
       body: () => (
         <>
           <P>
-            Before blaming a prompt, confirm the transport. The row should read{" "}
-            <Inline>enabled</Inline> with <Inline>Bearer token</Inline>.
+            Confirm the transport first. The row should read <Inline>enabled</Inline> with{" "}
+            <Inline>Bearer token</Inline>.
           </P>
           <Pre label="codex mcp list">{`Name          Url                                 Bearer Token Env Var  Status   Auth
 open-leagues  ${hostOrigin()}/api/mcp   OPENLEAGUES_TOKEN     enabled  Bearer token`}</Pre>
           <Callout tone="warn">
-            Your token must belong to someone with a seat in the league you are asking about. Every
-            call on a league-box league (an <Inline>lg_</Inline> id) runs{" "}
-            <Inline>assertLeagueViewer</Inline> — commissioner or seat holder, or the call returns{" "}
-            <Inline>Unauthorized</Inline>. A raw Sleeper league id is different: it is
-            Sleeper&apos;s own public data, passed through read-only, and needs no seat.
+            Your token must belong to someone with a seat in the league. Every call on an{" "}
+            <Inline>lg_</Inline> league runs <Inline>assertLeagueViewer</Inline>: commissioner or
+            seat holder, or the call returns <Inline>Unauthorized</Inline>. A raw Sleeper league id
+            is public data and needs no seat.
           </Callout>
         </>
       ),
@@ -596,17 +569,14 @@ open-leagues  ${hostOrigin()}/api/mcp   OPENLEAGUES_TOKEN     enabled  Bearer to
 
 const migrate: DocsPage = {
   title: "Migrate a league",
-  lede: "Every source becomes one import pack — teams, managers, slots, scoring, rosters, weeks. You preview the pack, then commit it.",
+  lede: "Each source becomes one import pack: teams, managers, slots, scoring, rosters, weeks. Preview the pack, then commit it.",
   sections: [
     {
       id: "sources",
       heading: "Pick a source",
       body: () => (
         <>
-          <P>
-            Three paths, two verbs each. Paste or file is always the fallback when a connect fails
-            or the platform is unsupported.
-          </P>
+          <P>Paste or file is the fallback when a connect fails or the platform is unsupported.</P>
           <DocTable
             head={["Source", "Preview", "Commit"]}
             rows={[
@@ -620,9 +590,9 @@ const migrate: DocsPage = {
             ]}
           />
           <P>
-            Sleeper import takes a <strong className="font-medium text-fg">league id</strong>. If
-            all you have is a username, <Inline>findSleeperUser</Inline> is the discovery step that
-            finds their leagues for a season — it is not itself an input to the import.
+            Sleeper import takes a <strong className="font-medium text-fg">league id</strong>.{" "}
+            <Inline>findSleeperUser</Inline> turns a username into that person’s leagues for a
+            season; it is not an input to the import.
           </P>
           <Pre label="MCP · arguments">{`findSleeperUser  { "query": "ryan" }
 
@@ -633,9 +603,8 @@ importLeague     { "sleeperId": "<league id>",
                    "includeHistory": false,
                    "confirm": true }`}</Pre>
           <Note>
-            <Inline>confirm: true</Inline> is an MCP-layer gate only — it is not part of the server
-            function signature. Dispatch refuses the call without it, so an agent cannot commit an
-            import by accident.
+            <Inline>confirm: true</Inline> is an MCP-layer gate, not part of the server function
+            signature. Dispatch refuses the call without it.
           </Note>
         </>
       ),
@@ -646,18 +615,18 @@ importLeague     { "sleeperId": "<league id>",
       body: () => (
         <>
           <P>
-            The preview reads and shapes; it writes nothing. Every write in a migration happens
-            inside one committer, so a failed import does not leave half a league behind.
+            The preview writes nothing. Every write happens inside one committer, so a failed import
+            leaves no half league.
           </P>
           <Callout>
             <strong className="font-medium text-fg">Never invent manager emails.</strong> No source
-            API gives you a trustworthy one, and the committer has no email column to write to. The
-            allowlist is a post-import step the commissioner types in settings, and managers attach
-            themselves to a seat with <Inline>claimRoster</Inline>.
+            API gives a verified one, and the committer has no email column. The commissioner types
+            the allowlist in settings after import; managers attach to a seat with{" "}
+            <Inline>claimRoster</Inline>.
           </Callout>
           <Note>
-            <Inline>addAllowlistEmail</Inline> is app-only — it is in the catalog but not on the MCP
-            allowlist, so an agent cannot seed the allowlist for you.
+            <Inline>addAllowlistEmail</Inline> is app-only: in the catalog, not on the MCP
+            allowlist.
           </Note>
         </>
       ),
@@ -668,18 +637,17 @@ importLeague     { "sleeperId": "<league id>",
       body: () => (
         <>
           <P>
-            Committing makes you the commissioner of the new league — the importing user id is
-            written as <Inline>commish_id</Inline>. From there the season runs here: waivers,
-            trades, the book, the clock.
+            Committing writes your user id as <Inline>commish_id</Inline>. From then on the season
+            runs here: waivers, trades, the book, the clock.
           </P>
           <P>
-            <Inline>exportLeague</Inline> gives a commissioner a JSON snapshot at any point. There
-            is no counterpart that reads one back in, and nothing writes to the platform you left.
+            <Inline>exportLeague</Inline> gives a commissioner a JSON snapshot. Nothing reads one
+            back in, and nothing writes to the platform you left.
           </P>
           <Note>
-            Migration also runs as a playbook — say “bring over my Sleeper league” to an agent with{" "}
-            <Inline>open-leagues-migrate</Inline> installed and it walks the tree, stopping for your
-            yes before the commit. See <DocLink slug="playbooks">Playbooks</DocLink>.
+            Migration also runs as a playbook: say “bring over my Sleeper league” to an agent with{" "}
+            <Inline>open-leagues-migrate</Inline> installed. It stops for your yes before the
+            commit. See <DocLink slug="playbooks">Playbooks</DocLink>.
           </Note>
         </>
       ),
@@ -691,7 +659,7 @@ importLeague     { "sleeperId": "<league id>",
 
 const cli: DocsPage = {
   title: "CLI",
-  lede: "A ledger slice, not a second client. Three reads and one gated write, so a terminal can inspect a league and settle a bet without standing up the whole surface.",
+  lede: "A script with three reads and one gated write. A terminal can inspect a league and place a wager without the browser app.",
   sections: [
     {
       id: "shape",
@@ -699,9 +667,8 @@ const cli: DocsPage = {
       body: () => (
         <>
           <P>
-            There is no <Inline>open-leagues</Inline> binary. The CLI is a script, and it refuses by
-            design anything outside its slice — the full surface is{" "}
-            <DocLink slug="agents">MCP</DocLink>.
+            There is no <Inline>open-leagues</Inline> binary. The CLI is a script and refuses
+            anything outside its slice; the full surface is <DocLink slug="agents">MCP</DocLink>.
           </P>
           <Pre label="shell">{`bun scripts/ledger.mjs --help
 bun scripts/ledger.mjs --list`}</Pre>
@@ -733,14 +700,13 @@ bun scripts/ledger.mjs --list`}</Pre>
             ]}
           />
           <Note>
-            <Inline>mintToken</Inline> is not a catalog verb — issuing a credential is not a league
-            primitive. It exists here so a self-hoster can go headless without opening the browser
-            app at all.
+            <Inline>mintToken</Inline> is not a catalog verb. It lets a self-hoster mint a token
+            without the browser app.
           </Note>
           <Note>
-            Anything else in the catalog is refused by name: “…is a catalogued read but this CLI
-            slice only dispatches getEvents, getLeagueFacts, and getAgentContext”, or “…is mutating
-            and is not dispatched from this CLI.”
+            Anything else is refused by name: “…is a catalogued read but this CLI slice only
+            dispatches getEvents, getLeagueFacts, and getAgentContext”, or “…is mutating and is not
+            dispatched from this CLI.”
           </Note>
         </>
       ),
@@ -751,16 +717,15 @@ bun scripts/ledger.mjs --list`}</Pre>
       body: () => (
         <>
           <P>
-            Flags are <Inline>--key value</Inline>. A <Inline>--json</Inline> blob can supply the
-            same fields if you would rather pass one argument.
+            Flags are <Inline>--key value</Inline>, or one <Inline>--json</Inline> blob with the
+            same fields.
           </P>
           <TabbedCode snippets={CLI_SNIPPETS} />
           <Callout tone="warn">
-            Live reads and the write need <Inline>DATABASE_URL</Inline> pointing at the same
-            Postgres the app uses. <Inline>bun</Inline> has no Vite{" "}
-            <Inline>import.meta.glob</Inline>, so it cannot migrate the PGLite fallback the dev
-            server runs on. <Inline>--help</Inline> and <Inline>--list</Inline> work with no
-            database at all.
+            Live reads and the write need <Inline>DATABASE_URL</Inline> pointing at the app’s
+            Postgres. <Inline>bun</Inline> has no Vite <Inline>import.meta.glob</Inline>, so it
+            cannot migrate the PGLite fallback. <Inline>--help</Inline> and <Inline>--list</Inline>{" "}
+            need no database.
           </Callout>
         </>
       ),
@@ -771,14 +736,14 @@ bun scripts/ledger.mjs --list`}</Pre>
       body: () => (
         <>
           <P>
-            <Inline>getAgentContext</Inline> is the one read worth memorising. It returns the three
-            numbers any spend must respect, in one round trip.
+            <Inline>getAgentContext</Inline> returns the three numbers any spend must respect, in
+            one round trip.
           </P>
           <PurseCard />
           <P>
             <Inline>spendable</Inline> is <Inline>max(0, remaining − atRisk)</Inline>.{" "}
-            <Inline>placeWager</Inline> validates against <Inline>spendable</Inline>, so a ticket
-            that has not settled is not money you have.
+            <Inline>placeWager</Inline> validates against <Inline>spendable</Inline>, so an
+            unsettled ticket is not spendable money.
           </P>
         </>
       ),
@@ -789,8 +754,8 @@ bun scripts/ledger.mjs --list`}</Pre>
       body: () => (
         <P>
           <Inline>tick</Inline> and <Inline>tickAllLeagues</Inline> are the league clock, driven by
-          cron or the in-process ticker. Dispatch rejects them by name — “tick is a cron clock, not
-          a tool” — on both the CLI and MCP paths.
+          cron or the in-process ticker. Dispatch rejects them by name on both paths: “tick is a
+          cron clock, not a tool”.
         </P>
       ),
     },
@@ -801,7 +766,7 @@ bun scripts/ledger.mjs --list`}</Pre>
 
 const agents: DocsPage = {
   title: "Agents & MCP",
-  lede: "One URL and whatever agent you already use. The public box needs no token at all for its read verbs; your own box takes a bearer token or a proxied user id. We publish no client-specific surface and ship no first-party plugin.",
+  lede: "One URL for any MCP client. The public box needs no token for reads; a league box takes a bearer token or a proxied user id.",
   sections: [
     {
       id: "connect",
@@ -809,20 +774,18 @@ const agents: DocsPage = {
       body: () => (
         <>
           <P>
-            Two doors. The public box at <Inline>leagues.waits.dev</Inline> runs in substrate mode:
-            add the URL and every read verb that needs no person — receipts, boards, the season
-            ledger, lines, cohorts, grading, staking — answers with no account and no token,
-            rate-limited per IP. Your own box is the full product: mint a token at{" "}
-            <Inline>/account</Inline> (or from a shell), or let your edge pass a user id. stdio is
-            for a commissioner who would rather not expose an endpoint at all.
+            The public box at <Inline>leagues.waits.dev</Inline> runs in substrate mode: every read
+            verb that needs no person answers with no account and no token, rate-limited per IP.
+            Your league box is the full product: mint a token at <Inline>/account</Inline> or from a
+            shell, or let your edge pass a user id. stdio is for a commissioner who exposes no
+            endpoint.
           </P>
           <TabbedCode snippets={connectSnippets(hostOrigin())} />
           <Callout>
-            Cookie sessions are rejected on <Inline>/api/mcp</Inline> — never accepted, in any mode.
-            No browser? Mint the same token from a shell:{" "}
-            <Inline>bun scripts/ledger.mjs mintToken --write --user …</Inline>. stdio needs a real
-            Postgres <Inline>DATABASE_URL</Inline> plus <Inline>OPENLEAGUES_USER</Inline>; it exits
-            immediately without both.
+            <Inline>/api/mcp</Inline> rejects cookie sessions in every mode. Shell mint:{" "}
+            <Inline>bun scripts/ledger.mjs mintToken --write --user …</Inline>. stdio needs a
+            Postgres <Inline>DATABASE_URL</Inline> plus <Inline>OPENLEAGUES_USER</Inline> and exits
+            without both.
           </Callout>
         </>
       ),
@@ -833,27 +796,24 @@ const agents: DocsPage = {
       body: () => (
         <>
           <P>
-            Captured preseason 2026 against the live host, kept unedited. The first two calls are
-            tools Codex assumed existed. It introspected the catalog, recovered on its own, and
-            answered from the league.
+            Captured preseason 2026 against the live host, unedited. The first two calls are tools
+            Codex assumed existed; it then introspected the catalog and answered from the league.
           </P>
           <TranscriptReplay />
           <Note>
-            The <Inline>mcp:</Inline> lines are the proof — every value came back over the wire,
-            none from model memory.
+            Every <Inline>mcp:</Inline> value came back over the wire, none from model memory.
           </Note>
         </>
       ),
     },
     {
       id: "auth",
-      heading: "What actually gates a call",
+      heading: "What gates a call",
       body: () => (
         <>
           <P>
-            Two checks, and neither of them reads the catalog’s <Inline>scope</Inline> column. That
-            column is documentation — it tells you which seat a verb is meant for; it is not an
-            authorization tier.
+            Two checks, and neither reads the catalog’s <Inline>scope</Inline> column. That column
+            says which seat a verb is meant for; it is not an authorization tier.
           </P>
           <DocTable
             head={["Check", "Applies to", "Failure"]}
@@ -872,15 +832,12 @@ const agents: DocsPage = {
           />
           <P>
             <Inline>assertLeagueViewer</Inline> passes only the league’s commissioner or a seat
-            holder. It refuses before any write runs, so an over-reaching call fails whole — never
-            halfway.
+            holder, and refuses before any write runs.
           </P>
           <Callout tone="warn">
-            A league box has no looser path. Every read of an <Inline>lg_</Inline> league — browser,
-            CLI, or agent — goes through the same seat check, so a box you self-host exposes nothing
-            it holds to a stranger who happens to know the id. Raw Sleeper ids are the one
-            exception, by design: that data is already public on Sleeper, and passing it through is
-            how you look at a league before you move it.
+            Every read of an <Inline>lg_</Inline> league (browser, CLI, or agent) goes through the
+            same seat check. Raw Sleeper ids are the exception: that data is already public on
+            Sleeper.
           </Callout>
         </>
       ),
@@ -891,26 +848,22 @@ const agents: DocsPage = {
       body: () => (
         <>
           <P>
-            Those two checks are league rules — who holds a seat, who runs the league. How a caller
-            proved they are that person is a different question, and it is yours to answer. The
-            engine only ever takes a user id.
+            Those checks are league rules. How a caller proved identity is yours to decide; the
+            engine takes a user id.
           </P>
           <TabbedCode snippets={IDENTITY_SNIPPETS} />
           <P>
             In <Inline>proxy</Inline> mode nothing else is trusted: no bearer, no cookie, no user id
-            in tool arguments. Your edge authenticates however you like — SSO, mTLS, an internal
-            gateway — and passes the id it settled on.
+            in tool arguments. Your edge authenticates (SSO, mTLS, a gateway) and passes the id.
           </P>
           <Callout tone="warn">
-            A header is only worth trusting if nothing but your proxy can set it. Set{" "}
-            <Inline>OPENLEAGUES_MCP_PROXY_SECRET</Inline> so the box can tell. Leave it unset and
-            the box logs a warning and trusts the header anyway — fine on an origin nothing else can
-            reach, dangerous on a public one.
+            Set <Inline>OPENLEAGUES_MCP_PROXY_SECRET</Inline> so only your proxy can set the header.
+            Unset, the box logs a warning and trusts the header anyway.
           </Callout>
           <Note>
-            Every mode fails closed. An unset mode is <Inline>token</Inline>; an unrecognised one
-            refuses to serve rather than guessing. stdio is separate again — it has no HTTP identity
-            at all, and <Inline>OPENLEAGUES_USER</Inline> is the trust boundary.
+            Every mode fails closed. Unset means <Inline>token</Inline>; an unrecognised mode
+            refuses to serve. stdio has no HTTP identity; <Inline>OPENLEAGUES_USER</Inline> is its
+            trust boundary.
           </Note>
         </>
       ),
@@ -921,10 +874,9 @@ const agents: DocsPage = {
       body: () => (
         <>
           <P>
-            Every token is minted <Inline>read</Inline> or <Inline>act</Inline>. A read token can
-            call any read verb and nothing that writes; an act token can do what the seat behind it
-            can do. This is the one scope the engine enforces — the catalog’s <Inline>scope</Inline>{" "}
-            column below is a different thing.
+            Every token is minted <Inline>read</Inline> or <Inline>act</Inline>. A read token calls
+            read verbs only; an act token does what its seat can do. This is the one scope the
+            engine enforces.
           </P>
           <Pre label="mint a read-only token from a shell">{`bun scripts/ledger.mjs mintToken --write --user usr_… --name codex --scope read`}</Pre>
           <DocTable
@@ -935,11 +887,9 @@ const agents: DocsPage = {
             ]}
           />
           <P>
-            Every write an act token makes is logged as an <Inline>agent_action</Inline> event
-            carrying the token’s name, so a receipt on a league box can show the agent’s line —
-            “codex started X over Y at 11:52am” — next to the human’s. In proxy mode the edge
-            narrows a caller with <Inline>x-openleagues-scope: read</Inline>; it cannot widen
-            anything, because act is already the ceiling.
+            Every write by an act token is logged as an <Inline>agent_action</Inline> event with the
+            token’s name, so a receipt can show “codex started X over Y at 11:52am” next to the
+            human’s line. In proxy mode <Inline>x-openleagues-scope: read</Inline> narrows a caller.
           </P>
         </>
       ),
@@ -950,9 +900,8 @@ const agents: DocsPage = {
       body: () => (
         <>
           <P>
-            Descriptive, but useful — it is how the catalog says who a verb is for, and{" "}
-            <Inline>getAgentContext</Inline> filters the tool list it hands an agent by the caller’s
-            own standing.
+            The scope column says who a verb is for. <Inline>getAgentContext</Inline> filters the
+            tool list it hands an agent by the caller’s standing.
           </P>
           <DocTable
             head={["Scope", "Meant for", "Verbs"]}
@@ -990,7 +939,7 @@ const agents: DocsPage = {
 
 const state: DocsPage = {
   title: "Reading league state",
-  lede: "Four reads cover almost every question anyone asks about a league. Start with context, then narrow.",
+  lede: "Four reads cover the common questions about a league. Start with getAgentContext, then narrow.",
   sections: [
     {
       id: "four",
@@ -1003,7 +952,7 @@ const state: DocsPage = {
               [
                 <Mono key="a">getAgentContext</Mono>,
                 <Mono key="b">leagueId</Mono>,
-                "Who am I here, what week, what can I spend, what may I call",
+                "Your seat, the week, your purse, the verbs you may call",
               ],
               [
                 <Mono key="a">getLeagueBundle</Mono>,
@@ -1023,9 +972,8 @@ const state: DocsPage = {
             ]}
           />
           <P>
-            Start every session with <Inline>getAgentContext</Inline>. One round trip for seat,
-            purse, league facts, recent events, and the in-scope tool list — the things an agent
-            otherwise discovers by guessing.
+            Start each session with <Inline>getAgentContext</Inline>: one round trip for seat,
+            purse, league facts, recent events, and the in-scope tool list.
           </P>
           <Pre label="getAgentContext · response">{`{
   "leagueId": "lg_wiffl",
@@ -1041,22 +989,18 @@ const state: DocsPage = {
 }`}</Pre>
           <Note>
             Without a seat, <Inline>you</Inline> is <Inline>null</Inline> and <Inline>purse</Inline>{" "}
-            comes back zeroed rather than null. For a settled week’s story — the flip, the bench,
-            the wire — read the <DocLink slug="receipts">receipt</DocLink> instead; it is the same
-            data folded into facts.
+            is zeroed. For a settled week (flip, bench, wire) read the{" "}
+            <DocLink slug="receipts">receipt</DocLink> instead.
           </Note>
         </>
       ),
     },
     {
       id: "shape",
-      heading: "One payload, two views",
+      heading: "The board and its payload",
       body: () => (
         <>
-          <P>
-            The board below is drawn from the array behind the toggle. Same object, no private
-            rendering path.
-          </P>
+          <P>The board below is drawn from the array behind the toggle.</P>
           <MatchupPreview caption="getMatchups · lg_wiffl · week 1" />
         </>
       ),
@@ -1067,22 +1011,19 @@ const state: DocsPage = {
       body: () => (
         <>
           <P>
-            A filled starter slot in an unplayed week carries <Inline>points: 0</Inline>, not null —{" "}
-            <Inline>null</Inline> means the slot has no player in it.{" "}
-            <Inline>MatchupSide.points</Inline> is the sum, so it is <Inline>0</Inline> before
-            kickoff.
+            A filled starter slot in an unplayed week carries <Inline>points: 0</Inline>;{" "}
+            <Inline>null</Inline> means an empty slot. <Inline>MatchupSide.points</Inline> is the
+            sum, so it is <Inline>0</Inline> before kickoff.
           </P>
           <Callout tone="warn">
-            The raw <Inline>getMatchups</Inline> response has no projections in it.{" "}
-            <Inline>expected</Inline> and <Inline>forecast</Inline> exist on the type but are added
-            by the app’s own enrichment pass — an agent that wants a projection calls{" "}
+            <Inline>getMatchups</Inline> carries no projections. <Inline>expected</Inline> and{" "}
+            <Inline>forecast</Inline> are added by the app’s enrichment pass. An agent calls{" "}
             <Inline>getWeekProjections</Inline> or <Inline>getProjections</Inline>, both on the
             allowlist.
           </Callout>
           <P>
-            That is why <Inline>open-leagues-lineup</Inline> spends a call on{" "}
-            <Inline>getWeekProjections</Inline> before it proposes a sit/start: there is nothing to
-            reason from in the matchup payload alone.
+            That is why <Inline>open-leagues-lineup</Inline> calls{" "}
+            <Inline>getWeekProjections</Inline> before proposing a sit/start.
           </P>
         </>
       ),
@@ -1093,8 +1034,8 @@ const state: DocsPage = {
       body: () => (
         <>
           <P>
-            <Inline>getBook</Inline> returns the week’s lines, your positions, the settled ones, the
-            house pool, your purse, and the caps. Two markets only — there is no over/under.
+            <Inline>getBook</Inline> returns the week’s lines, your positions, settled ones, the
+            house pool, your purse, and the caps. Two markets, spread and moneyline; no over/under.
           </P>
           <DocTable
             head={["Field", "Holds"]}
@@ -1116,9 +1057,9 @@ const state: DocsPage = {
             ]}
           />
           <Note>
-            A wager is <Inline>spread</Inline> or <Inline>moneyline</Inline>. Spread pricing is the
-            single <Inline>spread</Inline> field, negative when the home side is favoured; moneyline
-            pricing is <Inline>homeMult</Inline> / <Inline>awayMult</Inline>, profit per dollar.
+            <Inline>spread</Inline> is the single spread field, negative when the home side is
+            favoured. <Inline>homeMult</Inline> / <Inline>awayMult</Inline> are moneyline profit per
+            dollar.
           </Note>
         </>
       ),
@@ -1130,7 +1071,7 @@ const state: DocsPage = {
 
 const playbooks: DocsPage = {
   title: "Playbooks",
-  lede: "Six skills ship in the repo. A skill turns one sentence into the right chain of verbs, in the right order, stopping where a human should confirm.",
+  lede: "Six skills ship in the repo. Each turns one sentence into a chain of verbs and stops where a human should confirm.",
   sections: [
     {
       id: "install",
@@ -1138,9 +1079,9 @@ const playbooks: DocsPage = {
       body: () => (
         <>
           <P>
-            One command with the <Inline>skills</Inline> CLI, or copy the folder. Nothing registers,
-            nothing phones home — a skill is a folder with a <Inline>SKILL.md</Inline>, and the six
-            live at <Inline>skills/</Inline> in the repo, where skills.sh finds them.
+            One command with the <Inline>skills</Inline> CLI, or copy the folder. A skill is a
+            folder with a <Inline>SKILL.md</Inline>; the six live at <Inline>skills/</Inline> in the
+            repo.
           </P>
           <Pre label="shell">{`npx skills add ryanwaits/open-leagues -g                          # every skill, Claude Code
 npx skills add ryanwaits/open-leagues --skill open-leagues-week -g  # one
@@ -1155,31 +1096,28 @@ ln -s "$PWD/skills/open-leagues-week" ~/.codex/skills/`}</Pre>
     },
     {
       id: "chains",
-      heading: "What you say, what fires",
+      heading: "What each sentence fires",
       body: () => (
         <>
           <P>
-            Writes are marked. Everything unmarked is a read. The lineup, migrate, and book skills
-            stop and wait for a human before anything mutates; the two lab skills never move money
-            at all — discover freezes a rule only after a holdout clears, and run only appends a
-            ledger.
+            Writes are marked; everything else is a read. The lineup, migrate, and book skills stop
+            for a human before anything mutates. The two lab skills move no money.
           </P>
           <PlaybookList playbooks={PLAYBOOKS} />
           <Note>
-            Every verb these six skills call is on the MCP allowlist, with one exception the migrate
-            skill flags itself: <Inline>addAllowlistEmail</Inline> is app-only.
+            Every verb these skills call is on the MCP allowlist, except{" "}
+            <Inline>addAllowlistEmail</Inline>, which is app-only.
           </Note>
         </>
       ),
     },
     {
       id: "why",
-      heading: "Why a skill and not a prompt",
+      heading: "Why a skill",
       body: () => (
         <P>
-          The session on the <DocLink slug="agents">Agents</DocLink> page shows what happens without
-          one: two failed guesses before the agent found the catalog. A skill front-loads the order
-          and the invariants, so the first call is the right call.
+          The session on the <DocLink slug="agents">Agents</DocLink> page shows two failed guesses
+          before the agent found the catalog. A skill front-loads the order.
         </P>
       ),
     },
@@ -1190,7 +1128,7 @@ ln -s "$PWD/skills/open-leagues-week" ~/.codex/skills/`}</Pre>
 
 const catalog: DocsPage = {
   title: "Verb catalog",
-  lede: `The catalog is the ceiling. MCP exposes a deliberate subset of it — ${MCP_WIRED} of ${MCP_CATALOG} today.`,
+  lede: `The catalog lists every verb the engine has. MCP exposes ${MCP_WIRED} of ${MCP_CATALOG} today.`,
   sections: [
     { id: "table", heading: "Every verb", body: () => <CatalogTable /> },
     {
@@ -1199,10 +1137,8 @@ const catalog: DocsPage = {
       body: () => (
         <>
           <P>
-            A handful of verbs move the whole league, not one roster, and none of them can be undone
-            by calling an opposite verb. Dispatch refuses them outright unless the call carries{" "}
-            <Inline>confirm: true</Inline>, so an agent cannot advance your season by being
-            agreeable.
+            Six verbs move the whole league, and none has an opposite verb to undo it. Dispatch
+            refuses them without <Inline>confirm: true</Inline>.
           </P>
           <DocTable
             head={["Verb", "What it moves"]}
@@ -1222,8 +1158,8 @@ const catalog: DocsPage = {
             ]}
           />
           <Note>
-            <Inline>saveSettings</Inline> takes only the fields it knows; an unrecognised key is
-            dropped rather than forwarded. It reports back which fields it changed.
+            <Inline>saveSettings</Inline> drops unrecognised keys and reports which fields it
+            changed.
           </Note>
         </>
       ),
@@ -1235,30 +1171,28 @@ const catalog: DocsPage = {
         <>
           <Bullets>
             <li>
-              <strong className="font-medium text-fg">scope</strong> — who the verb is for.
-              Documentation, not a gate; see{" "}
-              <DocLink slug="agents">what actually gates a call</DocLink>.
+              <strong className="font-medium text-fg">scope</strong>: who the verb is for.
+              Documentation; see <DocLink slug="agents">what gates a call</DocLink>.
             </li>
             <li>
-              <strong className="font-medium text-fg">read</strong> — never mutates.
+              <strong className="font-medium text-fg">read</strong>: never mutates.
             </li>
             <li>
-              <strong className="font-medium text-fg">atomic</strong> — one mutation, reversible by
+              <strong className="font-medium text-fg">atomic</strong>: one mutation, reversible by
               its opposite verb.
             </li>
             <li>
-              <strong className="font-medium text-fg">workflow</strong> — several mutations behind
-              one call. <Inline>addDrop</Inline> and <Inline>importLeague</Inline> are the shape.
+              <strong className="font-medium text-fg">workflow</strong>: several mutations behind
+              one call, such as <Inline>addDrop</Inline> and <Inline>importLeague</Inline>.
             </li>
             <li>
-              <strong className="font-medium text-fg">MCP</strong> — whether the id is on the
-              allowlist. Unwired means exactly that: no allowlist entry and no dispatch branch, so
-              the verb runs in the browser app and nowhere else.
+              <strong className="font-medium text-fg">MCP</strong>: whether the id is on the
+              allowlist. Unwired verbs run in the browser app only.
             </li>
           </Bullets>
           <Note>
             Adding a verb to MCP is an id in <Inline>core.ts</Inline> plus a branch in{" "}
-            <Inline>dispatch.ts</Inline> — never a new integration.
+            <Inline>dispatch.ts</Inline>.
           </Note>
         </>
       ),
@@ -1278,8 +1212,8 @@ const selfHost: DocsPage = {
       body: () => (
         <>
           <P>
-            The compose file publishes 8080 and keeps durable PGLite on a named volume. Do not set{" "}
-            <Inline>DATABASE_URL</Inline> here — the volume is the database.
+            The compose file publishes 8080 and keeps PGLite on a named volume. Do not set{" "}
+            <Inline>DATABASE_URL</Inline> here; the volume is the database.
           </P>
           <Pre label="docker-compose.yml (abridged)">{`services:
   app:
@@ -1293,14 +1227,13 @@ const selfHost: DocsPage = {
       BETTER_AUTH_SECRET: \${BETTER_AUTH_SECRET:-}
       CRON_SECRET: \${CRON_SECRET:-}`}</Pre>
           <P>
-            Leave <Inline>BETTER_AUTH_SECRET</Inline> blank and the entrypoint generates one and
-            saves it to the volume at <Inline>/data/better-auth-secret</Inline>, so sessions survive
-            a restart. Set it explicitly when you run more than one replica, or when the volume may
-            be recreated.
+            Left blank, <Inline>BETTER_AUTH_SECRET</Inline> is generated at{" "}
+            <Inline>/data/better-auth-secret</Inline> on the volume. Set it for more than one
+            replica.
           </P>
           <Note>
-            Set <Inline>BETTER_AUTH_URL</Inline> to your real public origin, without a trailing
-            slash, as soon as the box sits behind a proxy or a domain.
+            Set <Inline>BETTER_AUTH_URL</Inline> to your public origin, no trailing slash, once the
+            box sits behind a proxy or domain.
           </Note>
         </>
       ),
@@ -1310,13 +1243,13 @@ const selfHost: DocsPage = {
       heading: "Local",
       body: () => (
         <>
-          <P>No Postgres, no migrate step — PGLite migrates itself on first database access.</P>
+          <P>PGLite migrates itself on first database access.</P>
           <Pre label="shell">{`bun install
 cp .env.example .env      # optional
 bun run dev               # 0.0.0.0:8080`}</Pre>
           <Callout>
-            <Inline>bun run db:migrate</Inline> is a no-op without <Inline>DATABASE_URL</Inline> —
-            it prints “skipping” and exits. It only matters when you point dev at a real Postgres.
+            <Inline>bun run db:migrate</Inline> is a no-op without <Inline>DATABASE_URL</Inline>: it
+            prints “skipping” and exits.
           </Callout>
         </>
       ),
@@ -1326,7 +1259,7 @@ bun run dev               # 0.0.0.0:8080`}</Pre>
       heading: "The clock",
       body: () => (
         <>
-          <P>Scoring advances on a tick. Exactly one thing should drive it.</P>
+          <P>Scoring advances on a tick. One process should drive it.</P>
           <DocTable
             head={["Host", "Clock", "Setting"]}
             rows={[
@@ -1338,16 +1271,16 @@ bun run dev               # 0.0.0.0:8080`}</Pre>
               [
                 "Vercel",
                 <span key="b">
-                  <Mono>vercel.json</Mono> cron — <Mono>15 * * * *</Mono>
+                  <Mono>vercel.json</Mono> cron, <Mono>15 * * * *</Mono>
                 </span>,
                 <Mono key="c">leave it unset</Mono>,
               ],
             ]}
           />
           <Callout tone="warn">
-            Setting <Inline>OPENLEAGUES_SELF_TICK</Inline> on Vercel gives you two clocks. Set{" "}
-            <Inline>CRON_SECRET</Inline> too: without it, <Inline>/api/league/tick</Inline> accepts
-            unauthenticated requests — the box logs a warning at boot and carries on.
+            <Inline>OPENLEAGUES_SELF_TICK</Inline> on Vercel gives you two clocks. Without{" "}
+            <Inline>CRON_SECRET</Inline>, <Inline>/api/league/tick</Inline> accepts unauthenticated
+            requests and the box logs a warning at boot.
           </Callout>
         </>
       ),
@@ -1358,8 +1291,7 @@ bun run dev               # 0.0.0.0:8080`}</Pre>
       body: () => (
         <>
           <P>
-            The full list is in <Inline>.env.example</Inline>. What actually decides whether a box
-            boots:
+            The full list is in <Inline>.env.example</Inline>. These decide whether a box boots:
           </P>
           <DocTable
             head={["Variable", "Docker", "Vercel", "Purpose"]}
@@ -1372,7 +1304,7 @@ bun run dev               # 0.0.0.0:8080`}</Pre>
                 <Pill key="c" tone="ink">
                   required
                 </Pill>,
-                "Postgres. Its absence is what selects PGLite.",
+                "Postgres. Absent selects PGLite.",
               ],
               [
                 <Mono key="a">PGLITE_DATA_DIR</Mono>,
@@ -1408,7 +1340,7 @@ bun run dev               # 0.0.0.0:8080`}</Pre>
                 <Mono key="a">OPENLEAGUES_MCP_AUTH</Mono>,
                 <Pill key="b">optional</Pill>,
                 <Pill key="c">optional</Pill>,
-                "token (default) or proxy — who /api/mcp trusts.",
+                "token (default) or proxy: who /api/mcp trusts.",
               ],
               [
                 <Mono key="a">OPENLEAGUES_MODE</Mono>,
@@ -1436,16 +1368,14 @@ bun run dev               # 0.0.0.0:8080`}</Pre>
       body: () => (
         <>
           <P>
-            Out of the box, <Inline>/api/mcp</Inline> issues and checks its own bearer tokens
-            against its own database. Nothing is issued centrally: a token minted here works here
-            and nowhere else.
+            By default <Inline>/api/mcp</Inline> issues and checks its own bearer tokens against its
+            own database. A token minted here works here only.
           </P>
-          <Pre label="headless mint — no browser">{`bun scripts/ledger.mjs mintToken --write --user usr_… --name codex`}</Pre>
+          <Pre label="headless mint, no browser">{`bun scripts/ledger.mjs mintToken --write --user usr_… --name codex`}</Pre>
           <P>
-            If you already authenticate people at the edge, put{" "}
-            <Inline>OPENLEAGUES_MCP_AUTH=proxy</Inline> in the environment and pass the user id on a
-            header instead. See <DocLink slug="agents">bring your own identity</DocLink> for the
-            whole seam.
+            If you authenticate people at the edge, set <Inline>OPENLEAGUES_MCP_AUTH=proxy</Inline>{" "}
+            and pass the user id on a header. See{" "}
+            <DocLink slug="agents">bring your own identity</DocLink>.
           </P>
         </>
       ),
@@ -1456,14 +1386,14 @@ bun run dev               # 0.0.0.0:8080`}</Pre>
       body: () => (
         <>
           <P>
-            <Inline>bun run build</Inline> is <Inline>vite build</Inline> followed by{" "}
-            <Inline>db:migrate</Inline> — that ordering is for Vercel, where migrations run against{" "}
+            <Inline>bun run build</Inline> is <Inline>vite build</Inline> then{" "}
+            <Inline>db:migrate</Inline>. The ordering is for Vercel, where migrations run against{" "}
             <Inline>DATABASE_URL</Inline> on every deploy.
           </P>
           <P>
-            The Docker image does not use that script. It runs <Inline>vite build</Inline> at image
-            build time, and the entrypoint runs migrations at container start instead — where, with
-            no <Inline>DATABASE_URL</Inline> set, they skip and PGLite migrates itself.
+            The Docker image runs <Inline>vite build</Inline> at image build time and migrations at
+            container start. With no <Inline>DATABASE_URL</Inline>, they skip and PGLite migrates
+            itself.
           </P>
         </>
       ),
