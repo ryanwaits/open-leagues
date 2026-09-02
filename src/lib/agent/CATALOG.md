@@ -75,6 +75,13 @@ If it's not in this table, it is not a tool. Stop. Do not invent a table.
 | sampleGames | spectator | read | Games across seasons matching a cohort filter: home dog, spread band, total band, rest edge, roof, weekday. |
 | evaluateBets | spectator | read | Grade hypothetical bets against results: win/loss/push, units at the odds taken, closing-line value. |
 | summarizeRun | spectator | read | Record, ROI, break-even, drawdown, streaks, per-season splits for a graded run. |
+| simulateBankroll | spectator | read | A graded bet list through flat, percent, or fractional-Kelly staking: equity curve, drawdown, seeded bootstrap. |
+| freezeStrategy | spectator | atomic | Store a strategy spec (words, filter, bet, staking, seasons) so weekly runs grade exactly what was found. |
+| listStrategies | spectator | read | Your frozen strategies. |
+| getStrategy | spectator | read | One frozen strategy by id. |
+| deleteStrategy | spectator | atomic | Remove a strategy and its runs. confirm: true. |
+| recordLabRun | spectator | atomic | Append a graded run, its bankroll simulation, bets, and digest to a strategy's ledger. |
+| getLabRuns | spectator | read | Every recorded run for a strategy. |
 | getSourceLedger | spectator | read | Over a season, which open source would have set a better lineup than the roster did. |
 | getMatchups | spectator | read | Matchup cards for a week. |
 | getTicks | spectator | read | Per-minute projected finals / win % / spread samples for one matchup on a game day. |

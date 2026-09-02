@@ -5,7 +5,21 @@ import { test } from "node:test";
 
 const root = join(import.meta.dirname, "..");
 const read = (p) => readFileSync(join(root, p), "utf8");
-const VERBS = ["getGameLines", "getGameContext", "getBettingSplits", "sampleGames", "evaluateBets", "summarizeRun"];
+const VERBS = [
+  "getGameLines",
+  "getGameContext",
+  "getBettingSplits",
+  "sampleGames",
+  "evaluateBets",
+  "summarizeRun",
+  "simulateBankroll",
+  "freezeStrategy",
+  "listStrategies",
+  "getStrategy",
+  "deleteStrategy",
+  "recordLabRun",
+  "getLabRuns",
+];
 
 test("the lab's five primitives are verbs on MCP, exported as server fns, and in the catalog table", () => {
   const catalog = read("src/lib/agent/catalog.ts");
@@ -17,7 +31,7 @@ test("the lab's five primitives are verbs on MCP, exported as server fns, and in
     assert.match(catalog, new RegExp(`"${v}"`), v);
     assert.match(core, new RegExp(`"${v}"`), v);
     assert.match(dispatch, new RegExp(`case "${v}"`), v);
-    assert.match(md, new RegExp(`^\\| ${v} \\| spectator \\| read \\|`, "m"), v);
+    assert.match(md, new RegExp(`^\\| ${v} \\| spectator \\| (read|atomic) \\|`, "m"), v);
     assert.match(fns, new RegExp(`export const ${v} = createServerFn`), v);
   }
 });
@@ -46,4 +60,30 @@ test("splits are opt-in and every pulled week is kept", () => {
   assert.match(read(".env.example"), /OPENLEAGUES_SPLITS_SOURCE=/);
   // filters can ask for a ticket share, so the user's own example runs unchanged
   assert.match(read("src/lib/lab/bets.ts"), /tickets\?: \[number, number\]/);
+});
+
+test("two lab skills: discover freezes, run never places", () => {
+  const discover = read("src/lib/agent/skills/open-leagues-lab-discover/SKILL.md");
+  const run = read("src/lib/agent/skills/open-leagues-lab-run/SKILL.md");
+  assert.match(discover, /hold ?out/i);
+  assert.match(discover, /pBreakEven/);
+  assert.match(discover, /freezeStrategy/);
+  assert.match(discover, /Do \*\*not\*\* call `placeWager`/);
+  assert.match(run, /getStrategy/);
+  assert.match(run, /simulateBankroll/);
+  assert.match(run, /recordLabRun/);
+  assert.match(run, /Do \*\*not\*\* call `placeWager`/);
+  assert.match(run, /Do \*\*not\*\* call `freezeStrategy`/);
+  // the writes are mutating in the catalog, so a read token cannot freeze or record
+  const catalog = read("src/lib/agent/catalog.ts");
+  for (const v of ["freezeStrategy", "deleteStrategy", "recordLabRun"]) {
+    assert.match(catalog, new RegExp(`"${v}",[\\s\\S]{0,400}?"atomic"`), v);
+  }
+});
+
+test("staking arithmetic is pure and seeded", () => {
+  const b = read("src/lib/lab/bankroll.ts");
+  assert.doesNotMatch(b, /fetch\(|getSql/);
+  assert.match(b, /mulberry32/);
+  assert.match(b, /winProbSource/);
 });

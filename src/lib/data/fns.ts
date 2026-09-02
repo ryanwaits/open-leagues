@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { optionalAuthMiddleware } from "@/lib/auth/middleware";
+import { authMiddleware, optionalAuthMiddleware } from "@/lib/auth/middleware";
 import { isHostedLeague } from "./types";
 
 export const getPulse = createServerFn({ method: "GET" }).handler(async () => {
@@ -502,6 +502,116 @@ export const summarizeRun = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const lab = await import("@/lib/lab/bets");
     return lab.summarize(data.bets as unknown as import("@/lib/lab/bets").GradedBet[]);
+  });
+
+/** TanStack's serializable check wants plain JSON; these objects already are. */
+type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+const plain = <T>(x: T): Json => JSON.parse(JSON.stringify(x)) as Json;
+
+const stakingPolicy = z.union([
+  z.object({ type: z.literal("flat"), unit: z.number().positive() }),
+  z.object({
+    type: z.literal("percent"),
+    pct: z.number().positive(),
+    cap: z.number().positive().optional(),
+  }),
+  z.object({
+    type: z.literal("kelly"),
+    fraction: z.number().positive().max(1),
+    cap: z.number().positive().optional(),
+    winProb: z.number().min(0).max(1).optional(),
+  }),
+]);
+
+export const simulateBankroll = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      graded: z.array(z.record(z.string(), z.unknown())).min(1),
+      bankroll: z.number().positive(),
+      policy: stakingPolicy,
+      bootstrap: z.number().int().min(0).max(5000).optional(),
+      seed: z.number().int().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const { simulateBankroll: sim } = await import("@/lib/lab/bankroll");
+    return plain(
+      sim({
+        ...data,
+        graded: data.graded as unknown as import("@/lib/lab/bets").GradedBet[],
+      }),
+    );
+  });
+
+const strategySpec = z.object({
+  words: z.string().min(1),
+  seasons: z.object({ discovered: z.array(z.number()), holdout: z.array(z.number()) }),
+  filter: gameFilter.extend({ splits: z.array(splitCondition).optional() }),
+  bet: z.object({
+    market: z.enum(["spread", "total", "moneyline"]),
+    side: z.enum(["home", "away", "over", "under"]),
+    stake: z.number().positive().optional(),
+  }),
+  staking: stakingPolicy,
+  bankroll: z.number().positive(),
+});
+
+export const freezeStrategy = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ name: z.string().min(1), spec: strategySpec }))
+  .handler(async ({ data, context }) => {
+    const lab = await import("@/lib/lab/strategies.server");
+    return plain(await lab.freezeStrategy(context.userId, data.name, data.spec));
+  });
+
+export const listStrategies = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const lab = await import("@/lib/lab/strategies.server");
+    return plain(await lab.listStrategies(context.userId));
+  });
+
+export const getStrategy = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator(z.object({ id: z.string() }))
+  .handler(async ({ data, context }) => {
+    const lab = await import("@/lib/lab/strategies.server");
+    return plain(await lab.getStrategy(context.userId, data.id));
+  });
+
+export const deleteStrategy = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ id: z.string(), confirm: z.literal(true) }))
+  .handler(async ({ data, context }) => {
+    const lab = await import("@/lib/lab/strategies.server");
+    return lab.deleteStrategy(context.userId, data.id);
+  });
+
+export const recordLabRun = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    z.object({
+      strategyId: z.string(),
+      kind: z.enum(["discover", "weekly", "season"]),
+      season: z.number().nullable(),
+      week: z.number().nullable(),
+      summary: z.record(z.string(), z.unknown()),
+      bankroll: z.record(z.string(), z.unknown()).nullable(),
+      bets: z.array(bet),
+      digest: z.string().nullable(),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    const lab = await import("@/lib/lab/strategies.server");
+    return plain(await lab.recordLabRun(context.userId, data));
+  });
+
+export const getLabRuns = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator(z.object({ strategyId: z.string() }))
+  .handler(async ({ data, context }) => {
+    const lab = await import("@/lib/lab/strategies.server");
+    return plain(await lab.getLabRuns(context.userId, data.strategyId));
   });
 
 export const getSourceLedger = createServerFn({ method: "GET" })

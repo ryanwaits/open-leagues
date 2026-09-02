@@ -374,6 +374,80 @@ async function run(
       const lab = await import("@/lib/lab/bets");
       return asJson(lab.summarize(bets as import("@/lib/lab/bets").GradedBet[]));
     }
+    case "simulateBankroll": {
+      const graded = args.graded;
+      if (!Array.isArray(graded) || graded.length === 0) throw new Error("graded is required");
+      const bankroll = num(args.bankroll, "bankroll");
+      if (typeof args.policy !== "object" || args.policy === null)
+        throw new Error("policy is required");
+      const { simulateBankroll: sim } = await import("@/lib/lab/bankroll");
+      return asJson(
+        sim({
+          graded: graded as import("@/lib/lab/bets").GradedBet[],
+          bankroll,
+          policy: args.policy as import("@/lib/lab/bankroll").StakingPolicy,
+          bootstrap: optNum(args.bootstrap),
+          seed: optNum(args.seed),
+        }),
+      );
+    }
+    case "freezeStrategy": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      if (typeof args.spec !== "object" || args.spec === null) throw new Error("spec is required");
+      const lab = await import("@/lib/lab/strategies.server");
+      return asJson(
+        await lab.freezeStrategy(
+          userId,
+          str(args.name, "name"),
+          args.spec as import("@/lib/lab/strategies.server").StrategySpec,
+        ),
+      );
+    }
+    case "listStrategies": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      const lab = await import("@/lib/lab/strategies.server");
+      return asJson(await lab.listStrategies(userId));
+    }
+    case "getStrategy": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      const lab = await import("@/lib/lab/strategies.server");
+      return asJson(await lab.getStrategy(userId, str(args.id, "id")));
+    }
+    case "deleteStrategy": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      requireConfirm(id, args);
+      const lab = await import("@/lib/lab/strategies.server");
+      return asJson(await lab.deleteStrategy(userId, str(args.id, "id")));
+    }
+    case "recordLabRun": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      const kind = args.kind;
+      if (kind !== "discover" && kind !== "weekly" && kind !== "season")
+        throw new Error("kind must be discover, weekly, or season");
+      if (typeof args.summary !== "object" || args.summary === null)
+        throw new Error("summary is required");
+      const lab = await import("@/lib/lab/strategies.server");
+      return asJson(
+        await lab.recordLabRun(userId, {
+          strategyId: str(args.strategyId, "strategyId"),
+          kind,
+          season: optNum(args.season) ?? null,
+          week: optNum(args.week) ?? null,
+          summary: args.summary as Record<string, unknown>,
+          bankroll:
+            typeof args.bankroll === "object" && args.bankroll !== null
+              ? (args.bankroll as Record<string, unknown>)
+              : null,
+          bets: Array.isArray(args.bets) ? (args.bets as import("@/lib/lab/bets").Bet[]) : [],
+          digest: typeof args.digest === "string" ? args.digest : null,
+        }),
+      );
+    }
+    case "getLabRuns": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      const lab = await import("@/lib/lab/strategies.server");
+      return asJson(await lab.getLabRuns(userId, str(args.strategyId, "strategyId")));
+    }
     case "getSourceLedger": {
       const leagueId = str(args.leagueId, "leagueId");
       if (isHosted(leagueId)) {

@@ -97,6 +97,14 @@ export type Summary = {
   winRate: number;
   /** Break-even win rate at the average odds taken. */
   breakEven: number;
+  /** Wins plus losses; pushes and voids are not decisions. */
+  decided: number;
+  /**
+   * One-sided binomial probability of at least this many wins in `decided` bets if the
+   * true hit rate were exactly the break-even rate. Small means "hard to get by luck";
+   * it is not a probability that the edge is real. Null with no decided bets.
+   */
+  pBreakEven: number | null;
   maxDrawdown: number;
   longestWin: number;
   longestLoss: number;
@@ -202,6 +210,8 @@ export function summarize(graded: GradedBet[]): Summary {
     roi: 0,
     winRate: 0,
     breakEven: 0,
+    decided: 0,
+    pBreakEven: null,
     maxDrawdown: 0,
     longestWin: 0,
     longestLoss: 0,
@@ -256,15 +266,34 @@ export function summarize(graded: GradedBet[]): Summary {
     s.maxDrawdown = r2(Math.max(s.maxDrawdown, peak - bank));
   }
   const decided = s.wins + s.losses;
+  s.decided = decided;
   s.roi = s.staked > 0 ? r2(s.units / s.staked) : 0;
   s.winRate = decided > 0 ? r2(s.wins / decided) : 0;
   s.breakEven = beN > 0 ? r2(beSum / beN) : 0;
+  s.pBreakEven = decided > 0 ? binomialTail(s.wins, decided, beN > 0 ? beSum / beN : 0.5) : null;
   s.avgClv = clvN > 0 ? r2(clvSum / clvN) : null;
   for (const [season, row] of Object.entries(s.bySeason)) {
     const staked = stakedBySeason.get(season) ?? 0;
     row.roi = staked > 0 ? r2(row.units / staked) : 0;
   }
   return s;
+}
+
+/** P(X ≥ k) for X ~ Binomial(n, p), summed in log space so n in the thousands is fine. */
+export function binomialTail(k: number, n: number, p: number): number {
+  if (k <= 0) return 1;
+  if (k > n) return 0;
+  if (p <= 0) return 0;
+  if (p >= 1) return 1;
+  const lp = Math.log(p);
+  const lq = Math.log(1 - p);
+  let logC = 0; // log C(n, 0)
+  let tail = 0;
+  for (let i = 0; i <= n; i++) {
+    if (i > 0) logC += Math.log(n - i + 1) - Math.log(i);
+    if (i >= k) tail += Math.exp(logC + i * lp + (n - i) * lq);
+  }
+  return Math.round(Math.min(1, tail) * 10000) / 10000;
 }
 
 /* ── cohorts ─────────────────────────────────────────────────────────── */
