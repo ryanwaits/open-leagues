@@ -37,7 +37,15 @@ if (!yes) {
   process.exit(2);
 }
 
-const pool = new pg.Pool({ connectionString: url, max: 1 });
+// Managed Postgres (Render, Neon, Supabase) requires TLS on the external host;
+// their certificates chain to CAs Node does not always ship, so verify is off
+// here the same way `migrate.mjs` and the app connect. Local hosts stay plain.
+const local = /^(localhost|127\.0\.0\.1|\[::1\])(:|$)/.test(host);
+const pool = new pg.Pool({
+  connectionString: url,
+  max: 1,
+  ssl: local ? undefined : { rejectUnauthorized: false },
+});
 const client = await pool.connect();
 try {
   const before = await client.query(
