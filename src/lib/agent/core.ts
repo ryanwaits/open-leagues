@@ -61,6 +61,20 @@ export const AGENT_CORE: ReadonlySet<string> = new Set([
   "cancelClaim",
   "cancelTradeFn",
   "claimRoster",
+  // receipts (095) — public facts about a week, seat-gated for hosted leagues
+  "getReceipt",
+  "getWeekBoard",
+  // zero to a league without a browser (094)
+  "createLeague",
+  "joinLeague",
+  // the season spine (094) — commissioner operations, all confirm-gated
+  "advanceWeek",
+  "processWaivers",
+  "saveSettings",
+  "saveWeekSchedule",
+  "rebuildSchedule",
+  // the other half of voteTrade
+  "proposeTrade",
   // migrate completion (083)
   "previewEspn",
   "importEspn",

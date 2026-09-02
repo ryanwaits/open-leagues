@@ -26,6 +26,11 @@ function optStr(v: unknown): string | undefined {
   return v;
 }
 
+/** Hosted (lg_) leagues carry the seat rule; a raw Sleeper id is public data. */
+function isHosted(leagueId: string): boolean {
+  return leagueId.startsWith("lg_");
+}
+
 function asJson(result: unknown): unknown {
   return result === undefined ? { ok: true } : result;
 }
@@ -35,6 +40,93 @@ function strArray(v: unknown, name: string): string[] {
     throw new Error(`${name} is required`);
   }
   return v;
+}
+
+type SchedulePair = { home: number; away: number | null };
+
+function schedulePairs(v: unknown, name: string): SchedulePair[] {
+  if (!Array.isArray(v) || v.length === 0) throw new Error(`${name} is required`);
+  return v.map((row, i) => {
+    if (typeof row !== "object" || row === null) throw new Error(`${name}[${i}] must be an object`);
+    const r = row as Record<string, unknown>;
+    const away = r.away == null || r.away === "" ? null : num(r.away, `${name}[${i}].away`);
+    return { home: num(r.home, `${name}[${i}].home`), away };
+  });
+}
+
+type TradeAsset = {
+  fromRoster: number;
+  toRoster: number;
+  kind: "player" | "pick" | "faab";
+  playerId?: string | null;
+  pickNo?: number | null;
+  amount?: number | null;
+};
+
+function tradeAssets(v: unknown, name: string): TradeAsset[] {
+  if (!Array.isArray(v) || v.length === 0) throw new Error(`${name} is required`);
+  return v.map((row, i) => {
+    if (typeof row !== "object" || row === null) throw new Error(`${name}[${i}] must be an object`);
+    const r = row as Record<string, unknown>;
+    const kind = r.kind;
+    if (kind !== "player" && kind !== "pick" && kind !== "faab") {
+      throw new Error(`${name}[${i}].kind must be player, pick, or faab`);
+    }
+    return {
+      fromRoster: num(r.fromRoster, `${name}[${i}].fromRoster`),
+      toRoster: num(r.toRoster, `${name}[${i}].toRoster`),
+      kind,
+      playerId: typeof r.playerId === "string" ? r.playerId : null,
+      pickNo: optNum(r.pickNo) ?? null,
+      amount: optNum(r.amount) ?? null,
+    };
+  });
+}
+
+/**
+ * Settings an agent may touch, mirroring the saveSettings validator. An unknown
+ * key is dropped rather than forwarded — a commissioner verb is not a place to
+ * let a caller invent columns.
+ */
+function settingsPatch(args: DispatchArgs): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+  const numeric = [
+    "playoffTeams",
+    "currentWeek",
+    "faabBudget",
+    "tradeDeadlineWeek",
+    "playoffStartWeek",
+    "regularWeeks",
+    "playoffByes",
+    "poolSeed",
+    "wagerCap",
+    "exposureCap",
+  ] as const;
+  for (const key of numeric) {
+    const n = optNum(args[key]);
+    if (n !== undefined) patch[key] = n;
+  }
+  const name = optStr(args.name);
+  if (name !== undefined) patch.name = name;
+  const waiverType = optStr(args.waiverType);
+  if (waiverType !== undefined) patch.waiverType = waiverType;
+  if (typeof args.bettingOn === "boolean") patch.bettingOn = args.bettingOn;
+  if (Array.isArray(args.slots)) patch.slots = strArray(args.slots, "slots");
+  if (args.book != null) {
+    if (typeof args.book !== "object") throw new Error("book must be an object");
+    const book: Record<string, number> = {};
+    for (const [k, v] of Object.entries(args.book as Record<string, unknown>)) {
+      book[k] = num(v, `book.${k}`);
+    }
+    patch.book = book;
+  }
+  if (Object.keys(patch).length === 0) throw new Error("saveSettings needs at least one field");
+  return patch;
+}
+
+/** A season operation that cannot be undone by calling its opposite. */
+function requireConfirm(id: string, args: DispatchArgs): void {
+  if (args.confirm !== true) throw new Error(`${id} requires confirm: true`);
 }
 
 type PlayerRow = {
@@ -145,6 +237,26 @@ export async function dispatch(
       await eng.assertLeagueViewer(leagueId, uid);
       const book = await import("@/lib/league/book.server");
       return asJson(await book.loadBook(leagueId, uid, optNum(args.week)));
+    }
+    case "getReceipt": {
+      const leagueId = str(args.leagueId, "leagueId");
+      if (isHosted(leagueId)) {
+        const eng = await import("@/lib/league/engine.server");
+        await eng.assertLeagueViewer(leagueId, uid);
+      }
+      const { buildReceipt } = await import("@/lib/receipts/receipt.server");
+      return asJson(
+        await buildReceipt(leagueId, num(args.week, "week"), num(args.rosterId, "rosterId"), uid),
+      );
+    }
+    case "getWeekBoard": {
+      const leagueId = str(args.leagueId, "leagueId");
+      if (isHosted(leagueId)) {
+        const eng = await import("@/lib/league/engine.server");
+        await eng.assertLeagueViewer(leagueId, uid);
+      }
+      const { buildWeekBoard } = await import("@/lib/receipts/receipt.server");
+      return asJson(await buildWeekBoard(leagueId, optNum(args.week) ?? null, uid));
     }
     case "getMatchups": {
       const eng = await import("@/lib/league/engine.server");
@@ -261,6 +373,80 @@ export async function dispatch(
       const { queueAdd } = await import("@/lib/league/engine.server");
       await queueAdd(userId, str(args.leagueId, "leagueId"), str(args.playerId, "playerId"));
       return { ok: true };
+    }
+    case "createLeague": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      requireConfirm(id, args);
+      const scoring: "ppr" | "half" | "std" =
+        args.scoring === "ppr" || args.scoring === "half" || args.scoring === "std"
+          ? args.scoring
+          : (() => {
+              throw new Error("scoring must be ppr, half, or std");
+            })();
+      const input = {
+        userId,
+        name: str(args.name, "name"),
+        teamName: str(args.teamName, "teamName"),
+        teamCount: num(args.teamCount, "teamCount"),
+        scoring,
+        fillHouse: args.fillHouse === true,
+      };
+      const eng = await import("@/lib/league/engine.server");
+      return asJson(await eng.createLeague(input));
+    }
+    case "joinLeague": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      const code = str(args.code, "code");
+      const teamName = str(args.teamName, "teamName");
+      const rosterId = optNum(args.rosterId) ?? null;
+      const eng = await import("@/lib/league/engine.server");
+      return asJson(await eng.joinLeague(userId, code, teamName, rosterId));
+    }
+    case "advanceWeek": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      requireConfirm(id, args);
+      const ops = await import("@/lib/league/ops.server");
+      await ops.commishAdvance(userId, str(args.leagueId, "leagueId"));
+      return { ok: true };
+    }
+    case "processWaivers": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      requireConfirm(id, args);
+      const ops = await import("@/lib/league/ops.server");
+      return asJson(await ops.commishProcessWaivers(userId, str(args.leagueId, "leagueId")));
+    }
+    case "saveSettings": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      requireConfirm(id, args);
+      const leagueId = str(args.leagueId, "leagueId");
+      const patch = settingsPatch(args);
+      const eng = await import("@/lib/league/engine.server");
+      await eng.saveSettings(userId, leagueId, patch);
+      return { ok: true, changed: Object.keys(patch) };
+    }
+    case "saveWeekSchedule": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      requireConfirm(id, args);
+      const leagueId = str(args.leagueId, "leagueId");
+      const week = num(args.week, "week");
+      const pairs = schedulePairs(args.pairs, "pairs");
+      const eng = await import("@/lib/league/engine.server");
+      await eng.saveWeekSchedule(userId, leagueId, week, pairs);
+      return { ok: true };
+    }
+    case "rebuildSchedule": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      requireConfirm(id, args);
+      const eng = await import("@/lib/league/engine.server");
+      await eng.rebuildSchedule(userId, str(args.leagueId, "leagueId"));
+      return { ok: true };
+    }
+    case "proposeTrade": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      const leagueId = str(args.leagueId, "leagueId");
+      const assets = tradeAssets(args.assets, "assets");
+      const ops = await import("@/lib/league/ops.server");
+      return asJson(await ops.proposeTrade(userId, leagueId, assets));
     }
     case "voteTrade": {
       if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
@@ -680,10 +866,12 @@ export async function dispatch(
     }
     case "previewRebuild": {
       if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
-      const scoring = args.scoring;
-      if (scoring !== "ppr" && scoring !== "half" && scoring !== "std") {
-        throw new Error("scoring must be ppr, half, or std");
-      }
+      const scoring: "ppr" | "half" | "std" =
+        args.scoring === "ppr" || args.scoring === "half" || args.scoring === "std"
+          ? args.scoring
+          : (() => {
+              throw new Error("scoring must be ppr, half, or std");
+            })();
       const { previewRebuild } = await import("@/lib/league/engine.server");
       return asJson(
         await previewRebuild({
@@ -700,10 +888,12 @@ export async function dispatch(
     case "importRebuild": {
       if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
       if (args.confirm !== true) throw new Error("importRebuild requires confirm: true");
-      const scoring = args.scoring;
-      if (scoring !== "ppr" && scoring !== "half" && scoring !== "std") {
-        throw new Error("scoring must be ppr, half, or std");
-      }
+      const scoring: "ppr" | "half" | "std" =
+        args.scoring === "ppr" || args.scoring === "half" || args.scoring === "std"
+          ? args.scoring
+          : (() => {
+              throw new Error("scoring must be ppr, half, or std");
+            })();
       const { importRebuild } = await import("@/lib/league/engine.server");
       const claim =
         args.claimRosterId == null || args.claimRosterId === ""

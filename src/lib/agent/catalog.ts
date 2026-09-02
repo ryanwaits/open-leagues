@@ -327,6 +327,20 @@ export const AGENT_TOOLS: AgentTool[] = [
     "spectator",
     "read",
   ),
+  tool(
+    "getReceipt",
+    "Get receipt",
+    "One roster's week as facts: score, what was left on the bench, what the wire cost. Team names only.",
+    "spectator",
+    "read",
+  ),
+  tool(
+    "getWeekBoard",
+    "Get week board",
+    "Every matchup in a league for a week, each side linked to its receipt.",
+    "spectator",
+    "read",
+  ),
   tool("getMatchups", "Get matchups", "Matchup cards for a week.", "spectator", "read"),
   tool(
     "getTicks",

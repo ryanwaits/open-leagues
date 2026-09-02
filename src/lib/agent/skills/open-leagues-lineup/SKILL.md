@@ -11,17 +11,18 @@ description: >
 Ceiling and invariants: [CATALOG.md](../../CATALOG.md),
 [context-prompt.md](../../context-prompt.md).
 
-Week projections are not on the MCP core allowlist. Use live roster
-context only — do not invent projections from memory.
+Use `getTeam` plus `getWeekProjections` for the sit/start call. Do not
+invent projections from memory.
 
 ## Steps
 
 1. Call `getAgentContext` for the league.
 2. Call `getTeam` for the user's roster (slots, bench, byes).
-3. Propose sits and starts in plain language. Wait for the human to
+3. Call `getWeekProjections` for the same week.
+4. Propose sits and starts in plain language. Wait for the human to
    confirm.
-4. Apply with `sitPlayer` and/or `startPlayer`. Undo is the reverse
+5. Apply with `sitPlayer` and/or `startPlayer`. Undo is the reverse
    pair.
 
 Do not call tick. Lineup *advice without writes* belongs in
-`open-ff-week`.
+`open-leagues-week`.

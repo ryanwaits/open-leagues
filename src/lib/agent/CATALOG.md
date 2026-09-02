@@ -67,6 +67,8 @@ If it's not in this table, it is not a tool. Stop. Do not invent a table.
 | getLiveWire | spectator | read | Live scoring leaders for the current week. |
 | findSleeperUser | spectator | read | Lookup a Sleeper user by query. |
 | getLeagueBundle | spectator | read | League header, rosters, and users. |
+| getReceipt | spectator | read | One roster's week as facts: score, bench left, wire cost. Team names only. |
+| getWeekBoard | spectator | read | Every matchup in a week, each side linked to its receipt. |
 | getMatchups | spectator | read | Matchup cards for a week. |
 | getTicks | spectator | read | Per-minute projected finals / win % / spread samples for one matchup on a game day. |
 | getTeam | spectator | read | One roster's lineup and bench for a week. |

@@ -29,4 +29,4 @@ Ceiling and invariants: [CATALOG.md](../../CATALOG.md),
 - One FA add idea from the wire
 
 Do **not** write the roster or claim / drop players here. Lineup
-changes are `open-ff-lineup`. Do not call tick.
+changes are `open-leagues-lineup`. Do not call tick.

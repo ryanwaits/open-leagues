@@ -1,7 +1,7 @@
 ---
 name: open-leagues-migrate
 description: >
-  Migrate a fantasy league into open-ff. Use when importing from Sleeper,
+  Migrate a fantasy league into open-leagues. Use when importing from Sleeper,
   ESPN, Yahoo, NFL.com, or a paste/PDF rebuild, or when the user says
   "import league", "migrate", "bring over my sleeper league", or
   "set up from ESPN".

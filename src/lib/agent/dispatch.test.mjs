@@ -146,3 +146,104 @@ test("previewRebuild / importRebuild reject a bad scoring value", async () => {
     /scoring/,
   );
 });
+
+const SEASON_OPS = [
+  ["advanceWeek", { leagueId: "lg_x" }],
+  ["processWaivers", { leagueId: "lg_x" }],
+  ["saveSettings", { leagueId: "lg_x", currentWeek: 3 }],
+  ["saveWeekSchedule", { leagueId: "lg_x", week: 1, pairs: [{ home: 1, away: 2 }] }],
+  ["rebuildSchedule", { leagueId: "lg_x" }],
+];
+
+test("season operations are on MCP", () => {
+  for (const [id] of SEASON_OPS) {
+    assert.ok(AGENT_CORE.has(id), `${id} must be reachable over MCP`);
+  }
+  assert.ok(AGENT_CORE.has("proposeTrade"), "proposeTrade must match voteTrade");
+});
+
+test("season operations refuse without confirm", async () => {
+  for (const [id, args] of SEASON_OPS) {
+    await assert.rejects(
+      () => dispatch(id, "user_x", args),
+      /requires confirm: true/,
+      `${id} moved the league without confirm`,
+    );
+  }
+});
+
+test("season operations still refuse without a user", async () => {
+  for (const [id, args] of SEASON_OPS) {
+    await assert.rejects(
+      () => dispatch(id, null, { ...args, confirm: true }),
+      /OPENLEAGUES_USER|signed-in/,
+      `${id} ran for nobody`,
+    );
+  }
+});
+
+test("saveSettings needs a field it recognises", async () => {
+  await assert.rejects(
+    () => dispatch("saveSettings", "user_x", { leagueId: "lg_x", confirm: true, nonsense: 1 }),
+    /at least one field/,
+  );
+});
+
+test("proposeTrade validates its assets", async () => {
+  await assert.rejects(
+    () => dispatch("proposeTrade", "user_x", { leagueId: "lg_x", assets: [] }),
+    /assets is required/,
+  );
+  await assert.rejects(
+    () =>
+      dispatch("proposeTrade", "user_x", {
+        leagueId: "lg_x",
+        assets: [{ fromRoster: 1, toRoster: 2, kind: "cash" }],
+      }),
+    /kind must be player, pick, or faab/,
+  );
+});
+
+test("a league can be created and joined without a browser", () => {
+  assert.ok(AGENT_CORE.has("createLeague"));
+  assert.ok(AGENT_CORE.has("joinLeague"));
+});
+
+test("createLeague is confirm-gated and validates scoring", async () => {
+  await assert.rejects(
+    () =>
+      dispatch("createLeague", "user_x", {
+        name: "L",
+        teamName: "T",
+        teamCount: 10,
+        scoring: "ppr",
+      }),
+    /requires confirm: true/,
+  );
+  await assert.rejects(
+    () =>
+      dispatch("createLeague", "user_x", {
+        confirm: true,
+        name: "L",
+        teamName: "T",
+        teamCount: 10,
+        scoring: "superflex",
+      }),
+    /scoring must be ppr, half, or std/,
+  );
+  await assert.rejects(
+    () => dispatch("createLeague", null, { confirm: true }),
+    /OPENLEAGUES_USER|signed-in/,
+  );
+});
+
+test("joinLeague needs a code and a team name", async () => {
+  await assert.rejects(
+    () => dispatch("joinLeague", "user_x", { teamName: "T" }),
+    /code is required/,
+  );
+  await assert.rejects(
+    () => dispatch("joinLeague", "user_x", { code: "ABC123" }),
+    /teamName is required/,
+  );
+});
