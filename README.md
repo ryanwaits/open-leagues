@@ -109,7 +109,7 @@ codex "set my lineup for the bye weeks"
 
 Walkthrough with real output: [Connecting an agent](docs/codex-demo.md).
 Six playbooks (migrate, lineup, book, week, lab-discover, lab-run) live under
-`src/lib/agent/skills/`.
+`skills/` at the repo root — install with `npx skills add ryanwaits/open-leagues --skill <name> -g`.
 
 ## Docs
 

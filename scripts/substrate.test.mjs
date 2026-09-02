@@ -60,7 +60,7 @@ test("the public MCP door is rate-limited and confined to PUBLIC_CORE", () => {
 
 test("the lab skills know how to keep a strategy on a box with no accounts", () => {
   for (const p of ["open-leagues-lab-discover", "open-leagues-lab-run"]) {
-    assert.match(read(`src/lib/agent/skills/${p}/SKILL.md`), /labs\/<name>\/strategy\.json/, p);
+    assert.match(read(`skills/${p}/SKILL.md`), /labs\/<name>\/strategy\.json/, p);
   }
   assert.match(read("src/lib/agent/context-prompt.md"), /\*\*substrate\*\*/);
 });

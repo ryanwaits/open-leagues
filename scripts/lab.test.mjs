@@ -63,8 +63,8 @@ test("splits are opt-in and every pulled week is kept", () => {
 });
 
 test("two lab skills: discover freezes, run never places", () => {
-  const discover = read("src/lib/agent/skills/open-leagues-lab-discover/SKILL.md");
-  const run = read("src/lib/agent/skills/open-leagues-lab-run/SKILL.md");
+  const discover = read("skills/open-leagues-lab-discover/SKILL.md");
+  const run = read("skills/open-leagues-lab-run/SKILL.md");
   assert.match(discover, /hold ?out/i);
   assert.match(discover, /pBreakEven/);
   assert.match(discover, /freezeStrategy/);

@@ -940,7 +940,9 @@ startPlayer     { "leagueId": "lg_…", "playerId": "4866", "slot": "RB" }`}
             sentence runs the whole chain, stopping where a human should say yes.
           </>
         }
-        run={`cp -r src/lib/agent/skills/* ~/.codex/skills/     # or ~/.claude/skills/`}
+        run={`npx skills add ryanwaits/open-leagues -g                 # all six, Claude Code
+npx skills add ryanwaits/open-leagues --skill open-leagues-lab-discover -g
+npx skills add ryanwaits/open-leagues --agent codex -g   # Codex`}
         runLabel="install · once"
         after={<PlaybookList playbooks={PLAYBOOKS} />}
       />

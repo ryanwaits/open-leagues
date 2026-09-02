@@ -39,10 +39,12 @@ should see 14 games with `spread`, `total`, moneylines, and `result`.
 ## 2. Install the two skills
 
 ```sh
-mkdir -p ~/.claude/skills
-cp -r src/lib/agent/skills/open-leagues-lab-discover ~/.claude/skills/
-cp -r src/lib/agent/skills/open-leagues-lab-run      ~/.claude/skills/
-# Codex: ~/.codex/skills/
+# Claude Code (global)
+npx skills add ryanwaits/open-leagues --skill open-leagues-lab-discover -g
+npx skills add ryanwaits/open-leagues --skill open-leagues-lab-run -g
+# Codex
+npx skills add ryanwaits/open-leagues --skill open-leagues-lab-discover --agent codex -g
+# or, from a checkout: cp -r skills/open-leagues-lab-* ~/.claude/skills/
 ```
 
 Start a new agent session so it picks them up.

@@ -1127,12 +1127,18 @@ const playbooks: DocsPage = {
       body: () => (
         <>
           <P>
-            Copy or symlink into your host’s skills directory. Nothing registers, nothing phones
-            home — a skill is a folder with a <Inline>SKILL.md</Inline>.
+            One command with the <Inline>skills</Inline> CLI, or copy the folder. Nothing registers,
+            nothing phones home — a skill is a folder with a <Inline>SKILL.md</Inline>, and the six
+            live at <Inline>skills/</Inline> in the repo, where skills.sh finds them.
           </P>
-          <Pre label="shell">{`cp -R src/lib/agent/skills/open-leagues-* ~/.claude/skills/
+          <Pre label="shell">{`npx skills add ryanwaits/open-leagues -g                          # every skill, Claude Code
+npx skills add ryanwaits/open-leagues --skill open-leagues-week -g  # one
+npx skills add ryanwaits/open-leagues --agent codex -g            # Codex
+
+# or from a checkout
+cp -R skills/open-leagues-* ~/.claude/skills/
 # or
-ln -s "$PWD/src/lib/agent/skills/open-leagues-week" ~/.codex/skills/`}</Pre>
+ln -s "$PWD/skills/open-leagues-week" ~/.codex/skills/`}</Pre>
         </>
       ),
     },
@@ -1142,8 +1148,10 @@ ln -s "$PWD/src/lib/agent/skills/open-leagues-week" ~/.codex/skills/`}</Pre>
       body: () => (
         <>
           <P>
-            Writes are marked. Everything unmarked is a read. Three of the four stop and wait for a
-            human before anything mutates.
+            Writes are marked. Everything unmarked is a read. The lineup, migrate, and book skills
+            stop and wait for a human before anything mutates; the two lab skills never move money
+            at all — discover freezes a rule only after a holdout clears, and run only appends a
+            ledger.
           </P>
           <PlaybookList playbooks={PLAYBOOKS} />
           <Note>

@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { AGENT_CORE } from "../src/lib/agent/core.ts";
 
 const root = join(import.meta.dirname, "..");
-const skillsDir = join(root, "src/lib/agent/skills");
+const skillsDir = join(root, "skills");
 
 /** Not on MCP AGENT_CORE — may appear in skills only as PWA guidance. */
 const PWA_ONLY = new Set([

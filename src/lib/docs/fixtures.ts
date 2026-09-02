@@ -245,7 +245,7 @@ mintToken issues a live credential and is not dispatched without --write.`,
 export type PlaybookStep = { verb: string; write?: boolean; pause?: boolean };
 export type Playbook = { say: string; chain: PlaybookStep[]; skill: string };
 
-/** Chains transcribed from the four SKILL.md files under src/lib/agent/skills. */
+/** Chains transcribed from the SKILL.md files under skills/. */
 export const PLAYBOOKS: Playbook[] = [
   {
     say: "set my lineup for the bye weeks",
