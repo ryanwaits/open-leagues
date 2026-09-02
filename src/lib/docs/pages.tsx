@@ -325,6 +325,14 @@ Wire: bid $26 on Stefon Diggs, lost.`}</Pre>
               Kick times are printed in Eastern. If the season’s play-by-play is not published yet
               (the current week, most Sundays), the receipt says so rather than guessing.
             </li>
+            <li>
+              The play log is settled to the box score. Where nflverse and Sleeper’s official weekly
+              stats disagree — a re-spotted catch, a Thursday stat correction — the difference is
+              booked as one event at the final whistle, so every final matches Sleeper to the cent
+              (84 of 84 team-weeks checked on a real league) and the play log still supplies the
+              minute. If a correction is what decided the week, the receipt says “on the final box
+              score” instead of naming a play.
+            </li>
           </Bullets>
         </>
       ),
