@@ -51,8 +51,7 @@ test("README opens with the substrate and the install line, not a receipt", () =
   );
   assert.match(readme, /## Then ask/);
   assert.ok(readme.indexOf("## Then ask") < readme.indexOf("## Run your own"));
-  assert.ok(readme.split("
-").length < 90, "README grew past a screen");
+  assert.ok(readme.split("\n").length < 90, "README grew past a screen");
 });
 
 test("the guide leads with agents and knows bettors", () => {

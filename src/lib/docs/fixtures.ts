@@ -90,7 +90,7 @@ export const CODEX_ANSWER = { team: "hands", record: "0-0-0", opponent: "Butterb
 
 export type Snippet = { key: string; tab: string; label: string; body: string };
 
-export function connectSnippets(origin: string): Snippet[] {
+export function connectSnippets(_origin: string): Snippet[] {
   return [
     {
       key: "public",
