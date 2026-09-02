@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 /**
- * Wipe the local PGLite dir. Next `bun run dev` remigrates, reseeds
- * ryan@wiffl.local, and imports WIFFL (hands) if the dir is empty.
+ * Wipe the local PGLite dir. Next `bun run dev` remigrates and comes up empty
+ * — sign up, then create or migrate a league. Set OPENLEAGUES_DEV_SEED=1 to
+ * get the maintainer's account and league back.
  *
  * Stop the dev server first — two PGLite writers corrupt the WAL.
  */
@@ -19,4 +20,5 @@ if (!existsSync(dataDir)) {
 
 rmSync(dataDir, { recursive: true, force: true });
 console.log(`[reset] removed ${dataDir}`);
-console.log("[reset] restart bun run dev to migrate + seed WIFFL");
+console.log("[reset] restart bun run dev — the box comes up empty");
+console.log("[reset] OPENLEAGUES_DEV_SEED=1 bun run dev seeds the dev fixture");

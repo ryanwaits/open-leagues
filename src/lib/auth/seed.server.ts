@@ -2,6 +2,11 @@ import { hashPassword } from "better-auth/crypto";
 import type { Sql } from "@/lib/db";
 import { LOCAL_SEED } from "./local-seed";
 
+/**
+ * Development fixtures. Nothing here runs unless OPENLEAGUES_DEV_SEED=1 — a
+ * self-hosted box comes up empty and the operator brings their own league.
+ */
+
 /** Insert the local test account if the user table is empty of this email. */
 export async function seedLocalAccount(sql: Sql): Promise<void> {
   const existing = await sql`select id from "user" where email = ${LOCAL_SEED.email}`;
@@ -26,14 +31,15 @@ export async function seedLocalAccount(sql: Sql): Promise<void> {
 }
 
 /**
- * Empty local PGLite → import WIFFL and sit Ryan on hands.
- * Skips when any league already exists. Neon/prod never calls this.
+ * Local PGLite → import the maintainer's own league so `bun run dev` has
+ * something to look at, seated on `hands`. Opt-in via OPENLEAGUES_DEV_SEED=1.
  */
-export async function seedLocalWiffl(): Promise<void> {
+const DEV_LEAGUE_ID = "lg_dev";
+
+export async function seedDevLeague(): Promise<void> {
   const { getSql } = await import("@/lib/db");
   const sql = await getSql();
-  const existing = await sql`select id from ol_leagues limit 1`;
-  if (existing[0]) return;
+  if ((await sql`select id from ol_leagues where id = ${DEV_LEAGUE_ID}`)[0]) return;
   const { WIFFL_2026 } = await import("@/lib/league/recaps/wiffl-2026");
   const claimRosterId = WIFFL_2026.teams.findIndex((t) => t.teamName === "hands") + 1;
   const { importRebuild } = await import("@/lib/league/engine.server");
@@ -44,5 +50,6 @@ export async function seedLocalWiffl(): Promise<void> {
     season: WIFFL_2026.season,
     scoring: WIFFL_2026.scoring,
     claimRosterId: claimRosterId > 0 ? claimRosterId : 6,
+    leagueId: DEV_LEAGUE_ID,
   });
 }

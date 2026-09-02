@@ -10,6 +10,8 @@ import { configuredLoginSocials } from "@/lib/auth/providers";
 import { getQueryClient } from "@/lib/query-client";
 import { brand } from "@/skin/brand";
 
+const devPrefill = import.meta.env.DEV ? LOCAL_SEED : { email: "", password: "", name: "" };
+
 type Search = { redirect?: string };
 
 const loadSocialProviders = createServerFn({ method: "GET" }).handler(async () => {
@@ -41,9 +43,11 @@ function Login() {
         ? ` ${socialNames[0]} is available on this host.`
         : ` ${socialNames.slice(0, -1).join(", ")} and ${socialNames[socialNames.length - 1]} are available on this host.`;
   const [mode, setMode] = useState<"in" | "up">("in");
-  const [email, setEmail] = useState<string>(LOCAL_SEED.email);
-  const [password, setPassword] = useState<string>(LOCAL_SEED.password);
-  const [name, setName] = useState<string>(LOCAL_SEED.name);
+  // The maintainer's fixture credentials are a dev convenience. A production
+  // build — which is what a self-hoster runs — opens on empty fields.
+  const [email, setEmail] = useState<string>(devPrefill.email);
+  const [password, setPassword] = useState<string>(devPrefill.password);
+  const [name, setName] = useState<string>(devPrefill.name);
   const [busy, setBusy] = useState(false);
 
   async function onEmail(e: FormEvent) {
@@ -144,7 +148,7 @@ function Login() {
         ) : null}
 
         <Link to="/" className="mt-6 inline-block text-sm text-muted hover:text-fg">
-          Back to the desk
+          Home
         </Link>
       </div>
     </main>

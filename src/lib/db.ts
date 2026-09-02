@@ -164,12 +164,18 @@ async function createPgliteSql(): Promise<Sql> {
     const result = await pg.query<T>(text, params);
     return result.rows;
   });
-  const { seedLocalAccount, seedLocalWiffl } = await import("@/lib/auth/seed.server");
-  await seedLocalAccount(sql);
-  // Publish before WIFFL import so engine.server getSql() does not deadlock
-  // on the still-in-flight createSql() promise.
+  // A fresh box starts empty: sign up, then create or migrate a league. The
+  // maintainer's own fixture is opt-in, never something a self-hoster inherits.
+  if (process.env.OPENLEAGUES_DEV_SEED === "1") {
+    const { seedLocalAccount, seedDevLeague } = await import("@/lib/auth/seed.server");
+    await seedLocalAccount(sql);
+    // Publish before the import so engine.server getSql() does not deadlock on
+    // the still-in-flight createSql() promise.
+    globalRef.__sqlReady__ = sql;
+    await seedDevLeague();
+    return sql;
+  }
   globalRef.__sqlReady__ = sql;
-  await seedLocalWiffl();
   return sql;
 }
 

@@ -96,6 +96,8 @@ export async function commitImportPack(input: {
   userId: string;
   pack: ImportPack;
   claimRosterId: number | null;
+  /** Stable id for the public reference desk. Random `lg_…` otherwise. */
+  leagueId?: string;
 }): Promise<{ leagueId: string; inviteCode: string }> {
   const { pack, userId, claimRosterId } = input;
   if (!pack.teams.length) throw new Error("Import pack has no teams.");
@@ -114,7 +116,7 @@ export async function commitImportPack(input: {
 
   if (pack.teams.some((t) => t.snap)) await ensureSnapColumns();
 
-  const id = nid("lg_");
+  const id = input.leagueId ?? nid("lg_");
   let code = inviteCode();
   for (let i = 0; i < 6; i++) {
     if (!(await db`select id from ol_leagues where invite_code = ${code}`)[0]) break;
