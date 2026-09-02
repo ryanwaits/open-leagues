@@ -1,6 +1,6 @@
 import { getSql } from "@/lib/db";
 import { splitCsv } from "@/lib/receipts/pbp-parse";
-import type { GameLine } from "./bets";
+import type { GameLine, GameSplits } from "./bets";
 
 /**
  * The historical lines feed: every NFL game since 1999 with the closing
@@ -228,6 +228,24 @@ function toLine(r: Row): GameLine & { gameType: string } {
   };
 }
 
+async function attachSplits<T extends GameLine>(
+  games: T[],
+  seasons: number[],
+  week?: number,
+): Promise<T[]> {
+  try {
+    const { splitsFor } = await import("./splits.server");
+    const by: Map<string, GameSplits> = await splitsFor(seasons, week);
+    if (by.size === 0) return games;
+    return games.map((g) => {
+      const sp = by.get(g.gameId);
+      return sp ? { ...g, splits: sp } : g;
+    });
+  } catch {
+    return games;
+  }
+}
+
 /** Lines for a season (all weeks) or one week. Regular season by default. */
 export async function gameLines(input: {
   season: number;
@@ -240,7 +258,8 @@ export async function gameLines(input: {
     input.week != null
       ? await sql<Row>`select * from ol_game_lines where season = ${input.season} and week = ${input.week} order by gameday, gametime`
       : await sql<Row>`select * from ol_game_lines where season = ${input.season} order by week, gameday, gametime`;
-  return rows.filter((r) => input.postseason || r.game_type === "REG").map(toLine);
+  const games = rows.filter((r) => input.postseason || r.game_type === "REG").map(toLine);
+  return attachSplits(games, [input.season], input.week);
 }
 
 /** Lines across a span of seasons, for backtests. */
@@ -253,7 +272,7 @@ export async function gameLinesRange(
     select * from ol_game_lines where season = any(${seasons}) and game_type = 'REG'
     order by season, week, gameday, gametime
   `;
-  return rows.map(toLine);
+  return attachSplits(rows.map(toLine), seasons);
 }
 
 /** One game with its context, by nflverse game id. */

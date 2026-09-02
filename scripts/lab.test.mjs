@@ -5,7 +5,7 @@ import { test } from "node:test";
 
 const root = join(import.meta.dirname, "..");
 const read = (p) => readFileSync(join(root, p), "utf8");
-const VERBS = ["getGameLines", "getGameContext", "sampleGames", "evaluateBets", "summarizeRun"];
+const VERBS = ["getGameLines", "getGameContext", "getBettingSplits", "sampleGames", "evaluateBets", "summarizeRun"];
 
 test("the lab's five primitives are verbs on MCP, exported as server fns, and in the catalog table", () => {
   const catalog = read("src/lib/agent/catalog.ts");
@@ -26,7 +26,7 @@ test("grading is pure arithmetic: no network, no database, no opinion", () => {
   const bets = read("src/lib/lab/bets.ts");
   assert.doesNotMatch(bets, /fetch\(|getSql|import\("@\/lib\/data/);
   // nflverse sign conventions are documented where the math lives
-  assert.match(bets, /positive\s+when the home team is favored/);
+  assert.match(bets, /positive[\s*]+when the home team is favored/);
   assert.match(bets, /home score minus away score/);
 });
 
@@ -36,4 +36,14 @@ test("the lines feed is open data with CORS and a season guard", () => {
   assert.match(src, /access-control-allow-origin/);
   assert.match(src, /season < 1999/);
   assert.match(read("src/lib/lab/lines.server.ts"), /nflverse\/nfldata/);
+});
+
+test("splits are opt-in and every pulled week is kept", () => {
+  const sp = read("src/lib/lab/splits.server.ts");
+  assert.match(sp, /OPENLEAGUES_SPLITS_SOURCE/);
+  assert.match(sp, /raw === "actionnetwork" \? "actionnetwork" : "off"/);
+  assert.match(sp, /ol_game_splits_log/);
+  assert.match(read(".env.example"), /OPENLEAGUES_SPLITS_SOURCE=/);
+  // filters can ask for a ticket share, so the user's own example runs unchanged
+  assert.match(read("src/lib/lab/bets.ts"), /tickets\?: \[number, number\]/);
 });

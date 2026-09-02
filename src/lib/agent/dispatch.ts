@@ -324,11 +324,31 @@ async function run(
       const lines = await import("@/lib/lab/lines.server");
       return asJson(await lines.gameLine(str(args.gameId, "gameId")));
     }
+    case "getBettingSplits": {
+      const sp = await import("@/lib/lab/splits.server");
+      const season = num(args.season, "season");
+      const week = num(args.week, "week");
+      const status = await sp.ensureSplits(season, week).catch((e: Error) => ({
+        skipped: true,
+        rows: 0,
+        source: sp.splitsSource(),
+        error: e.message,
+      }));
+      const by = await sp.splitsFor([season], week);
+      return asJson({ ...status, games: Object.fromEntries(by) });
+    }
     case "sampleGames": {
       const seasons = args.seasons;
       if (!Array.isArray(seasons) || seasons.length === 0) throw new Error("seasons is required");
       const lines = await import("@/lib/lab/lines.server");
       const lab = await import("@/lib/lab/bets");
+      const filterArg = (typeof args.filter === "object" && args.filter ? args.filter : {}) as {
+        splits?: unknown[];
+      };
+      if (Array.isArray(filterArg.splits) && filterArg.splits.length > 0) {
+        const sp = await import("@/lib/lab/splits.server");
+        for (const season of seasons) await sp.ensureSeasonSplits(Number(season));
+      }
       const games = await lines.gameLinesRange(seasons.map((x) => Number(x)));
       const filter = (
         typeof args.filter === "object" && args.filter ? args.filter : {}

@@ -71,6 +71,7 @@ If it's not in this table, it is not a tool. Stop. Do not invent a table.
 | getWeekBoard | spectator | read | Every matchup in a week, each side linked to its receipt. |
 | getGameLines | spectator | read | Closing lines, prices, results, and context for every NFL game of a season or week, 1999 to now. |
 | getGameContext | spectator | read | One NFL game by nflverse id: lines, result, rest, roof, surface, division, QBs, referee. |
+| getBettingSplits | spectator | read | Public ticket and money percentages per market and side for a week, from the box's opted-in source. 2023 on. |
 | sampleGames | spectator | read | Games across seasons matching a cohort filter: home dog, spread band, total band, rest edge, roof, weekday. |
 | evaluateBets | spectator | read | Grade hypothetical bets against results: win/loss/push, units at the odds taken, closing-line value. |
 | summarizeRun | spectator | read | Record, ROI, break-even, drawdown, streaks, per-season splits for a graded run. |

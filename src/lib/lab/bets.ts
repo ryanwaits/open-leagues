@@ -13,6 +13,11 @@
 export type Market = "spread" | "total" | "moneyline";
 export type Side = "home" | "away" | "over" | "under";
 
+/** Public betting splits on a game, when a box has opted into a source. */
+export type GameSplits = Partial<
+  Record<Market, Partial<Record<Side, { tickets: number | null; money: number | null }>>>
+>;
+
 export type GameLine = {
   gameId: string;
   season: number;
@@ -45,6 +50,8 @@ export type GameLine = {
   homeQb: string | null;
   awayQb: string | null;
   referee: string | null;
+  /** Ticket and money percentages by market and side; absent when no source is on. */
+  splits?: GameSplits;
 };
 
 export type Bet = {
@@ -280,6 +287,8 @@ export type GameFilter = {
   restEdge?: [number, number];
   teams?: string[];
   played?: boolean;
+  /** Public-betting conditions, e.g. home side of the spread holding over 50% of tickets. */
+  splits?: { market: Market; side: Side; tickets?: [number, number]; money?: [number, number] }[];
 };
 
 const inRange = (v: number | null, r?: [number, number]) =>
@@ -308,6 +317,14 @@ export function sampleGames(games: GameLine[], f: GameFilter = {}): GameLine[] {
       return false;
     if (f.teams && !(f.teams.includes(g.home) || f.teams.includes(g.away))) return false;
     if (f.played !== undefined && (g.result !== null) !== f.played) return false;
+    if (f.splits) {
+      for (const c of f.splits) {
+        const cell = g.splits?.[c.market]?.[c.side];
+        if (!cell) return false;
+        if (!inRange(cell.tickets, c.tickets)) return false;
+        if (!inRange(cell.money, c.money)) return false;
+      }
+    }
     return true;
   });
 }

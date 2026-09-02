@@ -356,6 +356,13 @@ export const AGENT_TOOLS: AgentTool[] = [
     "read",
   ),
   tool(
+    "getBettingSplits",
+    "Get betting splits",
+    "Public ticket and money percentages by market and side for a week's games, from the source this box opted into (OPENLEAGUES_SPLITS_SOURCE). 2023 season onward. Empty when off.",
+    "spectator",
+    "read",
+  ),
+  tool(
     "sampleGames",
     "Sample games",
     "The cohort language: games across seasons matching a filter (home dog, spread band, total band, division, rest edge, roof, weekday, teams). Agents describe the shape; code finds them.",

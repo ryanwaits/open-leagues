@@ -435,11 +435,41 @@ const gameFilter = z.object({
   played: z.boolean().optional(),
 });
 
+const splitCondition = z.object({
+  market: z.enum(["spread", "total", "moneyline"]),
+  side: z.enum(["home", "away", "over", "under"]),
+  tickets: z.tuple([z.number(), z.number()]).optional(),
+  money: z.tuple([z.number(), z.number()]).optional(),
+});
+
+export const getBettingSplits = createServerFn({ method: "GET" })
+  .validator(z.object({ season: z.number(), week: z.number() }))
+  .handler(async ({ data }) => {
+    const sp = await import("@/lib/lab/splits.server");
+    const status = await sp.ensureSplits(data.season, data.week).catch((e: Error) => ({
+      skipped: true,
+      rows: 0,
+      source: sp.splitsSource(),
+      error: e.message,
+    }));
+    const by = await sp.splitsFor([data.season], data.week);
+    return { ...status, games: Object.fromEntries(by) };
+  });
+
 export const sampleGames = createServerFn({ method: "GET" })
-  .validator(z.object({ seasons: z.array(z.number()).min(1), filter: gameFilter.optional() }))
+  .validator(
+    z.object({
+      seasons: z.array(z.number()).min(1),
+      filter: gameFilter.extend({ splits: z.array(splitCondition).optional() }).optional(),
+    }),
+  )
   .handler(async ({ data }) => {
     const lines = await import("@/lib/lab/lines.server");
     const { sampleGames: pick } = await import("@/lib/lab/bets");
+    if (data.filter?.splits?.length) {
+      const sp = await import("@/lib/lab/splits.server");
+      for (const season of data.seasons) await sp.ensureSeasonSplits(season);
+    }
     const games = await lines.gameLinesRange(data.seasons);
     const out = pick(games, data.filter ?? {});
     return { count: out.length, games: out };

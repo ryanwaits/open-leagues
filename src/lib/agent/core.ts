@@ -67,6 +67,7 @@ export const AGENT_CORE: ReadonlySet<string> = new Set([
   "getSourceLedger",
   "getGameLines",
   "getGameContext",
+  "getBettingSplits",
   "sampleGames",
   "evaluateBets",
   "summarizeRun",
