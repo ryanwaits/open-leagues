@@ -55,7 +55,7 @@ Tuesday and writes the digest. Neither can place a bet.
 ```sh
 curl https://YOUR_HOST/api/lines/2025.json        # closing spread, total, moneylines, result, context
 # over MCP: sampleGames → evaluateBets → summarizeRun
-# OPENLEAGUES_SPLITS_SOURCE=actionnetwork          # opt-in ticket/money splits, 2023 onward
+# OPENLEAGUES_SPLITS_SOURCE=actionnetwork,dknetwork,wiseguyteam   # opt-in ticket/money splits
 ```
 
 ## The public box

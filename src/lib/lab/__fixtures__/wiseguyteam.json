@@ -1,0 +1,157 @@
+{
+  "sport": "nfl",
+  "games": [
+    {
+      "gameID": 635123,
+      "time": 1788999600000,
+      "timeLeft": "",
+      "live": false,
+      "league": "FBP",
+      "competition": null,
+      "round": "Week 1",
+      "away": {
+        "name": "Patriots",
+        "init": "NE",
+        "color": "0d254c"
+      },
+      "home": {
+        "name": "Seahawks",
+        "init": "SEA",
+        "color": "acb6bc"
+      },
+      "ml": {
+        "side1": {
+          "bet": 49,
+          "handle": 74,
+          "am": 170,
+          "book": "Novig",
+          "url": "https://wiseguyteam.com/go/novig"
+        },
+        "side2": {
+          "bet": 51,
+          "handle": 26,
+          "am": -174,
+          "book": "Novig",
+          "url": "https://wiseguyteam.com/go/novig"
+        },
+        "sharp": 1,
+        "big": 1
+      },
+      "sp": {
+        "line1": 3.5,
+        "line2": -3.5,
+        "side1": {
+          "bet": 67,
+          "handle": 74,
+          "am": -106,
+          "book": "Novig",
+          "url": "https://wiseguyteam.com/go/novig"
+        },
+        "side2": {
+          "bet": 33,
+          "handle": 26,
+          "am": 100,
+          "book": "Novig",
+          "url": "https://wiseguyteam.com/go/novig"
+        },
+        "sharp": 0,
+        "big": 1
+      },
+      "tot": {
+        "line": 44.5,
+        "over": {
+          "bet": 43,
+          "handle": 42,
+          "am": 100,
+          "book": "ESPN BET",
+          "url": "https://wiseguyteam.com/go/out?b=espnbet&u=https%3A%2F%2Fgo.metabet.io%2Fbet%2F635123%2Fespnbet"
+        },
+        "under": {
+          "bet": 57,
+          "handle": 58,
+          "am": -105,
+          "book": "Fanatics",
+          "url": "https://wiseguyteam.com/go/fanatics"
+        },
+        "sharp": 0,
+        "big": 0
+      }
+    },
+    {
+      "gameID": 635067,
+      "time": 1789086900000,
+      "timeLeft": "",
+      "live": false,
+      "league": "FBP",
+      "competition": null,
+      "round": "Week 1",
+      "away": {
+        "name": "49ers",
+        "init": "SF",
+        "color": "7e0101"
+      },
+      "home": {
+        "name": "Rams",
+        "init": "LAR",
+        "color": "13264b"
+      },
+      "ml": {
+        "side1": {
+          "bet": 18,
+          "handle": 18,
+          "am": 182,
+          "book": "Novig",
+          "url": "https://wiseguyteam.com/go/novig"
+        },
+        "side2": {
+          "bet": 82,
+          "handle": 82,
+          "am": -190,
+          "book": "Novig",
+          "url": "https://wiseguyteam.com/go/novig"
+        },
+        "sharp": 0,
+        "big": 0
+      },
+      "sp": {
+        "line1": 3.5,
+        "line2": -3.5,
+        "side1": {
+          "bet": 27,
+          "handle": 44,
+          "am": -102,
+          "book": "Novig",
+          "url": "https://wiseguyteam.com/go/novig"
+        },
+        "side2": {
+          "bet": 73,
+          "handle": 56,
+          "am": -108,
+          "book": "BetMGM",
+          "url": "https://wiseguyteam.com/go/out?b=mgm&u=https%3A%2F%2Fgo.metabet.io%2Fbet%2F635067%2Fmgm"
+        },
+        "sharp": 1,
+        "big": 0
+      },
+      "tot": {
+        "line": 48,
+        "over": {
+          "bet": 42,
+          "handle": 10,
+          "am": 100,
+          "book": "ESPN BET",
+          "url": "https://wiseguyteam.com/go/out?b=espnbet&u=https%3A%2F%2Fgo.metabet.io%2Fbet%2F635067%2Fespnbet"
+        },
+        "under": {
+          "bet": 58,
+          "handle": 90,
+          "am": -107,
+          "book": "DraftKings",
+          "url": "https://wiseguyteam.com/go/out?b=draftkings&u=https%3A%2F%2Fgo.metabet.io%2Fbet%2F635067%2Fdraftkings"
+        },
+        "sharp": 2,
+        "big": 2
+      }
+    }
+  ]
+}

@@ -55,10 +55,13 @@ export const GAME_FILTER: Schema = obj({
         side: SIDE,
         tickets: range("percent of tickets on this side"),
         money: range("percent of money on this side"),
+        book: str(
+          "read one source instead of the consensus: draftkings | wiseguyteam | actionnetwork",
+        ),
       },
       ["market", "side"],
     ),
-    "public-betting conditions; only games with stored splits can match",
+    "public-betting conditions; only games with stored splits can match. Consensus (Action Network) has history from 2023; draftkings and wiseguyteam cover the current slate only",
   ),
 });
 

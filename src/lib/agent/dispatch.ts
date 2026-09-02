@@ -334,8 +334,18 @@ async function run(
         source: sp.splitsSource(),
         error: e.message,
       }));
-      const by = await sp.splitsFor([season], week);
-      return asJson({ ...status, games: Object.fromEntries(by) });
+      const live = await sp.ensureLiveSplits().catch(() => ({}) as Record<string, number>);
+      const [by, books] = await Promise.all([
+        sp.splitsFor([season], week),
+        sp.splitsByBookFor([season], week),
+      ]);
+      return asJson({
+        ...status,
+        sources: sp.splitsSources(),
+        live,
+        games: Object.fromEntries(by),
+        books: Object.fromEntries(books),
+      });
     }
     case "sampleGames": {
       const seasons = args.seasons;

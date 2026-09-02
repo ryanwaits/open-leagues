@@ -50,8 +50,10 @@ export type GameLine = {
   homeQb: string | null;
   awayQb: string | null;
   referee: string | null;
-  /** Ticket and money percentages by market and side; absent when no source is on. */
+  /** Consensus ticket and money percentages by market and side; absent when no source is on. */
   splits?: GameSplits;
+  /** The same, per source book — draftkings, wiseguyteam, actionnetwork — when known. */
+  splitsByBook?: Record<string, GameSplits>;
 };
 
 export type Bet = {
@@ -317,7 +319,14 @@ export type GameFilter = {
   teams?: string[];
   played?: boolean;
   /** Public-betting conditions, e.g. home side of the spread holding over 50% of tickets. */
-  splits?: { market: Market; side: Side; tickets?: [number, number]; money?: [number, number] }[];
+  splits?: {
+    market: Market;
+    side: Side;
+    tickets?: [number, number];
+    money?: [number, number];
+    /** Read one source's numbers instead of the consensus, e.g. "draftkings". */
+    book?: string;
+  }[];
 };
 
 const inRange = (v: number | null, r?: [number, number]) =>
@@ -348,7 +357,8 @@ export function sampleGames(games: GameLine[], f: GameFilter = {}): GameLine[] {
     if (f.played !== undefined && (g.result !== null) !== f.played) return false;
     if (f.splits) {
       for (const c of f.splits) {
-        const cell = g.splits?.[c.market]?.[c.side];
+        const src = c.book ? g.splitsByBook?.[c.book] : g.splits;
+        const cell = src?.[c.market]?.[c.side];
         if (!cell) return false;
         if (!inRange(cell.tickets, c.tickets)) return false;
         if (!inRange(cell.money, c.money)) return false;

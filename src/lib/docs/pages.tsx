@@ -446,9 +446,11 @@ const openData: DocsPage = {
             game, weekday, starting quarterbacks, referee. nflverse’s games table, 1999 to now,
             refreshed every six hours. Closing lines only — free opening lines exist for 2007–2021
             in the Sportsbook Review archive and are not wired in. Public betting splits are a
-            separate, opt-in feed (<Inline>OPENLEAGUES_SPLITS_SOURCE=actionnetwork</Inline>, 2023
-            onward) read over MCP as <Inline>getBettingSplits</Inline>; they are not republished
-            here because they are not ours to publish.
+            separate, opt-in feed read over MCP as <Inline>getBettingSplits</Inline>:{" "}
+            <Inline>OPENLEAGUES_SPLITS_SOURCE=actionnetwork,dknetwork,wiseguyteam</Inline> gives the
+            consensus with history from 2023 plus DraftKings’ own numbers and a multi-book read for
+            the current slate, each under its own book so a filter can ask for one. They are not
+            republished here because they are not ours to publish.
           </P>
           <Pre label="shape · real">{`{
   "source": "nflverse nfldata games.csv · closing lines", "season": 2025, "count": 272,
@@ -1409,7 +1411,7 @@ bun run dev               # 0.0.0.0:8080`}</Pre>
                 <Mono key="a">OPENLEAGUES_SPLITS_SOURCE</Mono>,
                 <Pill key="b">optional</Pill>,
                 <Pill key="c">optional</Pill>,
-                "off (default) or actionnetwork — opts the lab into public betting splits, 2023 on. Every pulled week is kept.",
+                "off (default), or a list: actionnetwork (consensus, history from 2023), dknetwork (DraftKings' own, current slate), wiseguyteam (multi-book, current slate). Every pulled week is kept.",
               ],
             ]}
           />

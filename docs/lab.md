@@ -13,13 +13,19 @@ forbid it from inventing one.
 - **Your own box**, for splits and for storing frozen strategies. From the repo:
 
 ```sh
-# substrate + splits: anonymous MCP, no accounts, Action Network splits on
-OPENLEAGUES_MODE=substrate OPENLEAGUES_SPLITS_SOURCE=actionnetwork bun run dev
+# substrate + splits: anonymous MCP, no accounts, three splits sources on
+OPENLEAGUES_MODE=substrate OPENLEAGUES_SPLITS_SOURCE=actionnetwork,dknetwork,wiseguyteam bun run dev
 ```
 
-The first `sampleGames` that asks for splits pulls 2023–2025 from Action
-Network (54 requests, ~90 s) and keeps them; after that it is instant. The
-first `getGameLines` pulls nflverse's games table (~3 s).
+Three sources, each kept under its own book: `actionnetwork` is the consensus
+and the only one with history (2023 season on) — the one backtests use;
+`dknetwork` is DraftKings' own handle and bet share for the current slate;
+`wiseguyteam` is a multi-book read with the book named, current slate. A
+filter can ask for one: `splits: [{ market: "spread", side: "home",
+tickets: [50, 100], book: "draftkings" }]`. The first `sampleGames` that asks
+for splits pulls 2023–2025 from Action Network (54 requests, ~90 s) and keeps
+them; the live sources refresh hourly. The first `getGameLines` pulls
+nflverse's games table (~3 s).
 
 ## 1. Point your agent at it
 
@@ -139,8 +145,9 @@ band to flat 1%.
   holdout is the bar the skill uses to freeze. Most hunches will not clear it.
   That is the product working.
 - Closing lines only. Anything about line movement cannot be tested yet.
-- Splits are Action Network's consensus (an aggregate, 2023 onward), opt-in,
-  undocumented, and kept on your box once pulled.
+- Splits: Action Network's consensus (an aggregate, 2023 onward) is what a
+  backtest can use; DraftKings Network and WiseGuyTeam add the current slate
+  per book. All opt-in, undocumented, and kept on your box once pulled.
 - Staking is arithmetic: the policy is yours; `simulateBankroll` compounds it,
   reports drawdown in dollars, resamples the bets a thousand times, and flags
   Kelly fed from its own sample.

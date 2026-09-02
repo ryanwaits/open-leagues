@@ -234,12 +234,18 @@ async function attachSplits<T extends GameLine>(
   week?: number,
 ): Promise<T[]> {
   try {
-    const { splitsFor } = await import("./splits.server");
-    const by: Map<string, GameSplits> = await splitsFor(seasons, week);
-    if (by.size === 0) return games;
+    const { splitsFor, splitsByBookFor } = await import("./splits.server");
+    const [by, books] = await Promise.all([
+      splitsFor(seasons, week),
+      splitsByBookFor(seasons, week),
+    ]);
+    if (by.size === 0 && books.size === 0) return games;
     return games.map((g) => {
       const sp = by.get(g.gameId);
-      return sp ? { ...g, splits: sp } : g;
+      const bb = books.get(g.gameId);
+      return sp || bb
+        ? { ...g, ...(sp ? { splits: sp } : {}), ...(bb ? { splitsByBook: bb } : {}) }
+        : g;
     });
   } catch {
     return games;

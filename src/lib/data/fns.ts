@@ -440,6 +440,7 @@ const splitCondition = z.object({
   side: z.enum(["home", "away", "over", "under"]),
   tickets: z.tuple([z.number(), z.number()]).optional(),
   money: z.tuple([z.number(), z.number()]).optional(),
+  book: z.string().optional(),
 });
 
 export const getBettingSplits = createServerFn({ method: "GET" })
@@ -452,8 +453,18 @@ export const getBettingSplits = createServerFn({ method: "GET" })
       source: sp.splitsSource(),
       error: e.message,
     }));
-    const by = await sp.splitsFor([data.season], data.week);
-    return { ...status, games: Object.fromEntries(by) };
+    const live = await sp.ensureLiveSplits().catch(() => ({}) as Record<string, number>);
+    const [by, books] = await Promise.all([
+      sp.splitsFor([data.season], data.week),
+      sp.splitsByBookFor([data.season], data.week),
+    ]);
+    return {
+      ...status,
+      sources: sp.splitsSources(),
+      live,
+      games: Object.fromEntries(by),
+      books: Object.fromEntries(books),
+    };
   });
 
 export const sampleGames = createServerFn({ method: "GET" })
