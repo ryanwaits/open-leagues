@@ -6,6 +6,7 @@ import { InstallDrawer } from "@/components/install-drawer";
 import { LeagueSwitcher } from "@/components/league-switcher";
 import { SignedIn, SignedOut, UserButton } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useBoxMode } from "@/lib/box-mode.fns";
 import { getLeagueBundle, getScores } from "@/lib/data/fns";
 import { useLeagueStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -95,6 +96,7 @@ export function Shell({
   const hasHydrated = useLeagueStore((s) => s.hasHydrated);
   const recent = useLeagueStore((s) => s.recent);
   const { user, isPending } = useCurrentUserState();
+  const { substrate } = useBoxMode();
   const inLeague = pathname.startsWith("/league/");
   const inScores = pathname.startsWith("/scores");
   const routeLeagueId = inLeague ? (pathname.split("/")[2] ?? null) : null;
@@ -281,19 +283,21 @@ export function Shell({
             ) : (
               <>
                 <SignedIn>
-                  <Link
-                    to="/join"
-                    onClick={() => {
-                      if (pathname === "/join") scrollToTop();
-                    }}
-                    className={cn(
-                      "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150 focus-visible:outline-none",
-                      pathname === "/join" ? "bg-fg/6 text-fg" : "text-faint",
-                    )}
-                  >
-                    <UserRound className="size-[18px]" strokeWidth={1.8} />
-                    Join
-                  </Link>
+                  {substrate ? null : (
+                    <Link
+                      to="/join"
+                      onClick={() => {
+                        if (pathname === "/join") scrollToTop();
+                      }}
+                      className={cn(
+                        "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150 focus-visible:outline-none",
+                        pathname === "/join" ? "bg-fg/6 text-fg" : "text-faint",
+                      )}
+                    >
+                      <UserRound className="size-[18px]" strokeWidth={1.8} />
+                      Join
+                    </Link>
+                  )}
                 </SignedIn>
                 <SignedOut>
                   <Link

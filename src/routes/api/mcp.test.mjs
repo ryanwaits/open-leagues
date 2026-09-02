@@ -5,6 +5,7 @@ import { handleMcp } from "./mcp.ts";
 
 const KEYS = [
   "OPENLEAGUES_MCP_AUTH",
+  "OPENLEAGUES_MODE",
   "OPENLEAGUES_MCP_USER_HEADER",
   "OPENLEAGUES_MCP_PROXY_SECRET",
 ];
@@ -94,4 +95,40 @@ test("proxy mode can narrow a caller to read-only, and a write is then refused",
   const body = await res.json();
   assert.equal(body.result.isError, true);
   assert.match(body.result.content[0].text, /read-only/);
+});
+
+test("a substrate box answers the public with no credential, and only the public verbs", async () => {
+  process.env.OPENLEAGUES_MODE = "substrate";
+  const res = await handleMcp(rpc(LIST));
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  const names = body.result.tools.map((t) => t.name);
+  assert.ok(names.includes("getReceipt"));
+  assert.ok(names.includes("sampleGames"));
+  assert.ok(names.includes("simulateBankroll"));
+  assert.ok(!names.includes("startPlayer"), "writes are not offered");
+  assert.ok(!names.includes("freezeStrategy"), "nothing that needs a person is offered");
+  assert.ok(!names.includes("getAgentContext"), "no seat, no context");
+});
+
+test("a substrate box refuses a non-public verb with the pointer to self-hosting", async () => {
+  process.env.OPENLEAGUES_MODE = "substrate";
+  const call = {
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/call",
+    params: { name: "freezeStrategy", arguments: { name: "x", spec: {} } },
+  };
+  const res = await handleMcp(rpc(call));
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.result.isError, true);
+  assert.match(body.result.content[0].text, /public substrate/);
+  assert.match(body.result.content[0].text, /self-host/);
+});
+
+test("a substrate box ignores a bearer token: there are no accounts to check it against", async () => {
+  process.env.OPENLEAGUES_MODE = "substrate";
+  const res = await handleMcp(rpc(LIST, { authorization: "Bearer ol_anything" }));
+  assert.equal(res.status, 200);
 });

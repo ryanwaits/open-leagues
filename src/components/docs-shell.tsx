@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useState } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useBoxMode } from "@/lib/box-mode.fns";
 import { showsFor, useAudience } from "@/lib/docs/guide-store";
 import { DOCS_GROUPS, type DocsSlug, isDocsSlug } from "@/lib/docs/nav";
 import { DOCS_PAGES } from "@/lib/docs/pages";
@@ -14,6 +15,7 @@ function slugFromPath(pathname: string): DocsSlug {
 
 export function DocsShell({ children }: { children: ReactNode }) {
   const { user, isPending } = useCurrentUserState();
+  const { substrate } = useBoxMode();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const slug = slugFromPath(pathname);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -45,7 +47,7 @@ export function DocsShell({ children }: { children: ReactNode }) {
           <a href="https://github.com/ryanwaits/open-leagues" className="text-muted hover:text-fg">
             GitHub
           </a>
-          {isPending ? (
+          {substrate ? null : isPending ? (
             <span className="inline-block h-4 w-10 self-center rounded bg-raised" />
           ) : user ? (
             <Link to="/account" className="text-muted hover:text-fg">

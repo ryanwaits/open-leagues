@@ -10,9 +10,10 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { createFileRoute } from "@tanstack/react-router";
 import { AGENT_TOOLS } from "@/lib/agent/catalog";
-import { AGENT_CORE } from "@/lib/agent/core";
+import { AGENT_CORE, PUBLIC_CORE } from "@/lib/agent/core";
 import { dispatch } from "@/lib/agent/dispatch";
 import { type McpIdentity, resolveMcpIdentity } from "@/lib/auth/mcp-identity.server";
+import { isSubstrate, SUBSTRATE_REFUSAL } from "@/lib/box-mode";
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -32,8 +33,41 @@ function unauthorized(): Response {
   return Response.json({ error: "unauthorized" }, { status: 401, headers: CORS });
 }
 
-/** Resolve the caller → userId, or 401. Cookie sessions are not accepted. */
+/** The public caller on a substrate box: no person, read scope, the public allowlist. */
+const PUBLIC: McpIdentity = { userId: "", scope: "read", label: "public" };
+
+/* ── a small per-IP limiter for the public door ─────────────────────── */
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX = 120;
+const buckets = new Map<string, { at: number; n: number }>();
+function rateLimited(request: Request): boolean {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "local";
+  const now = Date.now();
+  const b = buckets.get(ip);
+  if (!b || now - b.at > RATE_WINDOW_MS) {
+    buckets.set(ip, { at: now, n: 1 });
+    if (buckets.size > 10_000) buckets.clear();
+    return false;
+  }
+  b.n += 1;
+  return b.n > RATE_MAX;
+}
+
+/**
+ * Resolve the caller → identity, or 401. Cookie sessions are not accepted.
+ * A substrate box has no credentials to check: every caller is the public,
+ * rate-limited, and confined to PUBLIC_CORE.
+ */
 async function authorize(request: Request): Promise<McpIdentity | Response> {
+  if (isSubstrate()) {
+    if (rateLimited(request)) {
+      return Response.json({ error: "rate limited" }, { status: 429, headers: CORS });
+    }
+    return PUBLIC;
+  }
   try {
     const who = await resolveMcpIdentity(request);
     return who ?? unauthorized();
@@ -51,7 +85,9 @@ const inputSchema = {
 };
 
 function buildServer(who: McpIdentity): Server {
-  const coreTools = AGENT_TOOLS.filter((t) => AGENT_CORE.has(t.id));
+  const isPublic = who.label === "public";
+  const allowed = isPublic ? PUBLIC_CORE : AGENT_CORE;
+  const coreTools = AGENT_TOOLS.filter((t) => allowed.has(t.id));
   const server = new Server(
     { name: "open-leagues", version: "0.1.0" },
     { capabilities: { tools: {} } },
@@ -72,9 +108,13 @@ function buildServer(who: McpIdentity): Server {
         ? (request.params.arguments as Record<string, unknown>)
         : {};
     try {
+      if (isPublic && !PUBLIC_CORE.has(name)) throw new Error(`${name}: ${SUBSTRATE_REFUSAL}`);
       // Identity from the resolved credential only — never from tool arguments.
       // A read-scoped token is refused at the door of every write.
-      const result = await dispatch(name, who.userId, args, { scope: who.scope, actor: who.label });
+      const result = await dispatch(name, isPublic ? null : who.userId, args, {
+        scope: who.scope,
+        actor: who.label,
+      });
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       };

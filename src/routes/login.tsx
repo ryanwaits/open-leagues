@@ -2,11 +2,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
+import { SubstrateNotice } from "@/components/substrate-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authClient, authEnabled, signIn } from "@/lib/auth/client";
 import { LOCAL_SEED } from "@/lib/auth/local-seed";
 import { configuredLoginSocials } from "@/lib/auth/providers";
+import { useBoxMode } from "@/lib/box-mode.fns";
 import { getQueryClient } from "@/lib/query-client";
 import { brand } from "@/skin/brand";
 
@@ -31,6 +33,12 @@ export const Route = createFileRoute("/login")({
 });
 
 function Login() {
+  const { substrate } = useBoxMode();
+  if (substrate) return <SubstrateNotice what="Signing in" />;
+  return <LoginInner />;
+}
+
+function LoginInner() {
   const { redirect } = Route.useSearch();
   const social = Route.useLoaderData();
   const navigate = useNavigate();

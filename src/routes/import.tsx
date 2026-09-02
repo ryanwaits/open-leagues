@@ -4,9 +4,11 @@ import { AlertCircle, Check, ChevronDown, FileUp, Plus, Trash2 } from "lucide-re
 import { type DragEvent, useId, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
+import { SubstrateNotice } from "@/components/substrate-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useBoxMode } from "@/lib/box-mode.fns";
 import { calendarOf, recentSeasons } from "@/lib/data/calendar";
 import { getPulse } from "@/lib/data/fns";
 import {
@@ -180,6 +182,12 @@ function AiDetectedLine({
 }
 
 function ImportPage() {
+  const { substrate } = useBoxMode();
+  if (substrate) return <SubstrateNotice what="Importing a league" />;
+  return <ImportPageInner />;
+}
+
+function ImportPageInner() {
   const fieldId = useId();
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();

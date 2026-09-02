@@ -95,3 +95,34 @@ export const AGENT_CORE: ReadonlySet<string> = new Set([
   "previewRebuild",
   "importRebuild",
 ]);
+
+/**
+ * What a public substrate box answers with no credential at all: reads that
+ * work on raw Sleeper ids or on real NFL games, and the lab's arithmetic.
+ * Nothing here needs a person; nothing here touches a hosted league.
+ */
+export const PUBLIC_CORE: ReadonlySet<string> = new Set([
+  "findSleeperUser",
+  "getReceipt",
+  "getWeekBoard",
+  "getSourceLedger",
+  "getGameLines",
+  "getGameContext",
+  "getBettingSplits",
+  "sampleGames",
+  "evaluateBets",
+  "summarizeRun",
+  "simulateBankroll",
+  "getPlayerProfile",
+  "getPlayerSearch",
+  "getProjections",
+  "getWeekStats",
+  "getScores",
+  "getGameSummary",
+  "getLeaders",
+  "getByeWeeks",
+  "getOutlooks",
+  "getLiveWire",
+  "getPulse",
+  "getSources",
+]);

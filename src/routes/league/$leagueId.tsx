@@ -11,10 +11,12 @@ import { BarChart3, House, Search, Shield, Swords } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
+import { SubstrateNotice } from "@/components/substrate-notice";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WeekPicker } from "@/components/week-picker";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useBoxMode } from "@/lib/box-mode.fns";
 import { getLeagueBundle, getMatchups, getTeam, getWire } from "@/lib/data/fns";
 import { joinLeague } from "@/lib/league/fns";
 import { warmQuery } from "@/lib/query-client";
@@ -134,6 +136,12 @@ const TABS = [
 ];
 
 function LeagueLayout() {
+  const { substrate } = useBoxMode();
+  if (substrate) return <SubstrateNotice what="A hosted league" />;
+  return <LeagueLayoutInner />;
+}
+
+function LeagueLayoutInner() {
   const { leagueId } = Route.useParams();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const search = useRouterState({ select: (s) => s.location.search as LeagueSearch });

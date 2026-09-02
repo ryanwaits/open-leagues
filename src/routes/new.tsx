@@ -3,9 +3,11 @@ import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-ro
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
+import { SubstrateNotice } from "@/components/substrate-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useBoxMode } from "@/lib/box-mode.fns";
 import { createLeague } from "@/lib/league/fns";
 import { useLeagueStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -13,6 +15,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/new")({ component: NewLeague });
 
 function NewLeague() {
+  const { substrate } = useBoxMode();
+  if (substrate) return <SubstrateNotice what="A new league" />;
+  return <NewLeagueInner />;
+}
+
+function NewLeagueInner() {
   const fieldId = useId();
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();

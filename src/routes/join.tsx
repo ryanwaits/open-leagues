@@ -3,10 +3,12 @@ import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-ro
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
+import { SubstrateNotice } from "@/components/substrate-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { A2HS_JOIN_KEY } from "@/lib/a2hs";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useBoxMode } from "@/lib/box-mode.fns";
 import { joinLeague, previewInvite } from "@/lib/league/fns";
 import { useLeagueStore } from "@/lib/store";
 
@@ -20,6 +22,12 @@ export const Route = createFileRoute("/join")({
 });
 
 function JoinLeague() {
+  const { substrate } = useBoxMode();
+  if (substrate) return <SubstrateNotice what="Joining a league" />;
+  return <JoinLeagueInner />;
+}
+
+function JoinLeagueInner() {
   const codeId = useId();
   const search = Route.useSearch();
   const { user, isPending } = useCurrentUserState();

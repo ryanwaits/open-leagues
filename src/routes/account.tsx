@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { InstallDrawerButton } from "@/components/install-drawer";
 import { Shell } from "@/components/shell";
+import { SubstrateNotice } from "@/components/substrate-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useBoxMode } from "@/lib/box-mode.fns";
 import {
   deleteAiSettings,
   getAiSettings,
@@ -24,6 +26,12 @@ export const Route = createFileRoute("/account")({
 });
 
 function AccountPage() {
+  const { substrate } = useBoxMode();
+  if (substrate) return <SubstrateNotice what="Your account" />;
+  return <AccountPageInner />;
+}
+
+function AccountPageInner() {
   const { user, isPending } = useCurrentUserState();
   if (!isPending && !user) return <Navigate to="/login" search={{ redirect: "/account" }} />;
 

@@ -12,7 +12,7 @@ function src(rel) {
 test("home does not reuse a signed-out my-leagues cache after login", () => {
   const home = src("src/routes/index.tsx");
   assert.match(home, /queryKey:\s*\[\s*"my-leagues".*user\?\.id/);
-  assert.match(home, /enabled:\s*!sessionPending && Boolean\(user\)/);
+  assert.match(home, /enabled:\s*(!substrate && )?!sessionPending && Boolean\(user\)/);
   assert.match(home, /placeholderData:\s*undefined/);
   assert.match(home, /waiting \?/);
 
