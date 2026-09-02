@@ -17,7 +17,7 @@ test("router defaults to intent preload", () => {
 });
 
 test("home league rows are Links to /league/$leagueId", () => {
-  const index = readFileSync(join(root, "src/routes/index.tsx"), "utf8");
-  assert.match(index, /to=["']\/league\/\$leagueId["']/);
-  assert.match(index, /preload=["']intent["']/);
+  const landing = readFileSync(join(root, "src/components/landing.tsx"), "utf8");
+  assert.match(landing, /to=["']\/league\/\$leagueId["']/);
+  assert.match(landing, /preload=["']intent["']/);
 });

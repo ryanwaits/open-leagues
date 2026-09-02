@@ -24,7 +24,17 @@ the Vercel alternative, and running without Docker:
 ## Connect an agent
 
 Any signed-in member mints their own token from `/account` — no commish
-gate. Any client can migrate a league in and run it over MCP too:
+gate — or from a shell, if you never want to open the app:
+
+```sh
+bun scripts/ledger.mjs mintToken --write --user usr_… --name codex
+```
+
+Tokens are issued and checked by *your* box against its own database;
+nothing is central. If you already authenticate people at the edge, set
+`OPENLEAGUES_MCP_AUTH=proxy` and pass the user id on a header instead —
+the engine only ever needs a user id. Any client can migrate a league in
+and run it over MCP too:
 
 ```sh
 codex mcp add open-leagues --url https://YOUR_HOST/api/mcp --bearer-token-env-var OPENLEAGUES_TOKEN

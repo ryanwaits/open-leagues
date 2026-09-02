@@ -18,6 +18,9 @@ Open `http://YOUR_HOST:8080` → `/login` → `/new` → invite friends.
 | `BETTER_AUTH_URL` | Public https origin (no trailing slash). Default `http://localhost:8080`. |
 | `BETTER_AUTH_SECRET` | Session signing. Blank → entrypoint generates one and keeps it on the data volume (`/data/better-auth-secret`). |
 | `CRON_SECRET` | Optional on Docker (in-process tick). Still gates HTTP `/api/league/tick`. Unset = that route is public — set it on a public host. |
+| `OPENLEAGUES_MCP_AUTH` | Optional. `token` (default) — this box mints and checks its own `ol_` bearers. `proxy` — your edge authenticated the caller and passes their user id on a header. |
+| `OPENLEAGUES_MCP_USER_HEADER` | Optional, `proxy` only. Header carrying the user id (default `x-openleagues-user`). |
+| `OPENLEAGUES_MCP_PROXY_SECRET` | Optional, `proxy` only. Value your proxy sends as `x-openleagues-proxy-secret` to prove the request came through it. Unset = the box warns once and trusts the header — only safe when nothing else can reach the origin. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Optional. This app's own Google OAuth client (not the Grok broker). Both required. See [Google sign-in](google-sign-in.md). |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | Optional. Web Push. Both key vars required or the toggle stays hidden. See [Notifications](notifications.md). |
 

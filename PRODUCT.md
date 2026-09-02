@@ -3,7 +3,7 @@
 register: product
 
 ## Product purpose
-A self-hosted fantasy football desk: one commissioner runs a league on their own box, friends install it to their home screen and live in it on Sundays. Standings, matchups, live scoring, waivers/FAAB, trades, a draft room, weekly recaps, and a wagering book — no third-party app, no ads.
+A self-hosted fantasy football desk: one commissioner runs a league on their own box, friends install it to their home screen and live in it on Sundays. Standings, matchups, live scoring, waivers/FAAB, trades, a draft room, and a wagering book — no third-party app, no ads.
 
 ## Users
 - The commissioner (Ryan): runs the league, tunes settings, watches everything.
