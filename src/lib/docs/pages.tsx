@@ -67,7 +67,7 @@ function DocLink({ slug, children }: { slug: DocsSlug; children: ReactNode }) {
 
 const overview: DocsPage = {
   title: "Overview",
-  lede: "Postgres holds the league and enforces the rules. An MCP server exposes every verb. The browser app is client zero — not the product.",
+  lede: "Receipts for your fantasy week, on a headless league. Postgres holds the league and enforces the rules; an MCP server exposes every verb; the browser app is client zero — not the product.",
   sections: [
     {
       id: "what",
@@ -75,13 +75,22 @@ const overview: DocsPage = {
       body: () => (
         <>
           <P>
-            A fantasy football league that keeps its state in a database you control and its rules
-            in one engine, then exposes that engine three ways. The surfaces differ in reach, not in
-            rules — they all land on the same server modules.
+            Two things, one box. <DocLink slug="receipts">Receipts</DocLink> read any Sleeper league
+            by id — no account — and say when a matchup flipped, what sat on the bench, and what the
+            wire cost. Underneath is a fantasy football league that keeps its state in a database
+            you control and its rules in one engine, exposed three ways. The surfaces differ in
+            reach, not in rules — they all land on the same server modules.
           </P>
           <DocTable
             head={["Surface", "Reach", "Entry point"]}
             rows={[
+              [
+                <strong key="a" className="font-medium text-fg">
+                  Receipts
+                </strong>,
+                "Any Sleeper league, anonymous",
+                <Mono key="c">/r/:leagueId · /api/*.json</Mono>,
+              ],
               [
                 <strong key="a" className="font-medium text-fg">
                   Browser app
@@ -157,6 +166,220 @@ const overview: DocsPage = {
             <Inline>exportLeague</Inline> hands back a JSON snapshot; there is no import-from-backup
             and nothing syncs to Sleeper or ESPN.
           </Callout>
+        </>
+      ),
+    },
+  ],
+};
+
+/* ── receipts ──────────────────────────────────────────────────────── */
+
+const receipts: DocsPage = {
+  title: "Receipts",
+  lede: "Paste a Sleeper league id. For any team, any settled week: the minute the matchup flipped, what was left on the bench, what the wire cost — and which open source called it before kickoff.",
+  sections: [
+    {
+      id: "urls",
+      heading: "Two URLs",
+      body: () => (
+        <>
+          <DocTable
+            head={["URL", "Shows", "Needs"]}
+            rows={[
+              [
+                <Mono key="a">/r/:leagueId</Mono>,
+                "Every matchup of the current week, one line each; a week picker",
+                "Nothing",
+              ],
+              [
+                <Mono key="a">/r/:leagueId/:week/:rosterId</Mono>,
+                "One team’s receipt, with an image card for the chat",
+                "Nothing",
+              ],
+            ]}
+          />
+          <P>
+            <Inline>:leagueId</Inline> is a raw Sleeper id. Private leagues work — Sleeper’s API
+            serves them by id — and a username in the home input lists that person’s leagues to pick
+            from. Team names only: when a team name is just the manager’s username, it renders as{" "}
+            <Inline>Roster N</Inline>.
+          </P>
+          <Callout>
+            Hosted (<Inline>lg_</Inline>) leagues have receipts too, but behind the same seat check
+            as everything else on the box — and no public card. The anonymous path is for public
+            Sleeper data only.
+          </Callout>
+        </>
+      ),
+    },
+    {
+      id: "lines",
+      heading: "What is on one",
+      body: () => (
+        <>
+          <DocTable
+            head={["Line", "Says", "Computed from"]}
+            rows={[
+              [
+                <strong key="a" className="font-medium text-fg">
+                  The flip
+                </strong>,
+                "The minute the matchup last changed hands, the play, and how likely you were to win a half-hour earlier",
+                "nflverse play-by-play, scored under the league’s own book, to the second",
+              ],
+              [
+                <strong key="a" className="font-medium text-fg">
+                  The bench
+                </strong>,
+                "Points left sitting, and exactly who over whom",
+                "Best lineup on the box score versus the lineup actually set",
+              ],
+              [
+                <strong key="a" className="font-medium text-fg">
+                  The sources
+                </strong>,
+                "What each open source would have called before kickoff",
+                "Sleeper projection · last three weeks · season average, under the same book",
+              ],
+              [
+                <strong key="a" className="font-medium text-fg">
+                  The wire
+                </strong>,
+                "Bids, results, and what the player cleared for elsewhere",
+                "The league’s transactions plus the wire clearing prices, once three leagues have one",
+              ],
+              [
+                <strong key="a" className="font-medium text-fg">
+                  The agent’s line
+                </strong>,
+                "Which lineup moves a token made, by name and time",
+                <Mono key="c">agent_action</Mono>,
+              ],
+            ]}
+          />
+          <Pre label="a real one · SDIFFL 2025 · week 14 · NateBot 129.0 — Roster 14 85.3">{`Took the lead for good at 3:41pm ET on a Trevor Lawrence completion, 78.8–78.6 · 78% to win at 3:11pm.
+6.5 left on the bench — Omarion Hampton (13.7) started over Saquon Barkley (20.2).
+  Sleeper projection, Last 3 weeks, and Season average all said start Barkley.
+Wire: bid $26 on Stefon Diggs, lost.`}</Pre>
+          <Note>
+            Hindsight, on purpose. A projection is an opinion and a box score is a fact; the receipt
+            is about facts, and it names which opinions were right. Paid sources never appear, even
+            as a comparison.
+          </Note>
+        </>
+      ),
+    },
+    {
+      id: "card",
+      heading: "The card",
+      body: () => (
+        <>
+          <P>
+            Every receipt page sets <Inline>og:image</Inline> to a rendered PNG at{" "}
+            <Inline>/api/og/r/:leagueId/:week/:rosterId</Inline>, so pasting the link into iMessage,
+            Discord, or a group chat unfurls the receipt itself. The card is rendered server-side
+            with the same lines as the page; nothing is drawn that is not on the receipt.
+          </P>
+          <Callout tone="warn">
+            Receipts read a league’s public Sleeper data and show team names, not people. To have a
+            league’s receipts taken down, open an issue on the repo with the league id.
+          </Callout>
+        </>
+      ),
+    },
+    {
+      id: "flip-method",
+      heading: "How the flip is found",
+      body: () => (
+        <>
+          <Bullets>
+            <li>
+              Each season’s nflverse play-by-play is streamed once into a per-game timeline of
+              scoring deltas — who gained what, on which play, at which wall-clock second.
+            </li>
+            <li>
+              Both lineups are replayed under the league’s scoring book, so a half-PPR league’s flip
+              and a full-PPR league’s flip can land on different plays for the same game slate.
+            </li>
+            <li>
+              The flip is the last moment the lead changed. “How likely you were” is a
+              win-probability snapshot from thirty minutes earlier, from the two scores and the game
+              states then.
+            </li>
+            <li>
+              Kick times are printed in Eastern. If the season’s play-by-play is not published yet
+              (the current week, most Sundays), the receipt says so rather than guessing.
+            </li>
+          </Bullets>
+        </>
+      ),
+    },
+  ],
+};
+
+/* ── open data ─────────────────────────────────────────────────────── */
+
+const openData: DocsPage = {
+  title: "Open data",
+  lede: "Two files every hobby tool rebuilds by hand, published once. Anonymous aggregates, CORS on, no key.",
+  sections: [
+    {
+      id: "players",
+      heading: "/api/players.json",
+      body: () => (
+        <>
+          <P>
+            The player-ID crosswalk: Sleeper, GSIS (nflverse), ESPN, Yahoo, RotoWire, and Sportradar
+            ids side by side, with name, team, and position. Built from Sleeper’s player file and
+            refreshed as it is; cached a day.
+          </P>
+          <Pre label="shape">{`{
+  "source": "sleeper players + nflverse gsis",
+  "count": 11826,
+  "players": [
+    { "sleeper_id": "4866", "gsis_id": "00-0034844", "espn_id": "3929630",
+      "yahoo_id": "30972", "rotowire_id": "12507", "sportradar_id": "9811b753-…",
+      "name": "Saquon Barkley", "team": "PHI", "position": "RB" }
+  ]
+}`}</Pre>
+        </>
+      ),
+    },
+    {
+      id: "wire",
+      heading: "/api/wire/:season/:week.json",
+      body: () => (
+        <>
+          <P>
+            What each player actually cleared for on waivers that week, across every Sleeper league
+            that has asked for a receipt. Median, quartiles, max, and the count of leagues behind
+            each number. The figure paid tools predict with a model, published as a fact.
+          </P>
+          <Pre label="shape">{`{
+  "season": "2025", "week": 14, "leagues": 1, "computedAt": "…",
+  "prices": [
+    { "player_id": "2449", "name": "Stefon Diggs", "position": "WR",
+      "n": 1, "median": 79, "p25": 79, "p75": 79, "max": 79 }
+  ]
+}`}</Pre>
+          <Bullets>
+            <li>
+              Only leagues that have pasted contribute. Each receipt read registers its league;
+              nothing is crawled.
+            </li>
+            <li>
+              No league id, manager, or roster appears in the payload. <Inline>n</Inline> is the
+              number of winning bids behind a price.
+            </li>
+            <li>
+              Cached an hour once at least one league has a cleared claim; empty results are not
+              cached, so the file fills in as leagues arrive.
+            </li>
+            <li>
+              A team’s own receipt shows the median beside a won claim only once three or more
+              leagues have one, so a single league’s bid never reads as “the market”.
+            </li>
+          </Bullets>
         </>
       ),
     },
@@ -589,6 +812,35 @@ const agents: DocsPage = {
       ),
     },
     {
+      id: "token-scope",
+      heading: "Token scope: read or act",
+      body: () => (
+        <>
+          <P>
+            Every token is minted <Inline>read</Inline> or <Inline>act</Inline>. A read token can
+            call any read verb and nothing that writes; an act token can do what the seat behind it
+            can do. This is the one scope the engine enforces — the catalog’s <Inline>scope</Inline>{" "}
+            column below is a different thing.
+          </P>
+          <Pre label="mint a read-only token from a shell">{`bun scripts/ledger.mjs mintToken --write --user usr_… --name codex --scope read`}</Pre>
+          <DocTable
+            head={["Scope", "May call", "On refusal"]}
+            rows={[
+              [<Mono key="a">read</Mono>, "Every verb with kind: read", "“…requires an act token”"],
+              [<Mono key="a">act</Mono>, "Everything the seat may do", "Seat rules, as usual"],
+            ]}
+          />
+          <P>
+            Every write an act token makes is logged as an <Inline>agent_action</Inline> event
+            carrying the token’s name, so a hosted league’s receipt can show the agent’s line —
+            “codex started X over Y at 11:52am” — next to the human’s. In proxy mode the edge
+            narrows a caller with <Inline>x-openleagues-scope: read</Inline>; it cannot widen
+            anything, because act is already the ceiling.
+          </P>
+        </>
+      ),
+    },
+    {
       id: "scopes",
       heading: "Reading the scope column",
       body: () => (
@@ -685,7 +937,9 @@ const state: DocsPage = {
 }`}</Pre>
           <Note>
             Without a seat, <Inline>you</Inline> is <Inline>null</Inline> and <Inline>purse</Inline>{" "}
-            comes back zeroed rather than null.
+            comes back zeroed rather than null. For a settled week’s story — the flip, the bench,
+            the wire — read the <DocLink slug="receipts">receipt</DocLink> instead; it is the same
+            data folded into facts.
           </Note>
         </>
       ),
@@ -1095,6 +1349,8 @@ bun run dev               # 0.0.0.0:8080`}</Pre>
 
 export const DOCS_PAGES: Record<DocsSlug, DocsPage> = {
   overview,
+  receipts,
+  "open-data": openData,
   quickstart,
   migrate,
   cli,

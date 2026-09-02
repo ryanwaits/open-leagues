@@ -3,28 +3,30 @@
 register: product
 
 ## Product purpose
-A self-hosted fantasy football desk: one commissioner runs a league on their own box, friends install it to their home screen and live in it on Sundays. Standings, matchups, live scoring, waivers/FAAB, trades, a draft room, and a wagering book — no third-party app, no ads.
+Receipts for your fantasy week, on a headless league. Paste a Sleeper league id and get, for any team, the minute the matchup flipped, what was left on the bench, what the wire cost, and which open source called it before kickoff. Every line is a fact with a timestamp; nothing on a receipt comes from a model. Beneath the receipts, a league engine anyone can self-host and any agent can operate.
 
 ## Users
-- The commissioner (Ryan): runs the league, tunes settings, watches everything.
-- League members: check their team, follow the live matchup on Sundays (phone-first, PWA), work the wire, talk trash.
-- Agents/LLMs: a headless catalog (MCP) can run the league's verbs; the PWA stays client zero.
+- The manager who lost by 2.4: wants to know exactly when and why, and wants to send it to the chat. Never makes an account.
+- The commissioner: migrates a league in, then lets it run — the tick advances weeks and clears waivers; they confirm season ops and otherwise stay idle.
+- Agents: read or act tokens over MCP. They read receipts like anyone else, set lineups, work the wire, and sign every write so the receipt can show their line next to the human's.
+- Builders: fetch the player crosswalk and the wire clearing prices instead of rebuilding them.
 
 ## The scene (theme)
-A phone on a couch on Sunday at 1:07pm, sun on the screen, four games in progress and one eye on the TV. Light-first, high contrast, numbers that hold still.
+Monday morning, phone in one hand, the group chat already going. A card unfurls: the flip, the bench, the wire. Nobody argues with it because every line has a clock on it.
 
 ## Tone & brand
-"Ledger": a well-kept desk, not a dashboard. Sober, precise, a little dry. One identity colour (green) used sparingly; losing is the marked state, winning is default. Numbers are mono and tabular. Status is counts, not fake precision ("7 v 7 live", never a single quarter chip for a multi-game matchup).
+"Ledger": a well-kept desk, not a dashboard. Sober, precise, a little dry. One identity colour (green) used sparingly; losing is the marked state, winning is default. Numbers are mono and tabular. Facts over adjectives: a receipt says what happened and who said so beforehand — never what you should have done.
 
 ## Anti-references
+- Advice sites: no rankings, no "start/sit" verdicts, no expert byline. We print who was right, not who to trust.
 - ESPN/Yahoo app clutter: banner ads, badge storms, six nav levels.
 - Sportsbook neon: no glow, no red/green casino flash.
 - Generic SaaS dashboards: no hero-metric cards, no icon-card grids.
-- "Bad web app" mobile: controls that scroll away, snap-scroll hijacks, spinner theatre.
 
 ## Strategic principles
-1. The desk outlives the week: everything has a permalink and a past (livelines, ticks, recaps).
-2. Compare vs follow: boards scan many things shallowly; detail pages follow one thing deeply. Every fact lives deep on exactly one page.
-3. Movement only under the finger: drag follows touch 1:1; releases and state changes are instant. No easing on high-frequency UI.
-4. Every gesture has a visible, tappable twin.
-5. One live canvas per viewport; charts only when there is a line to draw.
+1. A receipt is a fact, not an opinion. Every line traces to a box score, a play-by-play row, or a transaction log — with a timestamp. Projections appear only as what a source said before kickoff.
+2. Open sources only. Sleeper's projection, last three weeks, season average. A paid source never renders, even as a comparison.
+3. Team names, never people. Public Sleeper data passes through by id; a manager's name is replaced with the roster number when it would identify them. Hosted (`lg_`) leagues are seat-gated on every surface.
+4. Every paste makes the commons richer. Leagues that ask for a receipt contribute anonymously to the wire clearing prices. No league id, manager, or roster appears in an aggregate.
+5. The engine is the product's floor, not its headline. One FAAB purse, one scoring book, confirm-gated season ops, read/act agent scopes. The browser app is client zero.
+6. Leagues run themselves. The tick advances weeks and clears waivers; the commissioner is idle by design.
