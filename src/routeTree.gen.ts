@@ -21,6 +21,7 @@ import { Route as NewRouteImport } from './routes/new'
 import { Route as PlayersRouteImport } from './routes/players'
 import { Route as ScoresRouteImport } from './routes/scores'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
+import { Route as ApiPlayersDotjsonRouteImport } from './routes/api/players[.]json'
 import { Route as DocsIndexRouteImport } from './routes/docs/index'
 import { Route as DocsSlugRouteImport } from './routes/docs/$slug'
 import { Route as LeagueLeagueIdRouteImport } from './routes/league/$leagueId'
@@ -39,6 +40,7 @@ import { Route as LeagueLeagueIdStandingsRouteImport } from './routes/league/$le
 import { Route as LeagueLeagueIdTradesRouteImport } from './routes/league/$leagueId/trades'
 import { Route as LeagueLeagueIdWireRouteImport } from './routes/league/$leagueId/wire'
 import { Route as RLeagueIdIndexRouteImport } from './routes/r/$leagueId/index'
+import { Route as ApiWireSeasonWeekDotjsonRouteImport } from './routes/api/wire/$season/$week[.]json'
 import { Route as LeagueLeagueIdPlayerPlayerIdRouteImport } from './routes/league/$leagueId/player/$playerId'
 import { Route as LeagueLeagueIdTeamRosterIdRouteImport } from './routes/league/$leagueId/team/$rosterId'
 import { Route as RLeagueIdWeekRosterIdRouteImport } from './routes/r/$leagueId/$week.$rosterId'
@@ -103,6 +105,11 @@ const ScoresRoute = ScoresRouteImport.update({
 const ApiMcpRoute = ApiMcpRouteImport.update({
   id: '/api/mcp',
   path: '/api/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlayersDotjsonRoute = ApiPlayersDotjsonRouteImport.update({
+  id: '/api/players.json',
+  path: '/api/players.json',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsIndexRoute = DocsIndexRouteImport.update({
@@ -195,6 +202,12 @@ const RLeagueIdIndexRoute = RLeagueIdIndexRouteImport.update({
   path: '/r/$leagueId/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiWireSeasonWeekDotjsonRoute =
+  ApiWireSeasonWeekDotjsonRouteImport.update({
+    id: '/api/wire/$season/$week.json',
+    path: '/api/wire/$season/$week.json',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LeagueLeagueIdPlayerPlayerIdRoute =
   LeagueLeagueIdPlayerPlayerIdRouteImport.update({
     id: '/player/$playerId',
@@ -238,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/players': typeof PlayersRoute
   '/scores': typeof ScoresRoute
   '/api/mcp': typeof ApiMcpRoute
+  '/api/players.json': typeof ApiPlayersDotjsonRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/league/$leagueId': typeof LeagueLeagueIdRouteWithChildren
   '/scores/$gameId': typeof ScoresGameIdRoute
@@ -256,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/league/$leagueId/wire': typeof LeagueLeagueIdWireRoute
   '/league/$leagueId/': typeof LeagueLeagueIdIndexRoute
   '/r/$leagueId/': typeof RLeagueIdIndexRoute
+  '/api/wire/$season/$week.json': typeof ApiWireSeasonWeekDotjsonRoute
   '/league/$leagueId/player/$playerId': typeof LeagueLeagueIdPlayerPlayerIdRoute
   '/league/$leagueId/team/$rosterId': typeof LeagueLeagueIdTeamRosterIdRoute
   '/r/$leagueId/$week/$rosterId': typeof RLeagueIdWeekRosterIdRoute
@@ -274,6 +289,7 @@ export interface FileRoutesByTo {
   '/players': typeof PlayersRoute
   '/scores': typeof ScoresRoute
   '/api/mcp': typeof ApiMcpRoute
+  '/api/players.json': typeof ApiPlayersDotjsonRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/scores/$gameId': typeof ScoresGameIdRoute
   '/docs': typeof DocsIndexRoute
@@ -291,6 +307,7 @@ export interface FileRoutesByTo {
   '/league/$leagueId/wire': typeof LeagueLeagueIdWireRoute
   '/league/$leagueId': typeof LeagueLeagueIdIndexRoute
   '/r/$leagueId': typeof RLeagueIdIndexRoute
+  '/api/wire/$season/$week.json': typeof ApiWireSeasonWeekDotjsonRoute
   '/league/$leagueId/player/$playerId': typeof LeagueLeagueIdPlayerPlayerIdRoute
   '/league/$leagueId/team/$rosterId': typeof LeagueLeagueIdTeamRosterIdRoute
   '/r/$leagueId/$week/$rosterId': typeof RLeagueIdWeekRosterIdRoute
@@ -311,6 +328,7 @@ export interface FileRoutesById {
   '/players': typeof PlayersRoute
   '/scores': typeof ScoresRoute
   '/api/mcp': typeof ApiMcpRoute
+  '/api/players.json': typeof ApiPlayersDotjsonRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/league/$leagueId': typeof LeagueLeagueIdRouteWithChildren
   '/scores_/$gameId': typeof ScoresGameIdRoute
@@ -329,6 +347,7 @@ export interface FileRoutesById {
   '/league/$leagueId/wire': typeof LeagueLeagueIdWireRoute
   '/league/$leagueId/': typeof LeagueLeagueIdIndexRoute
   '/r/$leagueId/': typeof RLeagueIdIndexRoute
+  '/api/wire/$season/$week.json': typeof ApiWireSeasonWeekDotjsonRoute
   '/league/$leagueId/player/$playerId': typeof LeagueLeagueIdPlayerPlayerIdRoute
   '/league/$leagueId/team/$rosterId': typeof LeagueLeagueIdTeamRosterIdRoute
   '/r/$leagueId/$week/$rosterId': typeof RLeagueIdWeekRosterIdRoute
@@ -350,6 +369,7 @@ export interface FileRouteTypes {
     | '/players'
     | '/scores'
     | '/api/mcp'
+    | '/api/players.json'
     | '/docs/$slug'
     | '/league/$leagueId'
     | '/scores/$gameId'
@@ -368,6 +388,7 @@ export interface FileRouteTypes {
     | '/league/$leagueId/wire'
     | '/league/$leagueId/'
     | '/r/$leagueId/'
+    | '/api/wire/$season/$week.json'
     | '/league/$leagueId/player/$playerId'
     | '/league/$leagueId/team/$rosterId'
     | '/r/$leagueId/$week/$rosterId'
@@ -386,6 +407,7 @@ export interface FileRouteTypes {
     | '/players'
     | '/scores'
     | '/api/mcp'
+    | '/api/players.json'
     | '/docs/$slug'
     | '/scores/$gameId'
     | '/docs'
@@ -403,6 +425,7 @@ export interface FileRouteTypes {
     | '/league/$leagueId/wire'
     | '/league/$leagueId'
     | '/r/$leagueId'
+    | '/api/wire/$season/$week.json'
     | '/league/$leagueId/player/$playerId'
     | '/league/$leagueId/team/$rosterId'
     | '/r/$leagueId/$week/$rosterId'
@@ -422,6 +445,7 @@ export interface FileRouteTypes {
     | '/players'
     | '/scores'
     | '/api/mcp'
+    | '/api/players.json'
     | '/docs/$slug'
     | '/league/$leagueId'
     | '/scores_/$gameId'
@@ -440,6 +464,7 @@ export interface FileRouteTypes {
     | '/league/$leagueId/wire'
     | '/league/$leagueId/'
     | '/r/$leagueId/'
+    | '/api/wire/$season/$week.json'
     | '/league/$leagueId/player/$playerId'
     | '/league/$leagueId/team/$rosterId'
     | '/r/$leagueId/$week/$rosterId'
@@ -460,11 +485,13 @@ export interface RootRouteChildren {
   PlayersRoute: typeof PlayersRoute
   ScoresRoute: typeof ScoresRoute
   ApiMcpRoute: typeof ApiMcpRoute
+  ApiPlayersDotjsonRoute: typeof ApiPlayersDotjsonRoute
   LeagueLeagueIdRoute: typeof LeagueLeagueIdRouteWithChildren
   ScoresGameIdRoute: typeof ScoresGameIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiLeagueTickRoute: typeof ApiLeagueTickRoute
   RLeagueIdIndexRoute: typeof RLeagueIdIndexRoute
+  ApiWireSeasonWeekDotjsonRoute: typeof ApiWireSeasonWeekDotjsonRoute
   RLeagueIdWeekRosterIdRoute: typeof RLeagueIdWeekRosterIdRoute
   ApiOgRLeagueIdWeekRosterIdRoute: typeof ApiOgRLeagueIdWeekRosterIdRoute
 }
@@ -553,6 +580,13 @@ declare module '@tanstack/react-router' {
       path: '/api/mcp'
       fullPath: '/api/mcp'
       preLoaderRoute: typeof ApiMcpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/players.json': {
+      id: '/api/players.json'
+      path: '/api/players.json'
+      fullPath: '/api/players.json'
+      preLoaderRoute: typeof ApiPlayersDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs/': {
@@ -681,6 +715,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RLeagueIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/wire/$season/$week.json': {
+      id: '/api/wire/$season/$week.json'
+      path: '/api/wire/$season/$week.json'
+      fullPath: '/api/wire/$season/$week.json'
+      preLoaderRoute: typeof ApiWireSeasonWeekDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/league/$leagueId/player/$playerId': {
       id: '/league/$leagueId/player/$playerId'
       path: '/player/$playerId'
@@ -783,11 +824,13 @@ const rootRouteChildren: RootRouteChildren = {
   PlayersRoute: PlayersRoute,
   ScoresRoute: ScoresRoute,
   ApiMcpRoute: ApiMcpRoute,
+  ApiPlayersDotjsonRoute: ApiPlayersDotjsonRoute,
   LeagueLeagueIdRoute: LeagueLeagueIdRouteWithChildren,
   ScoresGameIdRoute: ScoresGameIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiLeagueTickRoute: ApiLeagueTickRoute,
   RLeagueIdIndexRoute: RLeagueIdIndexRoute,
+  ApiWireSeasonWeekDotjsonRoute: ApiWireSeasonWeekDotjsonRoute,
   RLeagueIdWeekRosterIdRoute: RLeagueIdWeekRosterIdRoute,
   ApiOgRLeagueIdWeekRosterIdRoute: ApiOgRLeagueIdWeekRosterIdRoute,
 }

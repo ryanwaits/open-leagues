@@ -390,8 +390,10 @@ export const getReceipt = createServerFn({ method: "GET" })
     }
     const { buildReceipt } = await import("@/lib/receipts/receipt.server");
     const { count } = await import("@/lib/metrics.server");
+    const { recordPaste } = await import("@/lib/receipts/open-data.server");
     const receipt = await buildReceipt(data.leagueId, data.week, data.rosterId, context.userId);
     count("card", data.leagueId);
+    recordPaste(data.leagueId, receipt.league.season);
     return receipt;
   });
 
@@ -405,6 +407,9 @@ export const getWeekBoard = createServerFn({ method: "GET" })
     }
     const { buildWeekBoard } = await import("@/lib/receipts/receipt.server");
     const { count } = await import("@/lib/metrics.server");
+    const { recordPaste } = await import("@/lib/receipts/open-data.server");
     count("paste", data.leagueId);
-    return buildWeekBoard(data.leagueId, data.week ?? null, context.userId);
+    const board = await buildWeekBoard(data.leagueId, data.week ?? null, context.userId);
+    recordPaste(data.leagueId, board.league.season);
+    return board;
   });

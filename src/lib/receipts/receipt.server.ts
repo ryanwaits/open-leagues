@@ -19,9 +19,13 @@ export type ReceiptSide = { rosterId: number; name: string; points: number };
 export type WireMove = {
   kind: "waiver" | "free_agent" | "trade" | "other";
   add: string | null;
+  addId: string | null;
   drop: string | null;
   bid: number | null;
   won: boolean;
+  /** Median winning bid across pasted leagues, when at least three had one. */
+  median: number | null;
+  leagues: number | null;
 };
 
 /** The minute the matchup was decided, reconstructed from play-by-play. */
@@ -173,20 +177,16 @@ async function flipFor(input: {
   const { pair } = input;
   if (!pair.away) return null;
   const pbp = await import("./pbp.server");
-  if (!(await pbp.hasTimeline(input.season, input.week))) {
-    // First receipt for this season pulls the whole play log once; every later
-    // request finds it in the table. Past seasons never change.
-    try {
-      const r = await pbp.ensureTimelines(input.season);
-      console.info(
-        `[receipts] pbp ${input.season}: ${r.skipped ? "throttled" : `${r.games} games`}`,
-      );
-    } catch (err) {
-      console.warn(`[receipts] pbp ${input.season} ingest failed:`, err);
-      return null;
-    }
+  // First receipt for a season pulls the whole play log once; later requests
+  // hit the throttle and cost one query. A crosswalk version bump re-ingests.
+  try {
+    const r = await pbp.ensureTimelines(input.season);
+    if (!r.skipped) console.info(`[receipts] pbp ${input.season}: ${r.games} games`);
+  } catch (err) {
+    console.warn(`[receipts] pbp ${input.season} ingest failed:`, err);
     if (!(await pbp.hasTimeline(input.season, input.week))) return null;
   }
+  if (!(await pbp.hasTimeline(input.season, input.week))) return null;
   const events: TimelineEvent[] = await pbp.timelineFor(input.season, input.week);
   if (events.length === 0) return null;
 
@@ -334,10 +334,31 @@ export async function buildReceipt(
     .map((a) => ({
       kind: moveKind(a.type),
       add: a.adds[0]?.name ?? null,
+      addId: a.adds[0]?.playerId ?? null,
       drop: a.drops[0]?.name ?? null,
       bid: a.bid,
       won: a.status === "complete",
+      median: null,
+      leagues: null,
     }));
+  // What the same player cleared for elsewhere. Only for raw Sleeper leagues,
+  // only when enough leagues have pasted to say something.
+  if (!isHostedLeague(leagueId) && moves.some((m) => m.kind === "waiver" && m.won)) {
+    try {
+      const { wirePrices } = await import("./open-data.server");
+      const prices = await wirePrices(String(bundle.league.season), week);
+      const byId = new Map(prices.prices.map((p) => [p.player_id, p]));
+      for (const m of moves) {
+        const p = m.addId ? byId.get(m.addId) : undefined;
+        if (p && p.n >= 3) {
+          m.median = p.median;
+          m.leagues = p.n;
+        }
+      }
+    } catch {
+      /* prices are a courtesy */
+    }
+  }
   const spent = moves
     .filter((m) => m.kind === "waiver" && m.won && m.bid != null)
     .reduce((n, m) => n + (m.bid ?? 0), 0);
