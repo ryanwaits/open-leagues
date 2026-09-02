@@ -4,7 +4,6 @@ import type { LucideIcon } from "lucide-react";
 import { BarChart3, House, Radio, Search, Shield, Swords, Trophy, UserRound } from "lucide-react";
 import { InstallDrawer } from "@/components/install-drawer";
 import { LeagueSwitcher } from "@/components/league-switcher";
-import { LogoMark } from "@/components/logo";
 import { SignedIn, SignedOut, UserButton } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getLeagueBundle, getScores } from "@/lib/data/fns";
@@ -133,7 +132,6 @@ export function Shell({
     : leagueId && user
       ? leagueTabs(leagueId, Boolean(bundle.data?.hosted))
       : [];
-  const showWordmark = !current || !user;
   const scrollToTop = () => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
@@ -143,15 +141,12 @@ export function Shell({
     <div className="flex min-h-dvh flex-col bg-bg text-fg">
       <header className="sticky top-0 z-30 border-b border-line bg-bg/85 pt-[env(safe-area-inset-top)] backdrop-blur-md">
         <div className="mx-auto flex h-15 max-w-6xl items-center gap-3 px-4">
-          <Link to="/" className="shrink-0" aria-label={`${brand.name} — the desk`}>
-            <span className="flex items-center gap-2">
-              <LogoMark className="size-6" />
-              {showWordmark ? (
-                <span className="font-display text-[22px] font-semibold leading-none tracking-[-0.02em]">
-                  {brand.name}
-                </span>
-              ) : null}
-            </span>
+          <Link
+            to="/"
+            className="shrink-0 font-display text-[22px] font-semibold leading-none tracking-[-0.02em]"
+            aria-label={`${brand.name} — the desk`}
+          >
+            {brand.name}
           </Link>
           {user && current ? <LeagueSwitcher current={current} /> : null}
           {navTabs.length ? (
@@ -166,7 +161,7 @@ export function Shell({
                     search={(prev) => prev}
                     preload="intent"
                     className={cn(
-                      "shrink-0 rounded-pill px-3.5 py-2 text-sm font-medium transition-colors duration-150",
+                      "shrink-0 rounded-pill px-3.5 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none",
                       t.active ? "bg-fg text-bg" : "text-fg/55 hover:bg-raised hover:text-fg",
                     )}
                   >
@@ -244,7 +239,7 @@ export function Shell({
                   if (t.active) scrollToTop();
                 }}
                 className={cn(
-                  "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150",
+                  "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150 focus-visible:outline-none",
                   t.active ? "bg-fg/6 text-fg" : "text-faint",
                 )}
               >
@@ -261,7 +256,7 @@ export function Shell({
                 if (pathname === "/") scrollToTop();
               }}
               className={cn(
-                "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150",
+                "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150 focus-visible:outline-none",
                 pathname === "/" ? "bg-fg/6 text-fg" : "text-faint",
               )}
             >
@@ -274,7 +269,7 @@ export function Shell({
                 if (inScores) scrollToTop();
               }}
               className={cn(
-                "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150",
+                "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150 focus-visible:outline-none",
                 inScores ? "bg-fg/6 text-fg" : "text-faint",
               )}
             >
@@ -292,7 +287,7 @@ export function Shell({
                       if (pathname === "/join") scrollToTop();
                     }}
                     className={cn(
-                      "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150",
+                      "mx-0.5 flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-pill py-1 text-[10.5px] font-medium transition-colors duration-150 focus-visible:outline-none",
                       pathname === "/join" ? "bg-fg/6 text-fg" : "text-faint",
                     )}
                   >
