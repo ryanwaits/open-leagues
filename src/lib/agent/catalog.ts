@@ -309,7 +309,7 @@ export const AGENT_TOOLS: AgentTool[] = [
   tool(
     "getLiveWire",
     "Get live wire",
-    "Live scoring leaders for the current week.",
+    "Live scoring leaders for the current week. Unofficial Sleeper PPR (scoring: ppr), not a league book. League actuals are getReceipt.",
     "spectator",
     "read",
   ),

@@ -40,5 +40,8 @@ Ceiling and invariants: [CATALOG.md](../../src/lib/agent/CATALOG.md),
 
 Adds belong in open-leagues-wire.
 
+League points are `getReceipt`. Do not quote `getLiveWire` as this
+league's score — that verb is unofficial Sleeper PPR, not the book.
+
 Do **not** write the roster or claim / drop players here. Lineup
 changes are `open-leagues-lineup`. Do not call tick.

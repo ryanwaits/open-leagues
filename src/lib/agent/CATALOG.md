@@ -64,7 +64,7 @@ If it's not in this table, it is not a tool. Stop. Do not invent a table.
 | getScores | spectator | read | Scoreboard for a week. |
 | getGameSummary | spectator | read | Box score and plays for one NFL game. |
 | getWeekStats | spectator | read | Raw weekly stats for a season/week. |
-| getLiveWire | spectator | read | Live scoring leaders for the current week. |
+| getLiveWire | spectator | read | Live scoring leaders for the current week. Unofficial Sleeper PPR (`scoring: ppr`), not a league book. League actuals are getReceipt. |
 | findSleeperUser | spectator | read | Lookup a Sleeper user by query. |
 | getLeagueBundle | spectator | read | League header, rosters, and users. |
 | getReceipt | spectator | read | One roster's week as facts: score, bench left, wire cost. Team names only. |

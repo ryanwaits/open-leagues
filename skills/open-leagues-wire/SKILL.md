@@ -34,6 +34,8 @@ Call tools. Do not invent a bid.
 3. If they ask why, `getAdviceReceipt` with the card's receipt id. Always
    read `seat` (this roster at that pos, injuries, last add) before repeating
    the bid band. Comps on the receipt are the band set, not the whole tape.
+   League points are `getReceipt` (matchup `players_points`). Do not quote
+   `getLiveWire` as this league's score — that verb is unofficial Sleeper PPR.
 4. Optional: `getMoveLedger` for the season tape; `gradeManagerSpec` for
    the holdout. `classifyMoves` / `freezeManagerSpec` only on a box with
    a person and, for labels, `TYPESAFE_API_KEY`.

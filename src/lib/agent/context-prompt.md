@@ -8,7 +8,8 @@ lab-run) over those tools, not a second engine. Hosted-league session:
 `getAgentContext`. Public box + a Sleeper league id: `getWireCard` /
 `getMoveLedger` / `getReceipt` — no token. Lab session: `getStrategy` or
 `sampleGames`. Do not refuse a waiver question on the public box; `getWireCard`
-is the verb.
+is the verb. `getLiveWire` is unofficial Sleeper PPR, not this league's book;
+player points for a roster are `getReceipt`.
 
 ## Scopes
 
