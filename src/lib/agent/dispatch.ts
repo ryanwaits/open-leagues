@@ -770,6 +770,7 @@ async function run(
         week,
         season,
         kind,
+        scoring: "ppr",
         live: board.live,
         gamesIn: board.games.filter((g) => g.state === "in").length,
         gamesTotal: board.games.length,
@@ -792,8 +793,11 @@ async function run(
     }
     case "getPlayerSearch": {
       const sleeper = await import("@/lib/data/sleeper.server");
+      const { decoratePlayers } = await import("@/lib/data/player-refresh.server");
       return asJson(
-        await sleeper.searchPlayers(str(args.query, "query"), str(args.position, "position")),
+        await decoratePlayers(
+          sleeper.searchPlayers(str(args.query, "query"), str(args.position, "position")),
+        ),
       );
     }
     case "getSources": {

@@ -95,7 +95,7 @@ export async function loadPlayerProfile(input: {
   const player = overlay
     ? {
         ...base,
-        injury_status: overlay.injuryStatus ?? base.injury_status,
+        injury_status: overlay.injuryStatus,
         team: overlay.team ?? base.team,
         depth_chart_order: overlay.depthChartOrder ?? base.depth_chart_order,
       }

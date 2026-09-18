@@ -237,6 +237,41 @@ export async function statusOverlay(playerIds: string[]): Promise<Record<string,
   }
 }
 
+type Paintable = {
+  injury_status?: string | null;
+  status?: string | null;
+  team?: string | null;
+  depth_chart_order?: number | null;
+  news_updated?: string | null;
+  injury_body_part?: string | null;
+  injury_notes?: string | null;
+};
+
+/**
+ * Overlay always wins for injury, including null (healthy). Slim Q on
+ * players-slim.json must not survive a cleared designation.
+ */
+export function paintStatus<T extends Paintable>(p: T, o: StatusOverlay | undefined): void {
+  if (!o) return;
+  p.injury_status = o.injuryStatus;
+  if (o.status) p.status = o.status;
+  if (o.team) p.team = o.team;
+  if (o.depthChartOrder != null) p.depth_chart_order = o.depthChartOrder;
+  p.news_updated = o.newsUpdated;
+  p.injury_body_part = o.injuryBodyPart;
+  p.injury_notes = o.injuryNotes;
+}
+
+/** Paint overlay onto search/slim rows. Mutates in place. */
+export async function decoratePlayers<T extends { player_id: string } & Paintable>(
+  players: T[],
+): Promise<T[]> {
+  if (players.length === 0) return players;
+  const overlay = await statusOverlay(players.map((p) => p.player_id));
+  for (const p of players) paintStatus(p, overlay[p.player_id]);
+  return players;
+}
+
 /** Paint overlay + latest RotoWire note onto roster rows. Mutates in place. */
 export async function decorateRoster(players: RosterPlayer[]): Promise<void> {
   const ids = players.map((p) => p.player_id);
@@ -245,16 +280,7 @@ export async function decorateRoster(players: RosterPlayer[]): Promise<void> {
     import("./rotowire.server").then((m) => m.notesForPlayers(ids)),
   ]);
   for (const p of players) {
-    const o = overlay[p.player_id];
-    if (o) {
-      if (o.injuryStatus) p.injury_status = o.injuryStatus;
-      if (o.status) p.status = o.status;
-      if (o.team) p.team = o.team;
-      if (o.depthChartOrder != null) p.depth_chart_order = o.depthChartOrder;
-      p.news_updated = o.newsUpdated;
-      p.injury_body_part = o.injuryBodyPart;
-      p.injury_notes = o.injuryNotes;
-    }
+    paintStatus(p, overlay[p.player_id]);
     const list: PlayerNote[] = notes[p.player_id] ?? [];
     p.latest_note = list[0] ?? null;
   }

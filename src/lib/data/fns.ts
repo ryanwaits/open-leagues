@@ -94,6 +94,7 @@ export const getLiveWire = createServerFn({ method: "GET" })
       week,
       season,
       kind,
+      scoring: "ppr" as const,
       live: board.live,
       gamesIn: board.games.filter((g) => g.state === "in").length,
       gamesTotal: board.games.length,
@@ -348,7 +349,8 @@ export const getPlayerSearch = createServerFn({ method: "GET" })
   .validator(z.object({ query: z.string(), position: z.string() }))
   .handler(async ({ data }) => {
     const sleeper = await import("./sleeper.server");
-    return sleeper.searchPlayers(data.query, data.position);
+    const { decoratePlayers } = await import("./player-refresh.server");
+    return decoratePlayers(sleeper.searchPlayers(data.query, data.position));
   });
 
 export const getRecap = createServerFn({ method: "GET" })

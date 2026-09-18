@@ -108,7 +108,14 @@ export async function getWireCard(
     remainingFor(leagueId, rosterId),
     getManagerSpec(leagueId),
     sleeper.loadWire(leagueId, "ALL", "", "available").catch(() => []),
-    sleeper.loadTeam(leagueId, rosterId, wk).catch(() => null),
+    sleeper
+      .loadTeam(leagueId, rosterId, wk)
+      .then(async (t) => {
+        const { decorateRoster } = await import("@/lib/data/player-refresh.server");
+        await decorateRoster(t.players);
+        return t;
+      })
+      .catch(() => null),
     sleeper.loadLeagueBundle(leagueId).catch(() => null),
     import("@/lib/data/byes.server").then((b) =>
       b.byeWeeks(season).catch((): Record<string, number> => ({})),
