@@ -1,6 +1,15 @@
 import { getSql } from "@/lib/db";
 import { buildMoveLedger, remainingFor } from "./ledger.server";
-import { type Call, decideCall, type LabeledMove } from "./spec";
+import {
+  band,
+  type Call,
+  comparableMoves,
+  decideCall,
+  type LabeledMove,
+  remainingWindow,
+  type Seat,
+  startSlotsFrom,
+} from "./spec";
 import { getManagerSpec } from "./spec.server";
 
 let ready = false;
@@ -22,6 +31,18 @@ function newId(): string {
   return `adv_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+export type SeatFact = {
+  starterSlots: Record<string, number>;
+  players: {
+    name: string | null;
+    pos: string | null;
+    slot: string;
+    injury: string | null;
+    bye: boolean;
+  }[];
+  lastAddAtPos: LabeledMove | null;
+};
+
 export type WireCard = {
   leagueId: string;
   rosterId: number;
@@ -33,6 +54,46 @@ export type WireCard = {
   generatedAt: string;
 };
 
+export type AdviceReceipt = {
+  leagueId: string;
+  rosterId: number;
+  week: number;
+  remaining: number;
+  budget: number;
+  call: Call;
+  specId: string | null;
+  seat: SeatFact;
+  comps: LabeledMove[];
+  compBand: {
+    n: number;
+    p25: number;
+    p50: number;
+    p75: number;
+    remainingLo: number;
+    remainingHi: number;
+  } | null;
+  candidateSources: {
+    playerId: string;
+    sleeperProj: number | null;
+    last3: number | null;
+    seasonAvg: number | null;
+  } | null;
+  sources: string[];
+};
+
+function lastAddAtPos(
+  moves: LabeledMove[],
+  rosterId: number,
+  pos: string | null,
+): LabeledMove | null {
+  if (!pos) return null;
+  const hits = moves.filter(
+    (m) => m.rosterId === rosterId && m.pos === pos && (m.type === "waiver_won" || m.type === "fa"),
+  );
+  hits.sort((a, b) => b.week - a.week || b.seq - a.seq);
+  return hits[0] ?? null;
+}
+
 export async function getWireCard(
   leagueId: string,
   rosterId: number,
@@ -41,25 +102,61 @@ export async function getWireCard(
   const sleeper = await import("@/lib/data/sleeper.server");
   const nfl = await sleeper.fetchNflState();
   const wk = week ?? nfl.display_week ?? nfl.week;
-  const [ledger, purse, stored, wire] = await Promise.all([
+  const season = String(nfl.season);
+  const [ledger, purse, stored, wire, team, bundle, byes] = await Promise.all([
     buildMoveLedger(leagueId),
     remainingFor(leagueId, rosterId),
     getManagerSpec(leagueId),
     sleeper.loadWire(leagueId, "ALL", "", "available").catch(() => []),
+    sleeper.loadTeam(leagueId, rosterId, wk).catch(() => null),
+    sleeper.loadLeagueBundle(leagueId).catch(() => null),
+    import("@/lib/data/byes.server").then((b) =>
+      b.byeWeeks(season).catch((): Record<string, number> => ({})),
+    ),
   ]);
-  const candidates = wire.slice(0, 40).map((p) => ({
-    playerId: p.player_id,
-    pos: p.position ?? null,
-    sleeperProj: typeof p.pts === "number" ? p.pts : null,
-    last3: null as number | null,
-  }));
+
+  const positions = bundle?.league.roster_positions ?? [];
+  const seat: Seat = {
+    starterSlots: startSlotsFrom(positions),
+    players: (team?.players ?? []).map((p) => ({
+      playerId: p.player_id,
+      name: p.full_name ?? null,
+      pos: p.position ?? null,
+      slot: p.slot,
+      injury: p.injury_status ?? null,
+      bye: Boolean(p.team && byes[p.team] === wk),
+    })),
+  };
+
+  const ids = wire.slice(0, 80).map((p) => p.player_id);
+  const { sourceValues } = await import("@/lib/receipts/sources.server");
+  const values = await sourceValues({ leagueId, season, week: wk, playerIds: ids });
+  const candidates = ids.map((id) => {
+    const p = sleeper.getPlayer(id);
+    const v = values[id];
+    return {
+      playerId: id,
+      pos: p?.position ?? null,
+      sleeperProj: v?.sleeper_proj ?? null,
+      last3: v?.last3 ?? null,
+      seasonAvg: v?.season_avg ?? null,
+    };
+  });
+
   const call = decideCall({
     remaining: purse.remaining,
     candidates,
     history: ledger.moves,
     spec: stored?.spec ?? null,
+    seat,
   });
-  const receipt = {
+
+  const comps = call.kind === "add" ? comparableMoves(ledger.moves, call.pos, purse.remaining) : [];
+  const win = remainingWindow(purse.remaining);
+  const bids = comps.map((m) => m.bid).filter((n): n is number => typeof n === "number");
+  const picked = call.kind === "add" ? candidates.find((c) => c.playerId === call.playerId) : null;
+
+  const receipt: AdviceReceipt = {
     leagueId,
     rosterId,
     week: wk,
@@ -67,12 +164,33 @@ export async function getWireCard(
     budget: purse.budget,
     call,
     specId: stored?.id ?? null,
-    comps:
+    seat: {
+      starterSlots: seat.starterSlots,
+      players: seat.players.map((p) => ({
+        name: p.name,
+        pos: p.pos,
+        slot: p.slot,
+        injury: p.injury,
+        bye: p.bye,
+      })),
+      lastAddAtPos: call.kind === "add" ? lastAddAtPos(ledger.moves, rosterId, call.pos) : null,
+    },
+    comps,
+    compBand:
       call.kind === "add"
-        ? ledger.moves.filter((m) => m.type === "waiver_won" && m.pos === call.pos).slice(0, 25)
-        : ledger.moves.filter((m) => m.type === "waiver_won").slice(0, 15),
+        ? { ...band(bids), remainingLo: Math.round(win.lo), remainingHi: Math.round(win.hi) }
+        : null,
+    candidateSources: picked
+      ? {
+          playerId: picked.playerId,
+          sleeperProj: picked.sleeperProj,
+          last3: picked.last3,
+          seasonAvg: picked.seasonAvg,
+        }
+      : null,
     sources: ["sleeper_proj", "last3", "season_avg"],
   };
+
   await ensure();
   const sql = await getSql();
   const receiptId = newId();
@@ -91,18 +209,6 @@ export async function getWireCard(
     generatedAt: new Date().toISOString(),
   };
 }
-
-export type AdviceReceipt = {
-  leagueId: string;
-  rosterId: number;
-  week: number;
-  remaining: number;
-  budget: number;
-  call: Call;
-  specId: string | null;
-  comps: LabeledMove[];
-  sources: string[];
-};
 
 export async function getAdviceReceipt(id: string): Promise<AdviceReceipt> {
   await ensure();

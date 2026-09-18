@@ -458,7 +458,7 @@ export const AGENT_TOOLS: AgentTool[] = [
   tool(
     "getWireCard",
     "Get wire card",
-    "Monday card: spendable FAAB, a bid band or no-move, and a receipt id. Advice line is spec when frozen, else named quantile.",
+    "Monday card: spendable FAAB, a bid band or no-move (no-move when that pos is already filled), receipt id. Ranks this week's Sleeper proj / last-3 / season avg. Quantile unless a spec is frozen.",
     "spectator",
     "read",
   ),

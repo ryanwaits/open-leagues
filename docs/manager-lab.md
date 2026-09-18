@@ -18,11 +18,10 @@ Seeded against **SDIFFL**:
 bun test src/lib/manager
 ```
 
-Nine tests: FAAB remaining never goes negative, last-3 / season avg only use
-prior weeks, holdout is last 4 weeks of a single season (or the later season
-if it has ≥4 weeks), freeze refuses a holdout that does not beat
-always-no-move, the card is `no-move` at $0 FAAB and a named `quantile` band
-otherwise.
+FAAB remaining never goes negative; last-3 / season avg only use prior weeks;
+holdout is last 4 weeks (or the later season if it has ≥4 weeks); freeze
+refuses a holdout that does not beat always-no-move; 1QB with Mahomes Q +
+Dart is `no-move`; a hole at WR still adds.
 
 `bun scripts/ledger.mjs` does **not** dispatch these verbs. Use MCP.
 
@@ -72,10 +71,13 @@ What fires:
 What you should see:
 
 - `remaining` / `budget` (SDIFFL is 200; you’ve already spent some)
-- `call.kind` is `no-move` or `add`
-- on add: `playerId`, `bidLo`, `bidHi`, `comps`
+- `call.kind` is `no-move` when that position is already filled (1QB +
+  Mahomes Q and Dart → no-move, not Bryce Young)
+- on add: a hole at that pos, `playerId`, `bidLo`, `bidHi`, `comps`
+- ranking is this week's Sleeper proj / last-3 / season avg, not season PPR
 - `call.source` is `quantile` until a spec is frozen, `spec` after
-- a `receiptId` (`adv_…`)
+- a `receiptId` (`adv_…`); the receipt's `seat` names who you already roster
+  at that pos, and `comps` is the bid-band set
 
 The card does **not** call `addDrop`. If it names a player, you still bid in
 Sleeper yourself.

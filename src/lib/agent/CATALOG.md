@@ -87,7 +87,7 @@ If it's not in this table, it is not a tool. Stop. Do not invent a table.
 | classifyMoves | spectator | atomic | Label unlabeled ledger rows with Jev. No-op without TYPESAFE_API_KEY. |
 | freezeManagerSpec | spectator | atomic | Freeze a bid/no-move policy if the holdout beats always-no-move. |
 | gradeManagerSpec | spectator | read | Holdout points vs always-no-move for this league's spec. |
-| getWireCard | spectator | read | Monday card: FAAB, bid band or no-move, receipt id. |
+| getWireCard | spectator | read | Monday card: FAAB, bid band or no-move when the seat has a hole, receipt id. |
 | getAdviceReceipt | spectator | read | Why the card called bid X on Y. |
 | getMatchups | spectator | read | Matchup cards for a week. |
 | getTicks | spectator | read | Per-minute projected finals / win % / spread samples for one matchup on a game day. |

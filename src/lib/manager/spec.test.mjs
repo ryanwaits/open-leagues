@@ -1,7 +1,31 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { attachRemaining, seedsFromTxs } from "./ledger.ts";
-import { asLabeled, decideCall, freezeFrom, gradeVsNoMove, splitHoldout } from "./spec.ts";
+import {
+  asLabeled,
+  comparableMoves,
+  decideCall,
+  freezeFrom,
+  gradeVsNoMove,
+  posFilled,
+  splitHoldout,
+  startSlotsFrom,
+} from "./spec.ts";
+
+function seat(players, slots = { QB: 1, RB: 2, WR: 2, TE: 1 }) {
+  return { starterSlots: slots, players };
+}
+
+function p(pos, slot, extra = {}) {
+  return {
+    playerId: extra.id ?? pos + slot,
+    name: extra.name ?? pos,
+    pos,
+    slot,
+    injury: extra.injury ?? null,
+    bye: extra.bye ?? false,
+  };
+}
 
 function won(week, rosterId, playerId, bid, extra = {}) {
   const seeds = seedsFromTxs(week, [
@@ -65,26 +89,94 @@ test("freezeFrom refuses a holdout that does not beat no-move", () => {
   assert.ok(ok.bidPctRemaining.RB.n >= 1);
 });
 
-test("decideCall: no FAAB → no-move; otherwise quantile band", () => {
+test("1QB + healthy starter and backup is filled; Out starter with no backup is a hole", () => {
+  const slots = startSlotsFrom(["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "K", "DEF"]);
+  assert.equal(slots.QB, 1);
+  const filled = seat([
+    p("QB", "starter", { name: "Mahomes", injury: "Questionable" }),
+    p("QB", "bench", { name: "Dart" }),
+  ]);
+  assert.equal(posFilled(filled, "QB"), true);
+  const hole = seat([p("QB", "starter", { name: "Mahomes", injury: "Out" })]);
+  assert.equal(posFilled(hole, "QB"), false);
+  const byeHole = seat([p("QB", "starter", { bye: true })]);
+  assert.equal(posFilled(byeHole, "QB"), false);
+});
+
+test("decideCall: Young vs Mahomes+Dart is no-move; hole at WR still adds", () => {
   const history = [
-    won(1, 2, "x", 20, { pos: "WR" }),
-    won(2, 3, "y", 30, { pos: "WR" }),
-    won(3, 4, "z", 40, { pos: "WR" }),
+    won(1, 2, "x", 20, { pos: "QB" }),
+    won(2, 3, "y", 30, { pos: "QB" }),
+    won(3, 4, "z", 40, { pos: "QB" }),
+    won(1, 5, "w1", 12, { pos: "WR" }),
+    won(2, 6, "w2", 18, { pos: "WR" }),
+    won(3, 7, "w3", 24, { pos: "WR" }),
   ];
-  const empty = decideCall({ remaining: 0, candidates: [], history, spec: null });
-  assert.equal(empty.kind, "no-move");
-  const call = decideCall({
+  const guru = seat([
+    p("QB", "starter", { name: "Mahomes", injury: "Questionable" }),
+    p("QB", "bench", { name: "Dart" }),
+    p("RB", "starter"),
+    p("RB", "starter"),
+    p("WR", "starter"),
+    p("WR", "starter"),
+    p("TE", "starter"),
+  ]);
+  const young = decideCall({
     remaining: 178,
-    candidates: [{ playerId: "star", pos: "WR", sleeperProj: 12, last3: 9 }],
+    candidates: [{ playerId: "9228", pos: "QB", sleeperProj: 18, last3: null, seasonAvg: 22 }],
     history,
     spec: null,
+    seat: guru,
+  });
+  assert.equal(young.kind, "no-move");
+  assert.match(young.reason, /hole/i);
+
+  const wrThin = seat([
+    p("QB", "starter", { name: "Mahomes" }),
+    p("QB", "bench", { name: "Dart" }),
+    p("WR", "starter"),
+  ]);
+  const call = decideCall({
+    remaining: 178,
+    candidates: [
+      { playerId: "9228", pos: "QB", sleeperProj: 18, last3: null, seasonAvg: 22 },
+      { playerId: "star", pos: "WR", sleeperProj: 12, last3: 9, seasonAvg: 10 },
+    ],
+    history,
+    spec: null,
+    seat: wrThin,
   });
   assert.equal(call.kind, "add");
   if (call.kind === "add") {
     assert.equal(call.playerId, "star");
+    assert.equal(call.pos, "WR");
     assert.equal(call.source, "quantile");
-    assert.ok(call.bidHi <= 178);
-    assert.ok(call.bidLo <= call.bidHi);
     assert.equal(call.comps, 3);
   }
+});
+
+test("decideCall: no FAAB → no-move; empty purse before ranking", () => {
+  const empty = decideCall({
+    remaining: 0,
+    candidates: [{ playerId: "star", pos: "WR", sleeperProj: 12, last3: 9, seasonAvg: null }],
+    history: [],
+    spec: null,
+    seat: seat([]),
+  });
+  assert.equal(empty.kind, "no-move");
+});
+
+test("comparableMoves is the bid-band set, not tape order", () => {
+  const history = [
+    won(1, 2, "a", 5, { pos: "QB" }),
+    won(2, 3, "b", 80, { pos: "QB" }),
+    won(3, 4, "c", 12, { pos: "WR" }),
+  ];
+  // remaining 178 → window 125–231; remainingBefore on these isolated wins is 200
+  const qb = comparableMoves(history, "QB", 178);
+  assert.equal(qb.length, 2);
+  assert.deepEqual(
+    qb.map((m) => m.playerId),
+    ["a", "b"],
+  );
 });

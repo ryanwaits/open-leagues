@@ -51,8 +51,11 @@ roster's adds/drops/FAAB × Sleeper proj / last-3 / season avg × actuals).
 `classifyMoves` labels rows with Jev when `TYPESAFE_API_KEY` is set; no key
 is a no-op, not an error. `freezeManagerSpec` stores a league-scoped bid
 policy only if the holdout beats always-no-move. Monday is `getWireCard`
-(call + receipt id) and `getAdviceReceipt` (the why). Do not `addDrop` from
-this playbook. Without a frozen spec the card names its fallback `"quantile"`.
+(call + receipt id) and `getAdviceReceipt` (the why, including this seat).
+Quantile is no-move when the start slots at that pos are already covered by
+healthy (not Out, not bye) bodies — a Q starter plus a backup is filled.
+Do not `addDrop` from this playbook. Without a frozen spec the card names
+its fallback `"quantile"`.
 
 ## Two kinds of box
 

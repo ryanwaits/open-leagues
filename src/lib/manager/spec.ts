@@ -63,7 +63,54 @@ export type Candidate = {
   pos: string | null;
   sleeperProj: number | null;
   last3: number | null;
+  seasonAvg: number | null;
 };
+
+export type SeatPlayer = {
+  playerId: string;
+  name: string | null;
+  pos: string | null;
+  slot: "starter" | "bench" | "ir" | "taxi";
+  injury: string | null;
+  bye: boolean;
+};
+
+export type Seat = {
+  starterSlots: Record<string, number>;
+  players: SeatPlayer[];
+};
+
+/** Out / IR / doubtful — not Questionable. Q is still a starter you own. */
+const OUT = new Set(["out", "ir", "doubtful", "suspended", "pup", "na", "dnr"]);
+
+export function startSlotsFrom(positions: readonly string[]): Record<string, number> {
+  const n: Record<string, number> = {};
+  for (const s of positions) {
+    if (s === "QB" || s === "SUPER_FLEX") n.QB = (n.QB ?? 0) + 1;
+    else if (s === "RB" || s === "WR" || s === "TE" || s === "K" || s === "DEF") {
+      n[s] = (n[s] ?? 0) + 1;
+    }
+  }
+  return n;
+}
+
+function isOut(injury: string | null): boolean {
+  return OUT.has((injury ?? "").toLowerCase());
+}
+
+/**
+ * Position is filled when we already have enough healthy (not Out, not bye,
+ * not IR) bodies to cover start slots. A Q starter plus a healthy backup is
+ * filled. An Out starter with no healthy backup is a hole.
+ */
+export function posFilled(seat: Seat, pos: string | null): boolean {
+  if (!pos) return false;
+  const need = seat.starterSlots[pos] ?? 0;
+  if (need <= 0) return true;
+  const atPos = seat.players.filter((p) => p.pos === pos && p.slot !== "taxi");
+  const healthy = atPos.filter((p) => p.slot !== "ir" && !p.bye && !isOut(p.injury));
+  return healthy.length >= need;
+}
 
 function quantile(sorted: number[], q: number): number {
   if (sorted.length === 0) return 0;
@@ -179,7 +226,30 @@ export function freezeFrom(
 }
 
 function scoreOf(c: Candidate): number {
-  return c.sleeperProj ?? c.last3 ?? 0;
+  return c.sleeperProj ?? c.last3 ?? c.seasonAvg ?? 0;
+}
+
+export function remainingWindow(remaining: number): { lo: number; hi: number } {
+  return { lo: remaining * 0.7, hi: remaining * 1.3 };
+}
+
+/** Same filter the bid band uses — the receipt must print this set, not tape order. */
+export function comparableMoves(
+  history: LabeledMove[],
+  pos: string | null,
+  remaining: number,
+): LabeledMove[] {
+  const win = remainingWindow(remaining);
+  const out: LabeledMove[] = [];
+  for (const m of history) {
+    if (m.type !== "waiver_won" || m.bid == null) continue;
+    if (pos && m.pos && m.pos !== pos) continue;
+    if (m.remainingBefore > 0 && (m.remainingBefore < win.lo || m.remainingBefore > win.hi)) {
+      continue;
+    }
+    out.push(m);
+  }
+  return out;
 }
 
 export function comparableBids(
@@ -187,18 +257,7 @@ export function comparableBids(
   pos: string | null,
   remaining: number,
 ): number[] {
-  const out: number[] = [];
-  for (const m of history) {
-    if (m.type !== "waiver_won" || m.bid == null) continue;
-    if (pos && m.pos && m.pos !== pos) continue;
-    if (m.remainingBefore > 0) {
-      const lo = remaining * 0.7;
-      const hi = remaining * 1.3;
-      if (m.remainingBefore < lo || m.remainingBefore > hi) continue;
-    }
-    out.push(m.bid);
-  }
-  return out;
+  return comparableMoves(history, pos, remaining).map((m) => m.bid as number);
 }
 
 export function decideCall(input: {
@@ -206,50 +265,56 @@ export function decideCall(input: {
   candidates: Candidate[];
   history: LabeledMove[];
   spec: ManagerSpec | null;
+  seat: Seat;
 }): Call {
   const source = input.spec ? "spec" : "quantile";
   if (input.remaining <= 0) return { kind: "no-move", reason: "no FAAB left", source };
   const ranked = [...input.candidates].sort((a, b) => scoreOf(b) - scoreOf(a));
-  const top = ranked[0];
-  if (!top || scoreOf(top) <= 0) return { kind: "no-move", reason: "wire is empty", source };
+  if (ranked.every((c) => scoreOf(c) <= 0)) {
+    return { kind: "no-move", reason: "wire is empty", source };
+  }
 
   const minProj = input.spec?.minProj ?? 0;
-  if (input.spec && scoreOf(top) < minProj) {
-    return { kind: "no-move", reason: "top available below spec minProj", source };
+  for (const top of ranked) {
+    if (scoreOf(top) <= 0) continue;
+    if (input.spec && scoreOf(top) < minProj) continue;
+    if (posFilled(input.seat, top.pos)) continue;
+
+    const pos = top.pos ?? "UNK";
+    const comps = comparableBids(input.history, top.pos, input.remaining);
+    let lo: number;
+    let hi: number;
+    let n = comps.length;
+    if (input.spec?.bidPctRemaining[pos] && input.spec.bidPctRemaining[pos].n >= 3) {
+      const b = input.spec.bidPctRemaining[pos];
+      lo = Math.round((b.p25 / 100) * input.remaining);
+      hi = Math.round((b.p75 / 100) * input.remaining);
+    } else if (n >= 3) {
+      const b = band(comps);
+      lo = Math.round(b.p25);
+      hi = Math.round(b.p75);
+    } else {
+      lo = Math.round(input.remaining * 0.05);
+      hi = Math.round(input.remaining * 0.15);
+      n = comps.length;
+    }
+    hi = Math.min(hi, input.remaining);
+    lo = Math.min(lo, hi);
+    if (hi <= 0) continue;
+
+    return {
+      kind: "add",
+      playerId: top.playerId,
+      pos: top.pos,
+      dropPlayerId: null,
+      bidLo: lo,
+      bidHi: hi,
+      source,
+      comps: n,
+    };
   }
 
-  const pos = top.pos ?? "UNK";
-  const comps = comparableBids(input.history, top.pos, input.remaining);
-  let lo: number;
-  let hi: number;
-  let n = comps.length;
-  if (input.spec?.bidPctRemaining[pos] && input.spec.bidPctRemaining[pos].n >= 3) {
-    const b = input.spec.bidPctRemaining[pos];
-    lo = Math.round((b.p25 / 100) * input.remaining);
-    hi = Math.round((b.p75 / 100) * input.remaining);
-  } else if (n >= 3) {
-    const b = band(comps);
-    lo = Math.round(b.p25);
-    hi = Math.round(b.p75);
-  } else {
-    lo = Math.round(input.remaining * 0.05);
-    hi = Math.round(input.remaining * 0.15);
-    n = comps.length;
-  }
-  hi = Math.min(hi, input.remaining);
-  lo = Math.min(lo, hi);
-  if (hi <= 0) return { kind: "no-move", reason: "bid band is zero", source };
-
-  return {
-    kind: "add",
-    playerId: top.playerId,
-    pos: top.pos,
-    dropPlayerId: null,
-    bidLo: lo,
-    bidHi: hi,
-    source,
-    comps: n,
-  };
+  return { kind: "no-move", reason: "no hole on the roster", source };
 }
 
 export function asLabeled(
