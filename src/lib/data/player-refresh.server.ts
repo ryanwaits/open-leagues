@@ -248,11 +248,14 @@ type Paintable = {
 };
 
 /**
- * Overlay always wins for injury, including null (healthy). Slim Q on
- * players-slim.json must not survive a cleared designation.
+ * Overlay always wins for injury, including null (healthy). No overlay
+ * row means unknown — not the committed slim file.
  */
 export function paintStatus<T extends Paintable>(p: T, o: StatusOverlay | undefined): void {
-  if (!o) return;
+  if (!o) {
+    p.injury_status = null;
+    return;
+  }
   p.injury_status = o.injuryStatus;
   if (o.status) p.status = o.status;
   if (o.team) p.team = o.team;

@@ -99,7 +99,7 @@ export async function loadPlayerProfile(input: {
         team: overlay.team ?? base.team,
         depth_chart_order: overlay.depthChartOrder ?? base.depth_chart_order,
       }
-    : base;
+    : { ...base, injury_status: null };
 
   const season = input.season ?? SEED_SEASON;
   const book = await bookFor(input.leagueId);

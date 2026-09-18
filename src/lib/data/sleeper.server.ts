@@ -49,6 +49,9 @@ function loadPlayers(): Record<string, SlimPlayer> {
   playersById = JSON.parse(
     readFileSync(join(process.cwd(), "data/players-slim.json"), "utf8"),
   ) as Record<string, SlimPlayer>;
+  // Slim is names and headshots. Designations live on ol_player_status.
+  // A committed Q from August is not this week's injury report.
+  for (const p of Object.values(playersById)) p.injury_status = null;
   return playersById;
 }
 

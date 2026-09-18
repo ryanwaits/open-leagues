@@ -156,13 +156,7 @@ export async function outlooksFor(input: {
   for (const id of input.playerIds) {
     const fresh = overlay[id];
     const bundled = sleeper.getPlayer(id);
-    const designation = (
-      fresh?.injuryStatus ??
-      fresh?.status ??
-      bundled?.injury_status ??
-      bundled?.status ??
-      ""
-    )
+    const designation = (fresh?.injuryStatus ?? fresh?.status ?? bundled?.status ?? "")
       .toLowerCase()
       .trim();
     if (designation && CANNOT_PLAY.has(designation)) {

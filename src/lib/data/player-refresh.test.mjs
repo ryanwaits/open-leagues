@@ -23,10 +23,10 @@ test("overlay null injury clears slim Q", () => {
   assert.equal(p.injury_status, null);
 });
 
-test("no overlay leaves slim Q", () => {
+test("no overlay drops slim Q", () => {
   const p = { player_id: "4046", injury_status: "Questionable" };
   paintStatus(p, undefined);
-  assert.equal(p.injury_status, "Questionable");
+  assert.equal(p.injury_status, null);
 });
 
 test("overlay Out replaces slim Q", () => {
