@@ -2,6 +2,12 @@
 
 Slices live here. Read the one you are executing from.
 
+- **093–095 — Manager lab** (2026-09-18, commit `400a7dc`). Goal: betting-lab
+  cousin for roster moves. 093 is the join (decision × sources × actuals) for
+  SDIFFL + one prior season; 094 labels with Jev and freezes a spec if the
+  holdout beats always-no-move; 095 is the Monday MCP card + receipt. Notify
+  only. No `engine.server.ts`.
+
 - **001–005 — Desk performance** (improve skill, 2026-08-17, commit `1abb347`).
   Goal: league desk feels like a spreadsheet — last-known numbers stay painted,
   tabs do not reload, hard refresh restores the workbook, live scores still tick.

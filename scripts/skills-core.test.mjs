@@ -42,7 +42,7 @@ const LAB_FIELDS = new Set([
   "winProbSource",
 ]);
 
-test("six open-leagues skills exist", () => {
+test("seven open-leagues skills exist", () => {
   const names = readdirSync(skillsDir).sort();
   assert.deepEqual(names, [
     "open-leagues-book",
@@ -51,6 +51,7 @@ test("six open-leagues skills exist", () => {
     "open-leagues-lineup",
     "open-leagues-migrate",
     "open-leagues-week",
+    "open-leagues-wire",
   ]);
 });
 

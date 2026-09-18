@@ -44,6 +44,16 @@ Thirteen read-mostly verbs over real NFL games, not a league seat: `getGameLines
 - Splits (`getBettingSplits`) exist only if the box opted in
   (`OPENLEAGUES_SPLITS_SOURCE`). An empty result is not a zero; it is "off".
 
+## The manager lab
+
+Roster-move cousin of the betting lab. `getMoveLedger` is the join (every
+roster's adds/drops/FAAB × Sleeper proj / last-3 / season avg × actuals).
+`classifyMoves` labels rows with Jev when `TYPESAFE_API_KEY` is set; no key
+is a no-op, not an error. `freezeManagerSpec` stores a league-scoped bid
+policy only if the holdout beats always-no-move. Monday is `getWireCard`
+(call + receipt id) and `getAdviceReceipt` (the why). Do not `addDrop` from
+this playbook. Without a frozen spec the card names its fallback `"quantile"`.
+
 ## Two kinds of box
 
 - **substrate** (the default, and the public host) — receipts, open data, the lab, and the

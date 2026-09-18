@@ -147,6 +147,29 @@ export const TOOL_SCHEMAS: Record<string, Schema> = {
     "leagueId",
     "rosterId",
   ]),
+  getMoveLedger: obj(
+    {
+      leagueId: str("Sleeper league id"),
+      season: str("optional season filter"),
+      includeHistory: bool("walk one previous_league_id; default true"),
+    },
+    ["leagueId"],
+  ),
+  classifyMoves: obj({ leagueId: str("Sleeper league id") }, ["leagueId"]),
+  freezeManagerSpec: obj({ leagueId: str("Sleeper league id"), name: str("short name") }, [
+    "leagueId",
+    "name",
+  ]),
+  gradeManagerSpec: obj({ leagueId: str("Sleeper league id") }, ["leagueId"]),
+  getWireCard: obj(
+    {
+      leagueId: str("Sleeper league id"),
+      rosterId: num("roster id"),
+      week: num("optional week; default: current"),
+    },
+    ["leagueId", "rosterId"],
+  ),
+  getAdviceReceipt: obj({ id: str("receipt id from getWireCard") }, ["id"]),
   getGameLines: obj(
     { season: num("e.g. 2025"), week: num("optional week"), postseason: bool("include playoffs") },
     ["season"],

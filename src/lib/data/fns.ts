@@ -655,3 +655,78 @@ export const getWeekBoard = createServerFn({ method: "GET" })
     recordPaste(data.leagueId, board.league.season);
     return board;
   });
+
+export const getMoveLedger = createServerFn({ method: "GET" })
+  .middleware([optionalAuthMiddleware])
+  .validator(
+    z.object({
+      leagueId: z.string(),
+      season: z.string().optional(),
+      includeHistory: z.boolean().optional(),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    if (isHostedLeague(data.leagueId)) {
+      const eng = await import("@/lib/league/engine.server");
+      await eng.assertLeagueViewer(data.leagueId, context.userId);
+    }
+    const { buildMoveLedger } = await import("@/lib/manager/ledger.server");
+    return buildMoveLedger(data.leagueId, {
+      includeHistory: data.includeHistory,
+      season: data.season,
+    });
+  });
+
+export const classifyMoves = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ leagueId: z.string() }))
+  .handler(async ({ data }) => {
+    const { classifyMoves } = await import("@/lib/manager/classify.server");
+    return classifyMoves(data.leagueId);
+  });
+
+export const freezeManagerSpec = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ leagueId: z.string(), name: z.string().min(1).max(80) }))
+  .handler(async ({ data }) => {
+    const { freezeManagerSpec } = await import("@/lib/manager/spec.server");
+    return freezeManagerSpec(data.leagueId, data.name);
+  });
+
+export const gradeManagerSpec = createServerFn({ method: "GET" })
+  .middleware([optionalAuthMiddleware])
+  .validator(z.object({ leagueId: z.string() }))
+  .handler(async ({ data, context }) => {
+    if (isHostedLeague(data.leagueId)) {
+      const eng = await import("@/lib/league/engine.server");
+      await eng.assertLeagueViewer(data.leagueId, context.userId);
+    }
+    const { gradeManagerSpec } = await import("@/lib/manager/spec.server");
+    return gradeManagerSpec(data.leagueId);
+  });
+
+export const getWireCard = createServerFn({ method: "GET" })
+  .middleware([optionalAuthMiddleware])
+  .validator(
+    z.object({
+      leagueId: z.string(),
+      rosterId: z.number(),
+      week: z.number().optional(),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    if (isHostedLeague(data.leagueId)) {
+      const eng = await import("@/lib/league/engine.server");
+      await eng.assertLeagueViewer(data.leagueId, context.userId);
+    }
+    const { getWireCard } = await import("@/lib/manager/card.server");
+    return getWireCard(data.leagueId, data.rosterId, data.week);
+  });
+
+export const getAdviceReceipt = createServerFn({ method: "GET" })
+  .middleware([optionalAuthMiddleware])
+  .validator(z.object({ id: z.string() }))
+  .handler(async ({ data }) => {
+    const { getAdviceReceipt } = await import("@/lib/manager/card.server");
+    return getAdviceReceipt(data.id);
+  });

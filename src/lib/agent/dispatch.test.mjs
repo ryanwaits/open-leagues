@@ -70,6 +70,10 @@ test("81's 26 new ids are reachable — not Unknown tool", async () => {
     "getTrades",
     "getTradablePicks",
     "getSchedule",
+    "getMoveLedger",
+    "gradeManagerSpec",
+    "getWireCard",
+    "getAdviceReceipt",
   ];
   for (const id of needsArgs) {
     await assert.rejects(

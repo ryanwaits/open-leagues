@@ -74,6 +74,16 @@ export async function refreshProjections(
     }
   }
 
+  let frozen = false;
+  try {
+    const { fetchNflState } = await import("./sleeper.server");
+    const { weekIsFrozen } = await import("@/lib/manager/ledger");
+    const nfl = await fetchNflState();
+    frozen = weekIsFrozen(season, week, nfl);
+  } catch {
+    frozen = false;
+  }
+
   let stored = 0;
   for (const pos of POSITIONS) {
     const url =
@@ -88,13 +98,21 @@ export async function refreshProjections(
       const playerId = row.player_id;
       if (!playerId) continue;
 
-      await sql`
-        insert into ol_projections (season, week, player_id, stats_json, updated_at)
-        values (${season}, ${week}, ${playerId}, ${JSON.stringify(row.stats)}, now())
-        on conflict (season, week, player_id) do update set
-          stats_json = excluded.stats_json,
-          updated_at = now()
-      `;
+      if (frozen) {
+        await sql`
+          insert into ol_projections (season, week, player_id, stats_json, updated_at)
+          values (${season}, ${week}, ${playerId}, ${JSON.stringify(row.stats)}, now())
+          on conflict (season, week, player_id) do nothing
+        `;
+      } else {
+        await sql`
+          insert into ol_projections (season, week, player_id, stats_json, updated_at)
+          values (${season}, ${week}, ${playerId}, ${JSON.stringify(row.stats)}, now())
+          on conflict (season, week, player_id) do update set
+            stats_json = excluded.stats_json,
+            updated_at = now()
+        `;
+      }
       stored += 1;
     }
   }

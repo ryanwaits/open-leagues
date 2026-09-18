@@ -1123,6 +1123,54 @@ async function run(
         }),
       );
     }
+    case "getMoveLedger": {
+      const leagueId = str(args.leagueId, "leagueId");
+      if (isHosted(leagueId)) {
+        const eng = await import("@/lib/league/engine.server");
+        await eng.assertLeagueViewer(leagueId, uid);
+      }
+      const { buildMoveLedger } = await import("@/lib/manager/ledger.server");
+      return asJson(
+        await buildMoveLedger(leagueId, {
+          includeHistory: args.includeHistory !== false,
+          season: optStr(args.season),
+        }),
+      );
+    }
+    case "classifyMoves": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      const { classifyMoves } = await import("@/lib/manager/classify.server");
+      return asJson(await classifyMoves(str(args.leagueId, "leagueId")));
+    }
+    case "freezeManagerSpec": {
+      if (!userId) throw new Error(`${id} requires a signed-in user (OPENLEAGUES_USER)`);
+      const { freezeManagerSpec } = await import("@/lib/manager/spec.server");
+      return asJson(
+        await freezeManagerSpec(str(args.leagueId, "leagueId"), str(args.name, "name")),
+      );
+    }
+    case "gradeManagerSpec": {
+      const leagueId = str(args.leagueId, "leagueId");
+      if (isHosted(leagueId)) {
+        const eng = await import("@/lib/league/engine.server");
+        await eng.assertLeagueViewer(leagueId, uid);
+      }
+      const { gradeManagerSpec } = await import("@/lib/manager/spec.server");
+      return asJson(await gradeManagerSpec(leagueId));
+    }
+    case "getWireCard": {
+      const leagueId = str(args.leagueId, "leagueId");
+      if (isHosted(leagueId)) {
+        const eng = await import("@/lib/league/engine.server");
+        await eng.assertLeagueViewer(leagueId, uid);
+      }
+      const { getWireCard } = await import("@/lib/manager/card.server");
+      return asJson(await getWireCard(leagueId, num(args.rosterId, "rosterId"), optNum(args.week)));
+    }
+    case "getAdviceReceipt": {
+      const { getAdviceReceipt } = await import("@/lib/manager/card.server");
+      return asJson(await getAdviceReceipt(str(args.id, "id")));
+    }
     default:
       throw new Error(`Unknown tool: ${id}`);
   }
