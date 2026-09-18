@@ -17,6 +17,8 @@ codex  mcp add open-leagues --url https://leagues.waits.dev/api/mcp
 - "Home dogs of 3 to 7 in division games, 2015 to 2024: record against the
   spread and n." (graded at the closing line, with pBreakEven; it never picks
   a side or places a bet)
+- "SDIFFL, my team. Any adds this week? If you name a bid, show the receipt."
+  (Monday card: FAAB left, bid band or no-move; it never files the claim)
 
 Every answer carries a timestamp and a named open source. The public box
 keeps no accounts and hosts no leagues.
@@ -51,13 +53,14 @@ codex mcp add open-leagues --url https://YOUR_BOX/api/mcp --bearer-token-env-var
 ```
 
 Skills for Claude Code and Codex (lineup, week, book, migrate, lab-discover,
-lab-run): `npx skills add ryanwaits/open-leagues -g`.
+lab-run, wire): `npx skills add ryanwaits/open-leagues -g`.
 
 ## Docs
 
 In the app at `/docs`; start with `/docs/guide`. In the repo:
 
 - [The lab, end to end](docs/lab.md): test a betting hunch, run it on Tuesday
+- [Manager lab](docs/manager-lab.md): Monday FAAB card, SDIFFL tape, what to ask
 - [Migrating your league](docs/migrate.md): Sleeper, ESPN, or a pasted recap
 - [Self-hosting](docs/self-host.md): env vars, Vercel, the tick clock
 - [Notifications](docs/notifications.md) · [Google sign-in](docs/google-sign-in.md) · [Development](docs/development.md)

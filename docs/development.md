@@ -4,6 +4,7 @@
 
 ```sh
 bun test
+bun test src/lib/manager                   # move ledger / wire card math
 bun test src/lib/auth/providers.test.mjs   # native Google button gating
 bun test src/lib/push                      # SW + no-VAPID no-op
 bun run typecheck
