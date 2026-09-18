@@ -3,8 +3,10 @@ name: open-leagues-wire
 description: >
   Monday waiver card for a Sleeper league: spendable FAAB, bid band or
   no-move, fetchable receipt. Use when the user says "waivers", "wire
-  card", "what should I bid", "any adds", or "Monday FAAB". Notify only —
-  never write the roster.
+  card", "what should I bid", "any adds", "should I add anyone",
+  "looking to add", "anyone this week", or "Monday FAAB". Works on the
+  public box with a Sleeper league id — do not wait for a league-box
+  token. Notify only — never write the roster.
 ---
 
 # Wire card

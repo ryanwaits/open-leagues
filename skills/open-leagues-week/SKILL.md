@@ -2,20 +2,25 @@
 name: open-leagues-week
 description: >
   Read-only weekly digest for one league: record, matchup, bye/injury
-  flags, one waiver idea. Use when the user says "week preview",
-  "newsletter", "who do I play", "waiver wire idea", or "what's
-  going on this week". Decision support only, not autopilot.
+  flags. Use when the user says "week preview", "newsletter", "who do
+  I play", or "what's going on this week". Adds and FAAB are
+  open-leagues-wire, not this skill. Decision support only, not autopilot.
 ---
 
 # Weekly digest
 
 ## Before anything
 
-This skill only works with the open-leagues MCP server connected, pointed at a
-league box (one running `OPENLEAGUES_MODE=league` with your seat and a
-token). If no `open-leagues` tools are listed, or `getAgentContext` is refused
-as "public substrate", stop and say so: the public box at leagues.waits.dev
-hosts no leagues. Do not answer from memory.
+This skill only works with the open-leagues MCP server connected.
+
+Adds / waivers / FAAB: stop and use open-leagues-wire (`getWireCard`). That
+works on the public box with a Sleeper league id (SDIFFL
+`1312215005088739328`, roster 1). Do not call `getAgentContext` for that.
+
+The rest of this digest (record, matchup, sit/start flags) needs
+`getAgentContext` on a league box. If that call is refused as public
+substrate, do not invent a digest. You may still run `getWireCard` if they
+named a Sleeper league. Do not answer from memory.
 
 Ceiling and invariants: [CATALOG.md](../../src/lib/agent/CATALOG.md),
 [context-prompt.md](../../src/lib/agent/context-prompt.md).
@@ -32,7 +37,8 @@ Ceiling and invariants: [CATALOG.md](../../src/lib/agent/CATALOG.md),
 - Record / standings bite from context
 - This week's opponent
 - Bye / injury flags as sit-or-start *advice* only
-- One FA add idea from the wire
+
+Adds belong in open-leagues-wire.
 
 Do **not** write the roster or claim / drop players here. Lineup
 changes are `open-leagues-lineup`. Do not call tick.

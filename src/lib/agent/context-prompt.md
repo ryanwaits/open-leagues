@@ -3,9 +3,12 @@
 open-leagues is a headless fantasy football league engine: draft, lineups, waivers/FAAB,
 trades, a matchup book, and an event diary. Mechanics live as named primitives
 in [CATALOG.md](./CATALOG.md). Features are the skills in
-[/skills](../../../skills) — playbooks (migrate, lineup, book, week, lab-discover,
-lab-run) over those tools, not a second engine. Start a league session with
-`getAgentContext`; a lab session starts with `getStrategy` or `sampleGames`.
+[/skills](../../../skills) — playbooks (migrate, lineup, book, week, wire, lab-discover,
+lab-run) over those tools, not a second engine. Hosted-league session:
+`getAgentContext`. Public box + a Sleeper league id: `getWireCard` /
+`getMoveLedger` / `getReceipt` — no token. Lab session: `getStrategy` or
+`sampleGames`. Do not refuse a waiver question on the public box; `getWireCard`
+is the verb.
 
 ## Scopes
 

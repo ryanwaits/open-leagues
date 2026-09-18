@@ -45,6 +45,12 @@ npx skills add ryanwaits/open-leagues --skill open-leagues-wire -g
 Start a new session so the tool list refreshes. Confirm `getWireCard` is
 listed.
 
+Grok: `grok mcp add --transport http open-leagues https://leagues.waits.dev/api/mcp`
+and copy `skills/open-leagues-wire/` into `~/.grok/skills/` (or `npx skills add`
+if that path is how you install). Public host needs **no token**. Do not start
+with `getAgentContext` — that verb is league-box only and will  fail on
+leagues.waits.dev. Monday asks go to `getWireCard`.
+
 ## 2. Monday card (the thing you feel)
 
 Say, exactly:
