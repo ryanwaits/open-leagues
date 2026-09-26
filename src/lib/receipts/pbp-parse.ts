@@ -109,14 +109,29 @@ export const n = (v: string | undefined): number => {
  * carries both `fgm_50_59`/`fgm_60p` and the coarser `fgm_50p`; a league's book
  * scores one of the two, so the parser emits both for a long make.
  */
-export function fgKey(distance: number): string {
-  if (distance < 20) return "fgm_0_19";
-  if (distance < 30) return "fgm_20_29";
-  if (distance < 40) return "fgm_30_39";
-  if (distance < 50) return "fgm_40_49";
-  if (distance < 60) return "fgm_50_59";
-  return "fgm_60p";
+export function fgKey(distance: number, prefix: "fgm" | "fgmiss" = "fgm"): string {
+  if (distance < 20) return `${prefix}_0_19`;
+  if (distance < 30) return `${prefix}_20_29`;
+  if (distance < 40) return `${prefix}_30_39`;
+  if (distance < 50) return `${prefix}_40_49`;
+  if (distance < 60) return `${prefix}_50_59`;
+  return `${prefix}_60p`;
 }
+
+/**
+ * Every distance key a book can score a kick by, made or missed. Books that
+ * charge a miss by distance (`fgmiss_50_59` and `fgmiss_50p`, as Sleeper
+ * carries both) need the same buckets on misses as on makes.
+ */
+export const FG_DISTANCE_KEYS: readonly string[] = ["fgm", "fgmiss"].flatMap((p) => [
+  `${p}_0_19`,
+  `${p}_20_29`,
+  `${p}_30_39`,
+  `${p}_40_49`,
+  `${p}_50_59`,
+  `${p}_60p`,
+  `${p}_50p`,
+]);
 
 export type Row = Record<Col, string>;
 
@@ -178,7 +193,12 @@ export function deltasFor(
       d.fgm_yds = dist;
       d[fgKey(dist)] = 1;
       if (dist >= 50) d.fgm_50p = 1;
-    } else if (r.field_goal_result === "missed" || r.field_goal_result === "blocked") d.fgmiss = 1;
+    } else if (r.field_goal_result === "missed" || r.field_goal_result === "blocked") {
+      const dist = n(r.kick_distance);
+      d.fgmiss = 1;
+      d[fgKey(dist, "fgmiss")] = 1;
+      if (dist >= 50) d.fgmiss_50p = 1;
+    }
     if (r.extra_point_result === "good") d.xpm = 1;
     else if (r.extra_point_result && r.extra_point_result !== "good") d.xpmiss = 1;
     add(r.kicker_player_id, d);
@@ -268,11 +288,13 @@ export function deltasFor(
 
 /**
  * Keys a book can score and a play log can under-count: every scoring field
- * except the tier flags and bonus markers Sleeper derives, plus the two DEF
- * levels the flip sums. `pts_allow` is settled as a delta like everything else.
+ * except the tier flags and bonus markers Sleeper derives, every kick distance
+ * bucket (a Sleeper book may score any of them, made or missed), plus the two
+ * DEF levels the flip sums. `pts_allow` is settled as a delta like everything else.
  */
 export const SETTLE_KEYS: ReadonlySet<string> = new Set([
   ...SCORING_FIELDS.map((f) => f.key).filter((k) => !/^(pts_allow_|yds_allow_|bonus_)/.test(k)),
+  ...FG_DISTANCE_KEYS,
   "pts_allow",
   "yds_allow",
 ]);

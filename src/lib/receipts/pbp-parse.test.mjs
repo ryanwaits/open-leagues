@@ -242,7 +242,26 @@ test("field goals bucket by distance; misses count", () => {
     row({ kicker_player_id: "00-0031234", field_goal_result: "missed", kick_distance: "44" }),
     gsis,
   );
-  assert.deepEqual(Object.fromEntries(miss.map((x) => [x.p, x.d]))["3678"], { fgmiss: 1 });
+  assert.deepEqual(Object.fromEntries(miss.map((x) => [x.p, x.d]))["3678"], {
+    fgmiss: 1,
+    fgmiss_40_49: 1,
+  });
+});
+
+test("a long miss carries both distance keys, as Sleeper's stat line does", () => {
+  assert.equal(fgKey(57, "fgmiss"), "fgmiss_50_59");
+  const miss = deltasFor(
+    row({ kicker_player_id: "00-0031234", field_goal_result: "blocked", kick_distance: "55" }),
+    gsis,
+  );
+  assert.deepEqual(Object.fromEntries(miss.map((x) => [x.p, x.d]))["3678"], {
+    fgmiss: 1,
+    fgmiss_50_59: 1,
+    fgmiss_50p: 1,
+  });
+  // a book that charges -1 per bucket scores a 55-yard miss at -2, like Sleeper
+  for (const k of ["fgmiss_50_59", "fgmiss_50p", "fgm_50_59", "fgm_60p"])
+    assert.ok(SETTLE_KEYS.has(k), k);
 });
 
 test("a player Sleeper does not know produces no event", () => {
