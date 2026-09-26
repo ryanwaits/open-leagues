@@ -143,6 +143,14 @@ export const TOOL_SCHEMAS: Record<string, Schema> = {
     },
     ["leagueId"],
   ),
+  getWinProbSeries: obj(
+    {
+      leagueId: str("Sleeper league id, or an lg_ id on a league box"),
+      week: num("week"),
+      matchupId: num("matchup id within the week (getWeekBoard rows carry it)"),
+    },
+    ["leagueId", "week", "matchupId"],
+  ),
   getSourceLedger: obj({ leagueId: str("Sleeper league id"), rosterId: num("roster id") }, [
     "leagueId",
     "rosterId",

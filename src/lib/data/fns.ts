@@ -399,6 +399,22 @@ export const getReceipt = createServerFn({ method: "GET" })
     return receipt;
   });
 
+/**
+ * One matchup's week as a curve: both scores and home's win chance over time,
+ * from the play log and the same model as the receipt's flip. Same seat rule.
+ */
+export const getWinProbSeries = createServerFn({ method: "GET" })
+  .middleware([optionalAuthMiddleware])
+  .validator(z.object({ leagueId: z.string(), week: z.number(), matchupId: z.number() }))
+  .handler(async ({ data, context }) => {
+    if (isHostedLeague(data.leagueId)) {
+      const eng = await import("@/lib/league/engine.server");
+      await eng.assertLeagueViewer(data.leagueId, context.userId);
+    }
+    const { buildWinProbSeries } = await import("@/lib/receipts/receipt.server");
+    return buildWinProbSeries(data.leagueId, data.week, data.matchupId, context.userId);
+  });
+
 /* ── the lab: lines, cohorts, grading ─────────────────────────────────── */
 
 export const getGameLines = createServerFn({ method: "GET" })

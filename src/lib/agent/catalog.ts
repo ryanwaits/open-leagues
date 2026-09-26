@@ -342,6 +342,13 @@ export const AGENT_TOOLS: AgentTool[] = [
     "read",
   ),
   tool(
+    "getWinProbSeries",
+    "Get win-probability series",
+    "One matchup's week as a curve: both scores and the home side's win chance at kickoffs, every scoring play and lead change, and each quarter hour of play. Team names only.",
+    "spectator",
+    "read",
+  ),
+  tool(
     "getGameLines",
     "Get game lines",
     "Closing spread, total, moneylines, prices, result, and context for every NFL game of a season or week, from nflverse. 1999 to now.",

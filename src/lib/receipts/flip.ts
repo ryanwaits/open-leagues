@@ -59,12 +59,34 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-export function computeFlip(input: {
+type ReplayInput = {
   home: FlipSide;
   away: FlipSide;
   events: TimelineEvent[];
   book: ScoringBook;
-}): Flip {
+};
+
+/** A moment the matchup's score moved: the running totals just after one event. */
+export type ScorePoint = {
+  at: string;
+  scores: [number, number];
+  playerId: string;
+  desc: string | null;
+  settled: boolean;
+  /** The lead changed hands on this event (level scores are not a change). */
+  leadChange: boolean;
+};
+
+/**
+ * One pass over the log: every starter event, in time order, re-scored with
+ * the book. Each event that moves a score becomes a point. computeFlip and
+ * scoreSeries both read this, so the flip and the series cannot disagree.
+ */
+function replay(input: ReplayInput): {
+  points: ScorePoint[];
+  final: [number, number];
+  games: number;
+} {
   const homeSet = new Set(input.home.starters);
   const awaySet = new Set(input.away.starters);
   const relevant = input.events
@@ -76,7 +98,7 @@ export function computeFlip(input: {
   let home = 0;
   let away = 0;
   let leader: number | null = null; // rosterId, or null for level
-  const changes: LeadChange[] = [];
+  const points: ScorePoint[] = [];
   const games = new Set<string>();
 
   for (const e of relevant) {
@@ -95,25 +117,83 @@ export function computeFlip(input: {
     else away = round2(away + delta);
 
     const now = home > away ? input.home.rosterId : away > home ? input.away.rosterId : null;
-    if (now !== null && now !== leader && leader !== null) {
-      changes.push({
-        at: e.t,
-        to: now,
-        scores: [home, away],
-        desc: e.desc ?? null,
-        playerId: e.p,
-        settled: e.settled === true,
-      });
-    }
+    points.push({
+      at: e.t,
+      scores: [home, away],
+      playerId: e.p,
+      desc: e.desc ?? null,
+      settled: e.settled === true,
+      leadChange: now !== null && now !== leader && leader !== null,
+    });
     if (now !== null) leader = now;
   }
 
+  return { points, final: [home, away], games: games.size };
+}
+
+export function computeFlip(input: ReplayInput): Flip {
+  const r = replay(input);
+  const changes: LeadChange[] = r.points
+    .filter((p) => p.leadChange)
+    .map((p) => ({
+      at: p.at,
+      to: p.scores[0] > p.scores[1] ? input.home.rosterId : input.away.rosterId,
+      scores: p.scores,
+      desc: p.desc,
+      playerId: p.playerId,
+      settled: p.settled,
+    }));
   return {
     decided: changes.length ? (changes[changes.length - 1] ?? null) : null,
     changes,
-    final: [home, away],
-    games: games.size,
+    final: r.final,
+    games: r.games,
   };
+}
+
+/** Every moment the matchup's score moved, in time order. */
+export function scoreSeries(input: ReplayInput): ScorePoint[] {
+  return replay(input).points;
+}
+
+/** The score at a moment, from a series (the last point at or before it). */
+export function scoreAt(points: ScorePoint[], at: string): [number, number] {
+  let lo = 0;
+  let hi = points.length - 1;
+  let best = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if ((points[mid] as ScorePoint).at <= at) {
+      best = mid;
+      lo = mid + 1;
+    } else hi = mid - 1;
+  }
+  return best < 0 ? [0, 0] : (points[best] as ScorePoint).scores;
+}
+
+/**
+ * When to evaluate a win-probability curve: each game's first and last event,
+ * every moment a score moved on a scoring play, a settlement or a lead change,
+ * and every `stepMs` while any of the matchup's games is being played. Nothing
+ * between games (Friday, Saturday), where nothing can change.
+ * `spans` are [first, last] event times of the games the starters play in.
+ */
+export function sampleTimes(input: {
+  points: ScorePoint[];
+  spans: Array<[string, string]>;
+  stepMs: number;
+}): string[] {
+  const out = new Set<string>();
+  for (const [a, b] of input.spans) {
+    out.add(a);
+    out.add(b);
+    const end = new Date(b).getTime();
+    for (let t = new Date(a).getTime() + input.stepMs; t < end; t += input.stepMs) {
+      out.add(new Date(t).toISOString());
+    }
+  }
+  for (const p of input.points) if (p.desc || p.settled || p.leadChange) out.add(p.at);
+  return [...out].sort();
 }
 
 /**

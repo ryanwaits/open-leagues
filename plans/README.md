@@ -2,6 +2,10 @@
 
 Slices live here. Read the one you are executing from.
 
+- **096 — Win-probability series** (2026-09-26, at `0e573d3`). Goal: one
+  matchup's week as a curve (`getWinProbSeries`), from the same replay and
+  model as the receipt's flip, for SDIFFL Weekly's game of the week.
+
 - **093–095 — Manager lab** (2026-09-18, commit `400a7dc`). Goal: betting-lab
   cousin for roster moves. 093 is the join (decision × sources × actuals) for
   SDIFFL + one prior season; 094 labels with Jev and freezes a spec if the

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { computeFlip, gameStatesAt, scoresAt } from "./flip.ts";
+import { computeFlip, gameStatesAt, sampleTimes, scoreAt, scoreSeries, scoresAt } from "./flip.ts";
 
 // Half-PPR, 6-point passing TDs — the SDIFFL book.
 const BOOK = {
@@ -123,4 +123,71 @@ test("a settlement that decides the week is marked, so the receipt can say so", 
   assert.equal(f.changes.length, 2);
   assert.equal(f.changes[0]?.settled, false, "the catch was a play");
   assert.equal(f.decided?.settled, true, "the correction was booked at the whistle");
+});
+
+// ---------------------------------------------------------------- series
+
+const swing = [
+  ev("2025-12-07T18:05:00Z", "g1", "h1", { rush_yd: 50 }), // home 5.0 leads
+  ev("2025-12-07T18:10:00Z", "g1", "h1", { rush_att: 1 }), // scores nothing: no point
+  ev("2025-12-07T18:30:00Z", "g2", "a1", { rec: 1, rec_yd: 30, rec_td: 1 }, { desc: "TD pass" }), // away 9.5
+  ev("2025-12-07T19:00:00Z", "g1", "h2", { rec: 1, rec_yd: 50 }), // home 10.5
+];
+
+test("the series has a point for every event that moved a score, and agrees with the flip", () => {
+  const input = { home, away, book: BOOK, events: swing };
+  const pts = scoreSeries(input);
+  assert.deepEqual(
+    pts.map((p) => p.scores),
+    [
+      [5, 0],
+      [5, 9.5],
+      [10.5, 9.5],
+    ],
+  );
+  assert.deepEqual(
+    pts.map((p) => p.leadChange),
+    [false, true, true],
+  );
+  assert.equal(pts[1].desc, "TD pass");
+  const f = computeFlip(input);
+  assert.deepEqual(f.final, pts[pts.length - 1].scores);
+  assert.equal(f.changes.length, pts.filter((p) => p.leadChange).length);
+  assert.equal(f.decided.at, "2025-12-07T19:00:00Z");
+  assert.equal(f.decided.to, 1);
+});
+
+test("scoreAt reads the series the way scoresAt replays the log", () => {
+  const input = { home, away, book: BOOK, events: swing };
+  const pts = scoreSeries(input);
+  for (const at of [
+    "2025-12-07T18:00:00Z",
+    "2025-12-07T18:05:00Z",
+    "2025-12-07T18:45:00Z",
+    "2025-12-08T00:00:00Z",
+  ]) {
+    assert.deepEqual(scoreAt(pts, at), scoresAt(input, at), at);
+  }
+});
+
+test("samples: span ends, a grid while games are on, notable plays; nothing between games", () => {
+  const pts = scoreSeries({ home, away, book: BOOK, events: swing });
+  const times = sampleTimes({
+    points: pts,
+    spans: [
+      ["2025-12-05T01:15:00Z", "2025-12-05T04:15:00Z"], // Thursday night
+      ["2025-12-07T18:00:00Z", "2025-12-07T19:10:00Z"], // Sunday
+    ],
+    stepMs: 30 * 60 * 1000,
+  });
+  assert.deepEqual(times, [...times].sort(), "in time order");
+  assert.equal(new Set(times).size, times.length, "no duplicates");
+  assert.ok(times.includes("2025-12-05T01:15:00Z"), "a span's first event, as the log wrote it");
+  assert.ok(times.includes("2025-12-07T18:30:00Z"), "the scoring play");
+  assert.ok(times.includes("2025-12-07T19:00:00Z"), "the lead change");
+  assert.ok(!times.includes("2025-12-07T18:05:00Z"), "a plain yardage point is left to the grid");
+  assert.ok(
+    !times.some((t) => t > "2025-12-05T04:15:00Z" && t < "2025-12-07T18:00:00Z"),
+    "no samples between Thursday and Sunday",
+  );
 });

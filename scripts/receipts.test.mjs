@@ -19,6 +19,9 @@ test("hosted leagues keep the seat rule on receipts; raw Sleeper ids do not need
   assert.match(receipt, /assertLeagueViewer/);
   const board = fns.slice(fns.indexOf("export const getWeekBoard"));
   assert.match(board, /assertLeagueViewer/);
+  const series = fns.slice(fns.indexOf("export const getWinProbSeries"));
+  assert.match(series, /isHostedLeague\(data\.leagueId\)/);
+  assert.match(series, /assertLeagueViewer/);
 });
 
 test("the og image never renders a hosted league — unfurlers carry no session", () => {

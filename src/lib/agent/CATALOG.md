@@ -69,6 +69,7 @@ If it's not in this table, it is not a tool. Stop. Do not invent a table.
 | getLeagueBundle | spectator | read | League header, rosters, and users. |
 | getReceipt | spectator | read | One roster's week as facts: score, bench left, wire cost. Team names only. |
 | getWeekBoard | spectator | read | Every matchup in a week, each side linked to its receipt. |
+| getWinProbSeries | spectator | read | One matchup's week as a curve: both scores and home's win chance over time. Team names only. |
 | getGameLines | spectator | read | Closing lines, prices, results, and context for every NFL game of a season or week, 1999 to now. |
 | getGameContext | spectator | read | One NFL game by nflverse id: lines, result, rest, roof, surface, division, QBs, referee. |
 | getBettingSplits | spectator | read | Public ticket and money percentages per market and side for a week, from the box's opted-in source. 2023 on. |

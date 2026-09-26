@@ -310,6 +310,22 @@ async function run(
       const { buildWeekBoard } = await import("@/lib/receipts/receipt.server");
       return asJson(await buildWeekBoard(leagueId, optNum(args.week) ?? null, uid));
     }
+    case "getWinProbSeries": {
+      const leagueId = str(args.leagueId, "leagueId");
+      if (isHosted(leagueId)) {
+        const eng = await import("@/lib/league/engine.server");
+        await eng.assertLeagueViewer(leagueId, uid);
+      }
+      const { buildWinProbSeries } = await import("@/lib/receipts/receipt.server");
+      return asJson(
+        await buildWinProbSeries(
+          leagueId,
+          num(args.week, "week"),
+          num(args.matchupId, "matchupId"),
+          uid,
+        ),
+      );
+    }
     case "getGameLines": {
       const lines = await import("@/lib/lab/lines.server");
       return asJson(

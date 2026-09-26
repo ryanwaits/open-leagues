@@ -64,6 +64,7 @@ export const AGENT_CORE: ReadonlySet<string> = new Set([
   // receipts (095) — public facts about a week, seat-gated for hosted leagues
   "getReceipt",
   "getWeekBoard",
+  "getWinProbSeries",
   "getSourceLedger",
   "getMoveLedger",
   "classifyMoves",
@@ -111,6 +112,7 @@ export const PUBLIC_CORE: ReadonlySet<string> = new Set([
   "findSleeperUser",
   "getReceipt",
   "getWeekBoard",
+  "getWinProbSeries",
   "getSourceLedger",
   "getMoveLedger",
   "gradeManagerSpec",

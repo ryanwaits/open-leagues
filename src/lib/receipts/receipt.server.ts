@@ -1,7 +1,15 @@
 import type { ActivityItem, LeagueBundle, MatchupPair, TeamBundle } from "@/lib/data/types";
 import { isHostedLeague } from "@/lib/data/types";
 import { type BenchReceipt, benchReceipt } from "./bench";
-import { computeFlip, type FlipSide, gameStatesAt, scoresAt, type TimelineEvent } from "./flip";
+import {
+  computeFlip,
+  type FlipSide,
+  gameStatesAt,
+  sampleTimes,
+  scoreAt,
+  scoreSeries,
+  type TimelineEvent,
+} from "./flip";
 import { agreementLine, callsFor } from "./sources";
 
 /**
@@ -173,6 +181,102 @@ function teamsOfGame(gameId: string): string[] {
     : [];
 }
 
+/** The week's play log, ingesting the season's once if needed. Null when there is none. */
+async function timelineOf(season: string, week: number): Promise<TimelineEvent[] | null> {
+  const pbp = await import("./pbp.server");
+  // First request for a season pulls the whole play log once; later requests
+  // hit the throttle and cost one query. A crosswalk version bump re-ingests.
+  try {
+    const r = await pbp.ensureTimelines(season);
+    if (!r.skipped) console.info(`[receipts] pbp ${season}: ${r.games} games`);
+  } catch (err) {
+    console.warn(`[receipts] pbp ${season} ingest failed:`, err);
+  }
+  if (!(await pbp.hasTimeline(season, week))) return null;
+  const events: TimelineEvent[] = await pbp.timelineFor(season, week);
+  return events.length ? events : null;
+}
+
+function flipSide(m: MatchupPair["home"]): FlipSide {
+  return {
+    rosterId: m.rosterId,
+    name: publicName(m.teamName, m.manager, m.rosterId),
+    starters: m.starters.map((l) => l.playerId).filter((id): id is string => Boolean(id)),
+  };
+}
+
+/**
+ * The win-probability model for one matchup, ready to ask at any moment: the
+ * starters' outlooks are fetched once (they are the expensive part), then each
+ * call reads the games' states at `at` and returns home's chance, 0–1.
+ */
+async function winModel(input: {
+  leagueId: string;
+  season: string;
+  events: TimelineEvent[];
+  home: FlipSide;
+  away: FlipSide;
+}): Promise<(at: string, scores: [number, number]) => number> {
+  const sleeper = await import("@/lib/data/sleeper.server");
+  const { outlooksFor } = await import("@/lib/data/projections.server");
+  const { winProbability } = await import("@/lib/league/win-probability");
+  const ids = [...input.home.starters, ...input.away.starters];
+  const outlooks = await outlooksFor({
+    leagueId: input.leagueId,
+    season: input.season,
+    playerIds: ids,
+  });
+  const teamOf = new Map<string, string | null>();
+  const posOf = new Map<string, string | null>();
+  for (const id of ids) {
+    const p = sleeper.getPlayer(id);
+    teamOf.set(id, p?.team ?? (p?.position === "DEF" ? id : null));
+    posOf.set(id, p?.position ?? null);
+  }
+  const gameOfTeam = new Map<string, string>();
+  for (const e of input.events) for (const t of teamsOfGame(e.g)) gameOfTeam.set(t, e.g);
+  // only the games these starters play in: states are read per sample
+  const games = new Set<string>();
+  for (const id of ids) {
+    const t = teamOf.get(id);
+    const g = t ? gameOfTeam.get(t) : undefined;
+    if (g) games.add(g);
+  }
+  const events = input.events.filter((e) => games.has(e.g));
+  return (at, scores) => {
+    const states = gameStatesAt(events, at);
+    const toOutlook = (list: string[]) =>
+      list.map((id) => {
+        const team = teamOf.get(id) ?? null;
+        const g = team ? gameOfTeam.get(team) : undefined;
+        const st = g ? states[g] : undefined;
+        const o = outlooks[id];
+        return {
+          playerId: id,
+          team,
+          position: posOf.get(id) ?? null,
+          mean: o?.mean ?? 0,
+          sd: o?.sd ?? 0,
+          game: st ? { state: st.state, detail: st.detail, opp: null, gameId: g ?? null } : null,
+        };
+      });
+    return winProbability({
+      scores,
+      starters: [toOutlook(input.home.starters), toOutlook(input.away.starters)],
+    }).probability;
+  };
+}
+
+/** A play description without its formation prefix: "(Shotgun) ..." -> "...". */
+function playText(desc: string | null): string | null {
+  return desc
+    ? desc
+        .replace(/^\([^)]*\)\s*/, "")
+        .replace(/\s+/g, " ")
+        .trim()
+    : null;
+}
+
 async function flipFor(input: {
   leagueId: string;
   season: string;
@@ -182,32 +286,17 @@ async function flipFor(input: {
 }): Promise<ReceiptFlip | null> {
   const { pair } = input;
   if (!pair.away) return null;
-  const pbp = await import("./pbp.server");
-  // First receipt for a season pulls the whole play log once; later requests
-  // hit the throttle and cost one query. A crosswalk version bump re-ingests.
-  try {
-    const r = await pbp.ensureTimelines(input.season);
-    if (!r.skipped) console.info(`[receipts] pbp ${input.season}: ${r.games} games`);
-  } catch (err) {
-    console.warn(`[receipts] pbp ${input.season} ingest failed:`, err);
-    if (!(await pbp.hasTimeline(input.season, input.week))) return null;
-  }
-  if (!(await pbp.hasTimeline(input.season, input.week))) return null;
-  const events: TimelineEvent[] = await pbp.timelineFor(input.season, input.week);
-  if (events.length === 0) return null;
+  const events = await timelineOf(input.season, input.week);
+  if (!events) return null;
 
   const { scoringBookFor } = await import("@/lib/data/projections.server");
   const book = await scoringBookFor(input.leagueId);
-  const side = (m: MatchupPair["home"]): FlipSide => ({
-    rosterId: m.rosterId,
-    name: publicName(m.teamName, m.manager, m.rosterId),
-    starters: m.starters.map((l) => l.playerId).filter((id): id is string => Boolean(id)),
-  });
-  const home = side(pair.home);
-  const away = side(pair.away);
+  const home = flipSide(pair.home);
+  const away = flipSide(pair.away);
   const flip = computeFlip({ home, away, events, book });
   if (!flip.decided) return null;
   const d = flip.decided;
+  const points = scoreSeries({ home, away, events, book });
 
   const sleeper = await import("@/lib/data/sleeper.server");
   const byName = d.playerId ? (sleeper.getPlayer(d.playerId)?.full_name ?? null) : null;
@@ -217,39 +306,14 @@ async function flipFor(input: {
   let beforeLabel: string | null = null;
   try {
     const beforeAt = new Date(new Date(d.at).getTime() - HALF_HOUR_MS).toISOString();
-    const states = gameStatesAt(events, beforeAt);
-    const gameOfTeam = new Map<string, string>();
-    for (const g of Object.keys(states)) for (const t of teamsOfGame(g)) gameOfTeam.set(t, g);
-    const { outlooksFor } = await import("@/lib/data/projections.server");
-    const ids = [...home.starters, ...away.starters];
-    const outlooks = await outlooksFor({
+    const model = await winModel({
       leagueId: input.leagueId,
       season: input.season,
-      playerIds: ids,
+      events,
+      home,
+      away,
     });
-    const toOutlook = (ids: string[]) =>
-      ids.map((id) => {
-        const p = sleeper.getPlayer(id);
-        const team = p?.team ?? (p?.position === "DEF" ? id : null);
-        const g = team ? gameOfTeam.get(team) : undefined;
-        const st = g ? states[g] : undefined;
-        const o = outlooks[id];
-        return {
-          playerId: id,
-          team,
-          position: p?.position ?? null,
-          mean: o?.mean ?? 0,
-          sd: o?.sd ?? 0,
-          game: st ? { state: st.state, detail: st.detail, opp: null, gameId: g ?? null } : null,
-        };
-      });
-    const { winProbability } = await import("@/lib/league/win-probability");
-    const scores = scoresAt({ home, away, events, book }, beforeAt);
-    const wp = winProbability({
-      scores,
-      starters: [toOutlook(home.starters), toOutlook(away.starters)],
-    });
-    const pHome = wp.probability;
+    const pHome = model(beforeAt, scoreAt(points, beforeAt));
     probBefore = input.mine === home.rosterId ? pHome : 1 - pHome;
     beforeLabel = etLabel(beforeAt);
   } catch {
@@ -261,18 +325,165 @@ async function flipFor(input: {
     atLabel: etLabel(d.at),
     to: d.to,
     toName: d.to === home.rosterId ? home.name : away.name,
-    play: d.desc
-      ? d.desc
-          .replace(/^\([^)]*\)\s*/, "")
-          .replace(/\s+/g, " ")
-          .trim()
-      : null,
+    play: playText(d.desc),
     by: byName,
     settled: d.settled,
     scores: input.mine === home.rosterId ? d.scores : [d.scores[1], d.scores[0]],
     changes: flip.changes.length,
     probBefore,
     beforeLabel,
+  };
+}
+
+/* ------------------------------------------------------ win-prob series -- */
+
+export type WinProbPoint = {
+  at: string;
+  /** "Sun 4:07pm ET" */
+  atLabel: string;
+  /** Home, away. */
+  scores: [number, number];
+  /** Home's chance to win at this moment, 0–1. Null when unmodelled. */
+  pHome: number | null;
+  /** The scoring play at this moment, when there was one. */
+  play: string | null;
+  /** The starter whose stat line moved the score here, by name. */
+  by: string | null;
+  /** The lead changed hands here. */
+  leadChange: boolean;
+  /** A box-score settlement at the final whistle, not a play. */
+  settled: boolean;
+};
+
+export type WinProbSeries = {
+  leagueId: string;
+  season: string;
+  week: number;
+  matchupId: number;
+  home: { rosterId: number; name: string; points: number };
+  away: { rosterId: number; name: string; points: number };
+  /** Every moment the curve was evaluated, in time order. */
+  points: WinProbPoint[];
+  /** Lead changes across the week. */
+  changes: number;
+  /** The lowest chance the eventual winner had at any sampled moment. Null when unmodelled or tied. */
+  winnerLow: number | null;
+  /** False when the play log or the model was unavailable; points then carry scores only. */
+  modelled: boolean;
+};
+
+/** Sample every quarter hour while a starter's game is on. */
+const SERIES_STEP_MS = 15 * 60 * 1000;
+
+function dayLabel(iso: string): string {
+  const day = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    weekday: "short",
+  }).format(new Date(iso));
+  return `${day} ${etLabel(iso)}`;
+}
+
+/**
+ * One matchup's week as a curve: each side's score and home's chance to win,
+ * Thursday to Monday, from the same play log and model as the receipt's flip.
+ * Sampled at kickoffs, every scoring play and lead change, and every quarter
+ * hour while a starter's game is on.
+ */
+export async function buildWinProbSeries(
+  leagueId: string,
+  week: number,
+  matchupId: number,
+  userId: string | null,
+): Promise<WinProbSeries> {
+  const L = await loadersFor(leagueId, userId);
+  const [bundle, pairs] = await Promise.all([L.bundle(), L.matchups(week)]);
+  const pair = pairs.find((p) => p.matchupId === matchupId);
+  if (!pair) throw new Error(`No matchup ${matchupId} in week ${week}.`);
+  if (!pair.away) throw new Error(`Matchup ${matchupId} in week ${week} is a bye.`);
+  const season = String(bundle.league.season);
+  const home = flipSide(pair.home);
+  const away = flipSide(pair.away);
+  const base = {
+    leagueId,
+    season,
+    week,
+    matchupId,
+    home: { rosterId: home.rosterId, name: home.name, points: round1(pair.home.points) },
+    away: { rosterId: away.rosterId, name: away.name, points: round1(pair.away.points) },
+  };
+
+  const events = await timelineOf(season, week);
+  if (!events) return { ...base, points: [], changes: 0, winnerLow: null, modelled: false };
+
+  const { scoringBookFor } = await import("@/lib/data/projections.server");
+  const book = await scoringBookFor(leagueId);
+  const scored = scoreSeries({ home, away, events, book });
+
+  // the games these starters play in, first to last event
+  const starters = new Set([...home.starters, ...away.starters]);
+  const sleeper = await import("@/lib/data/sleeper.server");
+  const teams = new Set<string>();
+  for (const id of starters) {
+    const p = sleeper.getPlayer(id);
+    const t = p?.team ?? (p?.position === "DEF" ? id : null);
+    if (t) teams.add(t);
+  }
+  const span = new Map<string, [string, string]>();
+  for (const e of events) {
+    if (!teamsOfGame(e.g).some((t) => teams.has(t))) continue;
+    const s = span.get(e.g);
+    if (!s) span.set(e.g, [e.t, e.t]);
+    else {
+      if (e.t < s[0]) s[0] = e.t;
+      if (e.t > s[1]) s[1] = e.t;
+    }
+  }
+  const times = sampleTimes({ points: scored, spans: [...span.values()], stepMs: SERIES_STEP_MS });
+
+  let model: ((at: string, scores: [number, number]) => number) | null = null;
+  try {
+    model = await winModel({ leagueId, season, events, home, away });
+  } catch (err) {
+    console.warn(`[receipts] win model ${leagueId} wk${week} m${matchupId}:`, err);
+  }
+  const byAt = new Map(scored.map((p) => [p.at, p]));
+  const points: WinProbPoint[] = times.map((at) => {
+    const scores = scoreAt(scored, at);
+    const p = byAt.get(at);
+    let pHome: number | null = null;
+    if (model) {
+      try {
+        pHome = model(at, scores);
+      } catch {
+        pHome = null;
+      }
+    }
+    return {
+      at,
+      atLabel: dayLabel(at),
+      scores,
+      pHome,
+      play: p ? playText(p.desc) : null,
+      by: p ? (sleeper.getPlayer(p.playerId)?.full_name ?? null) : null,
+      leadChange: p?.leadChange ?? false,
+      settled: p?.settled ?? false,
+    };
+  });
+
+  const final = scored.length
+    ? (scored[scored.length - 1] as (typeof scored)[number]).scores
+    : null;
+  const homeWon = final ? final[0] > final[1] : null;
+  const winnerChances = points
+    .map((p) => (p.pHome === null || homeWon === null ? null : homeWon ? p.pHome : 1 - p.pHome))
+    .filter((v): v is number => v !== null);
+  return {
+    ...base,
+    points,
+    changes: scored.filter((p) => p.leadChange).length,
+    winnerLow:
+      final && final[0] !== final[1] && winnerChances.length ? Math.min(...winnerChances) : null,
+    modelled: model !== null && winnerChances.length > 0,
   };
 }
 
